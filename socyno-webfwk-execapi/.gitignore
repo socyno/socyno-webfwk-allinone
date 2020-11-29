@@ -1,0 +1,9 @@
+/bin/
+/target/
+/work/
+/war/
+/.settings/
+/.classpath
+/*.iml
+/.tomcatplugin
+/.idea/

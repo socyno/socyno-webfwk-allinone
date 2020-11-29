@@ -1,0 +1,573 @@
+package org.socyno.webfwk.state.basic;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.util.*;
+
+import lombok.Getter;
+import lombok.NonNull;
+
+import org.adrianwalker.multilinestring.Multiline;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.socyno.webfwk.state.exec.StateFormActionNotFoundException;
+import org.socyno.webfwk.state.exec.StateFormInvalidStatesException;
+import org.socyno.webfwk.state.exec.StateFormNamedQueryNotFoundException;
+import org.socyno.webfwk.state.model.CommonSimpleLog;
+import org.socyno.webfwk.state.module.notify.SystemNotifyService;
+import org.socyno.webfwk.state.service.SimpleLockService;
+import org.socyno.webfwk.state.service.SimpleLogService;
+import org.socyno.webfwk.state.util.StateFormNamedQuery;
+import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
+import org.socyno.webfwk.state.util.StateFormQueryDefinition;
+import org.socyno.webfwk.state.util.StateFormRevision;
+import org.socyno.webfwk.util.context.HttpMessageConverter;
+import org.socyno.webfwk.util.context.SessionContext;
+import org.socyno.webfwk.util.exception.AbstractMethodUnimplimentedException;
+import org.socyno.webfwk.util.model.ObjectMap;
+import org.socyno.webfwk.util.model.PagedList;
+import org.socyno.webfwk.util.model.PagedListWithTotal;
+import org.socyno.webfwk.util.service.AbstractSimpleLockService.CommonLockExecutor;
+import org.socyno.webfwk.util.sql.AbstractDao;
+import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
+import org.socyno.webfwk.util.sql.AbstractSqlStatement;
+import org.socyno.webfwk.util.sql.SqlQueryUtil;
+import org.socyno.webfwk.util.tmpl.EnjoyUtil;
+import org.socyno.webfwk.util.tool.CommonUtil;
+import org.socyno.webfwk.state.util.StateFormActionDefinition.EventType;
+
+import com.github.reinert.jjschema.v1.FieldOption;
+
+@Getter
+public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStateForm> extends AbstractStateFormService<F> {
+    
+    protected abstract String getFormTable();
+    
+    protected abstract AbstractDao getFormBaseDao();
+    
+    /**
+     * 获取默认（第一个）的预定义查询
+     * @return
+     */
+    public StateFormNamedQuery<?> getFormDefaultQuery() {
+        List<StateFormNamedQuery<?>> queries;
+        if ((queries = getFormNamedQueries()) == null || queries.isEmpty()) {
+            return null;
+        }
+        for (StateFormNamedQuery<?>query : queries) {
+            if (query != null) {
+                 return query;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 获取指定名称的预定义查询
+     * @param name
+     * @return 不存在则返回  null
+     */
+    public StateFormNamedQuery<?> getFormNamedQuery(String name) {
+        if (StringUtils.isBlank(name)) {
+            return null;
+        }
+        List<StateFormNamedQuery<?>> queries;
+        if ((queries = getFormNamedQueries()) == null || queries.isEmpty()) {
+            return null;
+        }
+        for (StateFormNamedQuery<?> query : queries) {
+            if (name.equals(query.getName())) {
+                return query;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 获取表单的预定义查询列表
+     * @return
+     */
+    public abstract List<StateFormNamedQuery<?>> getFormNamedQueries();
+    
+    public String getFormIdField() {
+        return "id";
+    }
+    
+    public String getFormStateField() {
+        return "state_form_status";
+    }
+    
+    public String getFormRevisionField() {
+        return "state_form_revision";
+    }
+    
+    protected boolean autoFillStateRevision() {
+        return true;
+    }
+    
+    @Override
+    protected void saveStateRevision(long id, String state) throws Exception {
+        saveStateRevision(id, state, new String[0]);
+    }
+    
+    protected void saveStateRevision(long id, String state, String ...stateWhens) throws Exception {
+        saveStateRevision(id, state, null, stateWhens);
+    }
+    
+    protected void saveStateRevision(long id, String state, ObjectMap customQueries, String ...stateWhens) throws Exception {
+        ObjectMap query = new ObjectMap()
+            .put("=" + getFormIdField(), id)
+            .put("#" + getFormRevisionField(), getFormRevisionField() + " + 1");
+        if (StringUtils.isNotBlank(state)) {
+            boolean found = false;
+            List<? extends FieldOption> stateOptions = getStates();
+            if ((stateOptions = getStates()) == null || stateOptions.isEmpty()) {
+                throw new StateFormInvalidStatesException(getFormName(), state);
+            }
+            for (FieldOption option : stateOptions) {
+                if (option == null ) {
+                    continue;
+                }
+                if (StringUtils.equals(state, option.getOptionValue())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new StateFormInvalidStatesException(getFormName(), state);
+            }
+            query.put(getFormStateField(), state);
+        }
+        if (customQueries != null) {
+            query.addAll(customQueries);
+        }
+        if (stateWhens != null && stateWhens.length > 0) {
+            query.put("=" + getFormStateField(), stateWhens);
+        }
+        getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
+            getFormTable(), query
+        ));
+    }
+    
+    @Override
+    protected Map<Long, StateFormRevision> loadStateRevision(Long[] formIds) throws Exception {
+        List<StateFormRevision> data = null;
+        if (formIds != null && formIds.length > 0) {
+            data = getFormBaseDao().queryAsList(StateFormRevision.class, String.format(
+                    "SELECT DISTINCT %s id, %s stateFormStatus , %s stateFormRevision FROM %s WHERE %s IN(%s)",
+                    getFormIdField(),
+                    getFormStateField(),
+                    getFormRevisionField(),
+                    getFormTable(),
+                    getFormIdField(), CommonUtil.join("?", formIds.length, ", ")
+                ), formIds);
+        }
+        if (data == null || data.size() <= 0) {
+            return Collections.emptyMap();
+        }
+        Map<Long, StateFormRevision> result = new HashMap<>();
+        for (StateFormRevision l : data) {
+            result.put(l.getId(), l);
+        }
+        return result;
+    }
+
+    public List<F> queryFormWithStateRevision(String sql) throws Exception {
+        return queryFormWithStateRevision(sql, null, null);
+    }
+    
+    public List<F> queryFormWithStateRevision(String sql, Object[] args) throws Exception {
+        return queryFormWithStateRevision(sql, args, null);
+    }
+    
+    public List<F> queryFormWithStateRevision(String sql, Map<String, String> mapper) throws Exception {
+        return queryFormWithStateRevision(sql, null, mapper);
+    }
+    
+    public List<F> queryFormWithStateRevision(String sql, Object[] args, Map<String, String> mapper) throws Exception {
+        return queryFormWithStateRevision(getFormClass(), sql, args, mapper);
+    }
+    
+    public <T> List<T> queryFormWithStateRevision(Class<T> entityClass, String sql) throws Exception {
+        return queryFormWithStateRevision(entityClass, sql, null, null);
+    }
+    
+    public <T> List<T> queryFormWithStateRevision(Class<T> entityClass, String sql, Map<String, String> mapper) throws Exception {
+        return queryFormWithStateRevision(entityClass, sql, null, mapper);
+    }
+    
+    public <T> List<T> queryFormWithStateRevision(Class<T> entityClass, String sql, Object[] args) throws Exception {
+        return queryFormWithStateRevision(entityClass, sql, args, null);
+    }
+    
+    public <T> List<T> queryFormWithStateRevision(@NonNull Class<T> entityClass, String sql, Object[] args, Map<String, String> mapper) throws Exception {
+        Map<String, String> mappAll = new HashMap<String, String>();
+        if (mapper != null) {
+            mappAll.putAll(mapper);
+        }
+        mappAll.put(getFormIdField(), "id");
+        mappAll.put(getFormStateField(), "state");
+        mappAll.put(getFormRevisionField(), "revision");
+        return getFormBaseDao().queryAsList(entityClass, sql, args, mappAll);
+    }
+    
+    /**
+     * 根据预定义的查询名称和条件数据，获取表单结果集
+     * @param namedQuery 查询名称
+     * @param condition  查询条件数据
+     * @return
+     * @throws Exception
+     */
+    public PagedList<?> listForm(String namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = getFormNamedQuery(namedQuery)) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery);
+        }
+        return listFormX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+    
+    public PagedList<?> listForm(@NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = getFormDefaultQuery()) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), "<DEFAULT>");
+        }
+        return listFormX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+    
+    public PagedList<?> listForm(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = namedQuery.getNamedQuery()) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
+        }
+        return listFormX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+    
+    /**
+     * 根据预定义的查询名称和条件数据，获取表单结果集(同时返回结果集总条数)
+     * @param namedQuery 查询名称
+     * @param condition  查询条件数据
+     * @return
+     * @throws Exception
+     */
+    public PagedListWithTotal<?> listFormWithTotal(String namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = getFormNamedQuery(namedQuery)) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery);
+        }
+        return listFormWithTotalX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+    
+    public PagedListWithTotal<?> listFormWithTotal(@NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = getFormDefaultQuery()) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), "<DEFAULT>");
+        }
+        return listFormWithTotalX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+
+    public PagedListWithTotal<?> listFormWithTotal(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = namedQuery.getNamedQuery()) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
+        }
+        return listFormWithTotalX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+    
+    /**
+     * 根据预定义的查询名称和条件数据，获取表单结果集的总条目数
+     * @param namedQuery 查询名称
+     * @param condition  查询条件数据
+     * @return
+     * @throws Exception
+     */
+    public long getListFormTotal(String namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<?> query;
+        if ((query = getFormNamedQuery(namedQuery)) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery);
+        }
+        return getListFormTotal(HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    }
+    
+    protected <T extends AbstractStateForm> PagedList<T> listFormX(@NonNull Class<T> resultClazz, @NonNull AbstractStateFormQuery filter)
+                        throws Exception {
+        AbstractSqlStatement query = filter.prepareSqlQuery();
+        List<T> resutSet = queryFormWithStateRevision(resultClazz, query.getSql(), query.getValues(), 
+                        getExtraFieldMapper(resultClazz, filter.getFieldMapper()));
+        return new PagedList<T>().setPage(filter.getPage()).setLimit(filter.getLimit())
+                            .setList(filter.processResultSet(resultClazz, resutSet));
+    }
+    
+    protected <T extends AbstractStateForm> PagedListWithTotal<T> listFormWithTotalX(@NonNull Class<T> resultClazz,
+                        @NonNull AbstractStateFormQuery filter) throws Exception {
+        AbstractSqlStatement query = filter.prepareSqlQuery();
+        List<T> resutSet = queryFormWithStateRevision(resultClazz, query.getSql(), query.getValues(), 
+                        getExtraFieldMapper(resultClazz, filter.getFieldMapper()));
+        long total = (resutSet == null || resutSet.size() <= 0 || resutSet.size() >= filter.getLimit())
+                                    ? getListFormTotal(filter) : (filter.getOffset() + resutSet.size());
+       return new PagedListWithTotal<T>().setPage(filter.getPage()).setLimit(filter.getLimit()).setTotal(total)
+                               .setList(filter.processResultSet(resultClazz, resutSet));
+    }
+    
+    public long getListFormTotal(@NonNull AbstractStateFormQuery query) throws Exception {
+        AbstractSqlStatement sql = query.prepareSqlTotal();
+        return getFormBaseDao().queryAsObject(Long.class, sql.getSql(), sql.getValues());
+    }
+    
+    /**
+     * 获取表单详情数据的 SQL 模板。
+     * 格式适用 jFinal 的 enjoy 模板，可用参数分别为 :
+     * <pre>
+     *       formTable   : 表名称
+     *       formIdField : ID 字段名
+     *       formIdValue : ID 字段值
+     * 默认模板语句 ： SELECT * FROM #(formTable) WHERE #(formIdField)=#(formIdValue)
+     * </pre>
+     */
+    protected String loadFormSqlTmpl() {
+        return "SELECT * FROM #(formTable) WHERE #(formIdField)=#(formIdValue)";
+    }
+    
+    @Override
+    protected <T extends F> T loadFormNoStateRevision(Class<T> clazz, long formId) throws Exception {
+        Map<String, String> mapper = getExtraFieldMapper(clazz, null);
+        if (mapper == null ) {
+            mapper = new HashMap<>();
+        }
+        mapper.put(getFormIdField(), "id");
+        mapper.put(getFormStateField(), "state");
+        mapper.put(getFormRevisionField(), "revision");
+        return getFormBaseDao().queryAsObject(clazz, EnjoyUtil.format(
+                loadFormSqlTmpl(), new ObjectMap()
+                        .put("formTable", getFormTable())
+                        .put("formIdField", getFormIdField())
+                        .put("formIdValue", formId)
+                        .asMap()),
+                new Object[0],
+                mapper
+        );
+    }
+    
+    @Override
+    public F getForm(long formId) throws Exception {
+        return loadFormNoStateRevision(getFormClass() , formId);
+    }
+    
+    @Override
+    public <T extends F> T getForm(Class<T> clazz, long formId) throws Exception {
+        throw new  AbstractMethodUnimplimentedException();
+    }
+    
+    @Override
+    protected void triggerPostHandle(String event, Object result, F originForm, AbstractStateForm form, String message) throws Exception {
+        super.triggerPostHandle(event, result, originForm, form, message);
+        if (form.getId() == null) {
+            return;
+        }
+        String logEventName = event;
+        AbstractStateAction<F, ?, ?> eventAction;
+        if ((eventAction = getExternalFormAction(event)) != null 
+                    && (EventType.Comment.equals(eventAction.getEventType())) ) {
+            logEventName  = AbstractStateCommentAction.getFormLogEvent();
+        }
+        AbstractStateForm changedForm = form;
+        if (eventAction != null && !EventType.Delete.equals(eventAction.getEventType())) {
+            changedForm = getForm(form.getId());
+        }
+        /**
+         * 异步通知
+         */
+        SystemNotifyService.sendAsync(
+                String.format("system.state.form:%s:%s", getFormName(), event), 
+                new ObjectMap().put("formEvent", event)
+                    .put("formName", getFormName())
+                    .put("formService", this)
+                    .put("originForm", originForm)
+                    .put("changedForm", changedForm)
+                    .put("eventMessage", message)
+                    .asMap(),
+                    SystemNotifyService.NOEXCEPTION_TMPL_NOTFOUD);
+        /**
+         * 记录日志
+         */
+        /* revision not changed, no message provided, disable log */
+        if (StringUtils.isBlank(message) && originForm != null && changedForm != null 
+                            && changedForm.getRevision().equals(originForm.getRevision())) {
+            return;
+        }
+        SimpleLogService.createLog(logEventName, getFormName(), form.getId(), message,
+                originForm, changedForm);
+    }
+    
+    /**
+     * 检索表单的日志记录
+     * @param formId
+     * @param fromLogIndex
+     */
+    public List<CommonSimpleLog> queryLogs (long formId, Long fromLogIndex) throws Exception {
+        return SimpleLogService.queryLogExcludeOperationTypes(
+                getFormName(), formId, new String[] {AbstractStateCommentAction.getFormLogEvent()}, fromLogIndex);
+    }
+    
+    /**
+     * 检索表单的首条日志记录
+     * @param formId
+     */
+    public CommonSimpleLog queryFirstLog (long formId) throws Exception {
+        return SimpleLogService.getFirstLog(getFormName(), formId);
+    }
+    
+    /**
+     * 检索表单的最新的日志记录
+     * @param formId
+     */
+    public CommonSimpleLog queryLatestLog (long formId) throws Exception {
+        return SimpleLogService.getLatestLog(getFormName(), formId);
+    }
+    
+    /**
+     * 检索表单的讨论列表
+     * @param formId
+     * @param fromLogIndex
+     */
+    public List<CommonSimpleLog> queryComments (long formId, Long fromLogIndex) throws Exception {
+        return SimpleLogService.queryLogIncludeOperationTypes(
+                getFormName(), formId, new String[] {AbstractStateCommentAction.getFormLogEvent()}, fromLogIndex);
+    }
+    
+    @Override
+    protected void triggerExceptionHandle(String event, F originForm, AbstractStateForm form, Throwable ex) throws Exception {
+        super.triggerExceptionHandle(event, originForm, form, ex);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private <T> T superTriggerActionWithTransactional(String event, AbstractStateForm form, String message, Class<T> clazz) throws Exception {
+        final Object[] result = new Object[] {null};
+        getFormBaseDao().executeTransaction(new ResultSetProcessor() {
+            @Override
+            public void process(ResultSet r, Connection c) throws Exception {
+                result[0] = superTriggerAction(event, form, message, clazz);
+            }
+        });
+        return (T)result[0];
+    }
+    
+    private <T> T superTriggerAction(String event, AbstractStateForm form, String message, Class<T> clazz) throws Exception {
+        return super.triggerAction(event, form, message, clazz);
+    }
+    
+    public void triggerAction(String event, AbstractStateForm form, String message) throws Exception {
+        triggerAction(event, form, message, void.class);
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T triggerAction(final String event, final AbstractStateForm form, final String message, final Class<T> clazz) throws Exception {
+        AbstractStateAction<F, ?, ?> action;
+        if ((action = getExternalFormAction(event)) == null) {
+            throw new StateFormActionNotFoundException(getFormName(), event);
+        }
+        
+        /* 确认无内容变更的操作, 不添加分布锁 */
+        if ((EventType.Submit.equals(action.getEventType()) || action.ensureNoStateChange())
+                    && action.getStateRevisionChangeIgnored()) {
+            return superTriggerActionWithTransactional(event, form, message, clazz);
+        }
+        
+        /* 加锁且事务处理, 表单创建使用表单全局锁 */
+    	Long lockObjectId = form.getId();
+    	if (EventType.Submit.equals(action.getEventType())) {
+    	    lockObjectId = -1000000L;
+    	}
+        final Object[] result = new Object[] {null};
+        SimpleLockService.DEFAULT.lockAndRun(getFormName(), lockObjectId, event,
+                new CommonLockExecutor() {
+                    @Override
+                    public void execute() throws Exception {
+                        result[0] = superTriggerActionWithTransactional(event, form, message, clazz);
+                    }
+                });
+        return (T)result[0];
+    }
+    
+    /**
+     * 获取最终查询的字段和属性的映射关系
+     */
+    protected Map<String, String> getExtraFieldMapper(Class<?> resultClass, Map<String, String> fieldMapper) {
+        return fieldMapper;
+    }
+    
+    /**
+     * 获取表单的外部事件定义
+     * 
+     */
+    public List<StateFormQueryDefinition> getFormQueryDefinition() throws Exception {
+        List<StateFormNamedQuery<?>> queries;
+        List<StateFormQueryDefinition> definitions = new ArrayList<>();
+        if ((queries = getFormNamedQueries() ) != null) {
+            for (StateFormNamedQuery<?> query : queries) {
+                if (query == null) {
+                    continue;
+                }
+                definitions.add(StateFormQueryDefinition.fromStateQuery(getFormName(), query.getName(), query));
+            }
+        }
+        return definitions;
+    }
+    
+    @Override
+    public void saveMultiChoiceCoveredTargetScopeIds(String event,AbstractStateForm form, String scopeType, long ...coveredTargetScopeIds) throws Exception {
+        if (coveredTargetScopeIds == null || coveredTargetScopeIds.length <= 0) {
+            return;
+        }
+        for (long scopeId : coveredTargetScopeIds) {
+            getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
+                    "system_form_multiple_choice_status", new ObjectMap()
+                            .put("event", event)
+                            .put("form_id", form.getId())
+                            .put("form_name", getFormName())
+                            .put("=scope_id", scopeId)
+                            .put("=scope_type", scopeType)
+                            .put("created_at", new Date())
+                            .put("created_code_by", SessionContext.getTokenUsername())
+                            .put("state_form_revision", form.getRevision())
+                            .put("created_by" , SessionContext.getUserId())
+                            .put("created_name_by" , SessionContext.getDisplay())
+            ));
+        }
+    }
+    
+    /**
+     * select s.scope_id from system_form_multiple_choice_status s
+     * WHERE
+     *  s.event = ? AND s.form_id = ? AND s.form_name = ? AND s.fail = 0
+     */
+    @Multiline
+    private static final String SQL_QUERY_MULTIPLE_APPROVAL_BY_APPROVE = "X";
+
+    @Override
+    public List<Long> queryMultipleChoiceCoveredTargetScopeIds(String event,AbstractStateForm form) throws Exception {
+        return getFormBaseDao().queryAsList(Long.class,
+                SQL_QUERY_MULTIPLE_APPROVAL_BY_APPROVE, new Object[]{event, form.getId(), getFormName()});
+    }
+
+
+    /**
+     * UPDATE system_form_multiple_choice_status s
+     * SET s.fail = 1
+     * WHERE
+     * 	( s.form_id = ? AND s.form_name = ? )
+     * 	%s
+     */
+    @Multiline
+    private static final String SQL_UPDATE_MULTIPLE_APPROVAL = "X";
+
+    @Override
+    public void cleanMultipleChoiceTargetScopeIds(String[] clearEvents,AbstractStateForm form) throws Exception {
+        if (clearEvents != null && clearEvents.length > 0) {
+            getFormBaseDao().executeUpdate(String.format(SQL_UPDATE_MULTIPLE_APPROVAL, String.format("AND s.event IN (%s)", CommonUtil.join("?", clearEvents.length, ","))),
+                    ArrayUtils.addAll(new Object[] { form.getId(), getFormName()}, (Object[])clearEvents));
+        }else{
+            getFormBaseDao().executeUpdate(String.format(SQL_UPDATE_MULTIPLE_APPROVAL,""), new Object[]{form.getId(), getFormName()});
+        }
+    }
+}

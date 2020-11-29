@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <link rel="stylesheet" href="https://at.alicdn.com/t/font_1435861_umq160kbhds.css">
+    <link rel="stylesheet" href="./libs/layui-2.5.6/css/layui.css">
+    <title></title>
+    <script src="./libs/layui-2.5.6/layui.all.js"></script>
+    <script type="text/javascript">
+      window.$ = layui.jquery
+      window.jQuery = layui.jquery
+      window.layer = layui.layer
+      window.$title = 'Socyno 后端开发框架'
+      document.getElementsByTagName('title')[0].innerHTML = window.$title
+    </script>
+    <style type="text/css">
+      .overflow-ellipsis {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .inline-block {
+        display: inline-block;
+      }
+      .direction-rtl {
+        direction: rtl;
+      }
+      .el-tooltip__popper {
+        max-width: 80% !important;
+      }
+      .el-table__expand-icon {
+        color: #409EFF !important;
+        font-size: 26px !important;
+      }
+      .el-table__expand-icon:focus {
+        color: #66b1ff !important;
+      }
+      .el-table__expand-icon>.el-icon {
+        margin-left: -15px !important;
+        margin-top: -15px !important;
+      }
+      .el-table__expand-icon .el-icon-arrow-right:before {
+        content: "\e791" !important;
+      }
+ }
+    </style>
+  </head>
+  <body style="margin: 0;">
+    <!--[if lt IE 9]><div class="alert alert-danger topframe" role="alert">你好，平台暂不支持IE浏览器访问，我们建议使用Chrome内核浏览器访问</div><![endif]-->
+    <noscript>
+      <strong>请开启浏览器的 JavaScript 功能支持，否则系统无法运行！</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  </body>
+</html>

@@ -1,0 +1,44 @@
+  .common-form-tablebar {
+    background-color: #fff;
+    margin-top: 5px;
+    .demo-table-expand {
+      font-size: 0;
+      padding: 0px 30px;
+    }
+    .demo-table-expand label {
+      width: 90px;
+      color: #99a9bf;
+    }
+    .demo-table-expand .el-form-item {
+      margin-right: 0;
+      margin-bottom: 0;
+      width: 420px;
+    }
+
+    .el-form--inline .el-form-item__content {
+      line-height: 21px;
+      vertical-align: middle;
+    }
+
+    thead tr th {
+      background-color: #fff !important;
+    }
+
+    .el-table td,
+    .el-table th {
+      text-align: left !important;
+      background-color: #fff !important;
+    }
+
+    .pagesbar {
+      padding: 20px 10px;
+    }
+
+    .el-dropdown-link {
+      cursor: pointer;
+      color: #409eff;
+    }
+    .el-icon-arrow-down {
+      font-size: 12px;
+    }
+  }

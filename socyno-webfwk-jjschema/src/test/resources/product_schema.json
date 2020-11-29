@@ -1,0 +1,31 @@
+{
+    "type": "object",
+    "classPath":"com.github.reinert.jjschema.v1.ProductTest$Product",
+    "description": "A product from Acme's catalog",
+    "title": "Product",
+    "properties": {
+        "id": {
+            "type": "integer",
+            "description": "The unique identifier for a product"
+        },
+        "name": {
+            "type": "string",
+            "description": "Name of the product"
+        },
+        "price": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+        },
+        "tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "uniqueItems": true,
+            "minItems": 1
+        }
+    },
+    "required": ["id", "name", "price"],
+    "$schema": "http://json-schema.org/draft-04/schema#"
+}

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:task="http://www.springframework.org/schema/task"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:websocket="http://www.springframework.org/schema/websocket"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.2.xsd
+        http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task-4.2.xsd
+        http://www.springframework.org/schema/websocket
+        http://www.springframework.org/schema/websocket/spring-websocket.xsd">
+    
+    <task:annotation-driven />
+    <context:annotation-config />
+    
+    <!-- 数据源配置 -->
+    <bean id="metaDataSource" class="org.socyno.webfwk.util.sql.AbstractDao">
+        <constructor-arg index="0" value="classpath:jdbc.properties" />
+    </bean>
+    
+    <!-- 注解方法处理适配器 -->
+    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" />
+    
+    <!-- 业务相关组件服务注入  -->
+    <context:component-scan base-package="org.socyno.webfwk.schedule" />
+    
+    <!-- 动态配置服务 -->
+	<bean id="configBackend" name="configBackend"
+		class="org.socyno.webfwk.util.conf.DBConfigBackend">
+		<constructor-arg index="0" ref="metaDataSource" />
+	</bean>
+	<bean id="configService" name="configService"
+		class="org.socyno.webfwk.util.conf.ConfigService">
+		<property name="backend" ref="configBackend" />
+	</bean>
+	<bean id="propertyConfigurer" class="org.socyno.webfwk.util.conf.PropertyPlaceholderLoader">
+		<property name="order" value="1" />
+		<property name="configService" ref="configService" />
+		<property name="baseDataSource" ref="metaDataSource" />
+		<property name="propertiesFile" value="socyno-webfwk-schedule.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	</bean>
+    
+    <!-- 数据 JSON 序列化 -->
+    <mvc:annotation-driven>
+        <mvc:message-converters register-defaults="true">
+            <bean class="org.socyno.webfwk.util.context.HttpMessageConverter">
+                <constructor-arg name="typeAdapters">
+                    <map>
+                    </map>
+                </constructor-arg>
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+    
+	<mvc:interceptors>
+		<!-- 授权拦截器 -->
+		<mvc:interceptor>
+			<!-- 拦截地址 -->
+			<mvc:mapping path="/**" />
+			<bean class="org.socyno.webfwk.schedule.interceptor.SessionContextInterceptor">
+				<constructor-arg index="0" value="NotAll" />
+        		<constructor-arg index="1" value="60"/>
+			</bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
+    
+    <!-- 计划任务的管理器 -->
+    <bean id="scheduledJobFactory" class="org.socyno.webfwk.schedule.service.ScheduledJobFactory"></bean>
+    <bean id="schedulerFactoryBean" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="jobFactory" ref="scheduledJobFactory" />
+    </bean>
+</beans>

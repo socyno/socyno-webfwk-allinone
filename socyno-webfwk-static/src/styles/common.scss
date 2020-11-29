@@ -1,0 +1,51 @@
+$bordercolor: #F6F6F6;
+$navcolor: #4394C3;
+$navtext: #ffffff;
+$fillblue: #E6F1FC;
+$textblue: #409EFF;
+$bgcolor: #F0F2F5;
+$greytext: #a1a1a1;
+$maintext:#303133;
+
+.common-shadow {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.common-iconbtn {
+  color: $greytext;
+  margin-right: 10px;
+  font-size: 21px;
+  cursor: pointer;
+}
+.common-iconbtn:last-child {
+  margin-right: 0;
+}
+
+.common-iconbtn:active {
+  color: $textblue;
+}
+
+.common-nodata {
+  color: $greytext;
+  font-size: 15px;
+  text-align: center;
+  padding-top: 10%;
+}
+
+.common-option-group {
+  padding: 0 5px;
+  font-size: 12px;
+  color: #333;
+  font-weight: bold;
+}
+
+.common-page-header {
+  background: #fff;
+  padding: 10px 15px;
+}
+
+.common-code {
+  color:#2e2e2e;
+  font-size: 14px;
+  font-family: "Menlo", "DejaVu Sans Mono", "Liberation Mono", "Consolas", "Ubuntu Mono", "Courier New", "andale mono", "lucida console", monospace;
+}
