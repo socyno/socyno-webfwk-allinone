@@ -17,79 +17,93 @@
         <module>socyno-webfwk-schedule</module>
     <module>socyno-webfwk-jjschema</module>
   </modules>
+    
+   <properties>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+       <version.log4j>2.13.2</version.log4j>
+       <version.jackson>2.10.3</version.jackson>
+       <version.socyno.webfwk>0.0.1-SNAPSHOT</version.socyno.webfwk>
+       <version.spring.framework>4.3.20.RELEASE</version.spring.framework>
+   </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- org.socyno.webfwk -->
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-util</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${version.socyno.webfwk}</version>
             </dependency>
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-schmodel</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${version.socyno.webfwk}</version>
             </dependency>
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-state</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${version.socyno.webfwk}</version>
             </dependency>
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-execapi</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${version.socyno.webfwk}</version>
             </dependency>
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-module</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${version.socyno.webfwk}</version>
             </dependency>
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-jjschema</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${version.socyno.webfwk}</version>
             </dependency>
+            <!-- org.socyno.webfwk -->
+            
+            <!-- org.apache.logging.log4j -->
             <dependency>
                 <groupId>com.lmax</groupId>
                 <artifactId>disruptor</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-1.2-api</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-jcl</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j} </version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-slf4j-impl</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-jul</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-web</artifactId>
-                <version>2.3</version>
+                <version>${version.log4j}</version>
             </dependency>
+            <!-- org.apache.logging.log4j -->
+            
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -108,7 +122,7 @@
             <dependency>
                 <groupId>commons-collections</groupId>
                 <artifactId>commons-collections</artifactId>
-                <version>3.2.1</version>
+                <version>3.2.2</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -220,7 +234,7 @@
             <dependency>
                 <groupId>org.java-websocket</groupId>
                 <artifactId>Java-WebSocket</artifactId>
-                <version>1.4.0</version>
+                <version>1.5.0</version>
             </dependency>
 	        <dependency>
 	            <groupId>javax.ws.rs</groupId>
@@ -228,81 +242,82 @@
 	            <version>2.0.1</version>
 	            <optional>true</optional>
 	        </dependency>
-            <!-- com.fasterxml.jackson.core -->
-	        <dependency>
-	            <groupId>com.fasterxml.jackson.core</groupId>
-	            <artifactId>jackson-annotations</artifactId>
-	            <version>2.10.3</version>
-	        </dependency>
-	        <dependency>
-	            <groupId>com.fasterxml.jackson.core</groupId>
-	            <artifactId>jackson-core</artifactId>
-	            <version>2.10.3</version>
-	        </dependency>
-	        <dependency>
-	            <groupId>com.fasterxml.jackson.core</groupId>
-	            <artifactId>jackson-databind</artifactId>
-	            <version>2.10.3</version>
-	        </dependency>
-            <!-- com.fasterxml.jackson.core -->
-            <!-- org.springframework -->
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-aop</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-web</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-core</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-beans</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-webmvc</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-websocket</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-expression</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context-support</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-tx</artifactId>
-                <version>4.2.8.RELEASE</version>
-            </dependency>
-            <!-- org.springframework -->
-            <!-- mysql connector -->
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>8.0.22</version>
             </dependency>
+	        
+            <!-- com.fasterxml.jackson.core -->
+	        <dependency>
+	            <groupId>com.fasterxml.jackson.core</groupId>
+	            <artifactId>jackson-annotations</artifactId>
+	            <version>${version.jackson}</version>
+	        </dependency>
+	        <dependency>
+	            <groupId>com.fasterxml.jackson.core</groupId>
+	            <artifactId>jackson-core</artifactId>
+	            <version>${version.jackson}</version>
+	        </dependency>
+	        <dependency>
+	            <groupId>com.fasterxml.jackson.core</groupId>
+	            <artifactId>jackson-databind</artifactId>
+	            <version>${version.jackson}</version>
+	        </dependency>
+            <!-- com.fasterxml.jackson.core -->
+            
+            <!-- org.springframework -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-websocket</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-expression</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context-support</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${version.spring.framework}</version>
+            </dependency>
+            <!-- org.springframework -->
         </dependencies>
     </dependencyManagement>
     <build>
