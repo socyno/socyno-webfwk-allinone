@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-button type="primary" style="position: absolute; top: 10px; left: 10px; z-index: 999; width: 250px; height: 80px" @click="toggleFlowChartType">
-      {{ type === 'unchanged' ? '隐藏无状态流转的事件' : '显示所有事件' }}
+      {{ unchanged ? '隐藏无状态流转的事件' : '显示所有事件' }}
     </el-button>
     <div id="form-flow-chart-canvas" />
   </div>
@@ -17,7 +17,7 @@ export default {
       myDiagram: null,
       formId: this.$route.query.formId,
       formName: this.$route.params.formName,
-      type: tool.toLower(this.$route.query.type) === 'unchanged' ? 'unchanged' : 'changed'
+      unchanged: this.$route.query.unchanged === 'true'
     }
   },
   mounted() {
@@ -31,7 +31,7 @@ export default {
         '#' + this.$route.path +
         tool.setUrlParams('?', {
           formId: tool.stringify(this.formId),
-          type: this.type === 'unchanged' ? 'changed' : 'unchanged'
+          unchanged: !this.unchanged
         })
       )
       location.reload()
@@ -179,7 +179,7 @@ export default {
         ))
 
       const myModel = MAKE(go.GraphLinksModel)
-      new FormApi(this.formName).loadFlowChart(this.formId, this.type).then(res => {
+      new FormApi(this.formName).loadFlowChart(this.formId, this.unchanged).then(res => {
         myModel.nodeDataArray = res.data.nodeData
         myModel.linkDataArray = res.data.linkData
       }).catch(res => {

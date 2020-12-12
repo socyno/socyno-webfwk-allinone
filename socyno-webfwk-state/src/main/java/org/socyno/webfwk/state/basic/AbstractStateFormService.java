@@ -22,7 +22,7 @@ import org.socyno.webfwk.state.exec.StateFormSubmitEventResultException;
 import org.socyno.webfwk.state.exec.StateFormSubmitEventTargetException;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
-import org.socyno.webfwk.state.model.CommonFlowChartNodeData;
+import org.socyno.webfwk.state.model.StateFlowChartNodeData;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.state.util.StateFormActionDefinition;
 import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
@@ -349,114 +349,125 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
         }
         return actions;
     }
-
-//    /**
-//     * 解析状态机的事件定义，生成流程数据，用于绘制流程图
-//     */
-//    public final Map<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> parseFormFlowChartDefinition(
-//            boolean removeUnChangeStateNode) throws Exception {
-//        return parseFormFlowChartDefinition(removeUnChangeStateNode, null);
-//    }
-
+    
     /**
-     * 解析状态机的事件定义，生成流程数据，用于绘制流程图
+     * 解析状态机的流程事件定义，遍历流程节点收集流程传递数据。
+     * 其返回的 Map 数据中，key 为节点数据，value 则为其直属子节点信息集合。
      */
     @SuppressWarnings("unchecked")
-    public final Map<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> parseFormFlowChartDefinition(
+    public final Map<StateFlowChartNodeData, Set<StateFlowChartNodeData>> parseFormFlowChartDefinition(
             boolean keepUnChanged, AbstractStateForm form) throws Exception {
         /**
          * 加载当前的状态信息
          */
         StateFormRevision stateRevision = null;
         if (form != null) {
-            stateRevision = new StateFormRevision().setId(form.getId())
-                .setStateFormRevision(form.getRevision())
-                .setStateFormStatus(form.getState());
+            stateRevision = new StateFormRevision()
+                    .setId(form.getId())
+                    .setStateFormStatus(form.getState())
+                    .setStateFormRevision(form.getRevision());
         }
+        
         /**
-         * 将事件及状态的流转关系转化为基础流程数据
+         * 将事件及状态的流转关系转化为基础流程关系，其中 key 为节点信息，value 为其父节点列表
          */
         AbstractStateAction<S, ?, ?> action;
-        Map<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> baseFlowData = new HashMap<>();
-        for (Map.Entry<String, AbstractStateAction<S,?,?>> e : getFormActions(true, null).entrySet()) {
+        Map<StateFlowChartNodeData, Set<StateFlowChartNodeData>> flowNodesData = new HashMap<>();
+        for (Map.Entry<String, AbstractStateAction<S, ?, ?>> e : getFormActions(true, null).entrySet()) {
             action = e.getValue();
             if (action == null) {
                 continue;
             }
-            if (form != null && !action.flowMatched((S)form)) {
+            if (form != null && !action.flowMatched((S) form)) {
                 continue;
             }
-            CommonFlowChartNodeData actionNode = new CommonFlowChartNodeData(e.getKey(), action);
-            if (!baseFlowData.containsKey(actionNode)) {
-                baseFlowData.put(actionNode, new HashSet<>());
+            StateFlowChartNodeData actionNode = new StateFlowChartNodeData(e.getKey(), action);
+            if (!flowNodesData.containsKey(actionNode)) {
+                flowNodesData.put(actionNode, new HashSet<>());
             }
             for (String source : action.getSourceStates()) {
-                CommonFlowChartNodeData sourceNode = new CommonFlowChartNodeData(source, getStateDisplay(source), stateRevision);
-                if (!baseFlowData.containsKey(sourceNode)) {
-                    baseFlowData.put(sourceNode, new HashSet<>());
+                StateFlowChartNodeData sourceNode = new StateFlowChartNodeData(source, getStateDisplay(source),
+                        stateRevision);
+                if (!flowNodesData.containsKey(sourceNode)) {
+                    flowNodesData.put(sourceNode, new HashSet<>());
                 }
-                baseFlowData.get(actionNode).add(sourceNode);
+                flowNodesData.get(actionNode).add(sourceNode);
             }
-            parseStateChoice(action.getTargetState(), actionNode, baseFlowData, stateRevision, (S)form);
+            parseStateChoice(action.getTargetState(), actionNode, flowNodesData, stateRevision, (S) form);
         }
+        
         /**
-         * 构造流程图所需的数据结构;
-         * 流程数据结果的 key 为父节点， values 为子节点
+         * 根据流程图展示需求，移除无父节点的非事件（从逻辑上来说，事件是状态的触发
+         * 点，否则通常意味着是非标准事件产生的节点，当前考虑将其从流程图上丢弃）以
+         * 及 “不变状态”（即所有状态保持不变场景下的统一目标状态） 的节点。同时，将
+         * 节点结构关系颠倒（以父节点为 key，子节点为 value 的方式存储）。
          */
-        CommonFlowChartNodeData stateUnchangedNode = null;
-        Set<CommonFlowChartNodeData> noParentStateNodes = new HashSet<>(); 
-        Map<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> resultFlowData = new HashMap<>();
-        for (Map.Entry<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> flowEntry : baseFlowData.entrySet()) {
-            CommonFlowChartNodeData childNode = flowEntry.getKey();
-            Set<CommonFlowChartNodeData> parentNodes = flowEntry.getValue();
-            if (CommonFlowChartNodeData.Category.STATE.equals(flowEntry.getKey().getCategory())
-                    && parentNodes.isEmpty()) {
+        StateFlowChartNodeData unchangedStateNode = null;
+        Set<StateFlowChartNodeData> noParentStateNodes = new HashSet<>();
+        Map<StateFlowChartNodeData, Set<StateFlowChartNodeData>> resultFlowNodes = new HashMap<>();
+        for (Map.Entry<StateFlowChartNodeData, Set<StateFlowChartNodeData>> nodeEntry : flowNodesData.entrySet()) {
+            StateFlowChartNodeData childNode = nodeEntry.getKey();
+            Set<StateFlowChartNodeData> parentNodes = nodeEntry.getValue();
+            /**
+             * 标记 “不变状态”，以便后续统一丢弃
+             */
+            if (StateFlowChartNodeData.Category.UNCHANGED.equals(childNode.getCategory())) {
+                unchangedStateNode = childNode;
+            }
+            /**
+             * 没有父节点的非事件节点丢弃（并做记录，后续还需确保从最终数据中丢弃）
+             */
+            if (parentNodes.isEmpty()
+                    && !StateFlowChartNodeData.Category.ACTION.equals(childNode.getCategory())) {
                 noParentStateNodes.add(childNode);
                 continue;
             }
-            if (!resultFlowData.containsKey(childNode)) {
-                resultFlowData.put(flowEntry.getKey(), new HashSet<>());
+            /**
+             * 颠倒存储关系（以父节点为 key，子节点为 value 的方式存储）
+             */
+            if (!resultFlowNodes.containsKey(childNode)) {
+                resultFlowNodes.put(childNode, new HashSet<>());
             }
-            for(CommonFlowChartNodeData parentNode : parentNodes) {
-                if (!resultFlowData.containsKey(parentNode)) {
-                    resultFlowData.put(parentNode,new HashSet<>());
+            for (StateFlowChartNodeData parentNode : parentNodes) {
+                if (!resultFlowNodes.containsKey(parentNode)) {
+                    resultFlowNodes.put(parentNode, new HashSet<>());
                 }
-                resultFlowData.get(parentNode).add(flowEntry.getKey());
-                if (stateUnchangedNode == null) {
-                    if (CommonFlowChartNodeData.Category.UNCHANGED.equals(parentNode.getCategory())) {
-                        stateUnchangedNode = parentNode;
-                    } else if (CommonFlowChartNodeData.Category.UNCHANGED.equals(flowEntry.getKey().getCategory())) {
-                        stateUnchangedNode = flowEntry.getKey();
-                    }
+                resultFlowNodes.get(parentNode).add(childNode);
+                if (unchangedStateNode == null
+                        && StateFlowChartNodeData.Category.UNCHANGED.equals(parentNode.getCategory())) {
+                    unchangedStateNode = parentNode;
                 }
             }
         }
+        
         /**
-         * 移除所有无父节点的状态节点及其子节点信息
+         * 此处将子节点出现的无父节点信息移除（确保数据准确）
          */
-        for (CommonFlowChartNodeData node : noParentStateNodes) {
-            resultFlowData.remove(node);
+        for (StateFlowChartNodeData node : noParentStateNodes) {
+            resultFlowNodes.remove(node);
         }
-        if (keepUnChanged) {
-            return resultFlowData;
-        }
+        
         /**
-         * 移除非状态流转的流程节点，如表单编辑或相关数据查询事件等节点;
-         * 首先移除 "状态保持不变" 的流程节点，然后在移除所有非状态类且子节点为空的节点
+         * 从流程中移除 "不变状态" 的节点信息(如表单编辑或相关数据查询事件等节点)
          */
-        resultFlowData.remove(stateUnchangedNode);
-        for (Set<CommonFlowChartNodeData> children: resultFlowData.values()) {
-            children.remove(stateUnchangedNode);
+        if (!keepUnChanged) {
+            resultFlowNodes.remove(unchangedStateNode);
+            for (Set<StateFlowChartNodeData> children : resultFlowNodes.values()) {
+                children.remove(unchangedStateNode);
+            }
         }
+        
+        /**
+         * 清除所有非状态类无子节点的空节点
+         */
         while (true) {
             boolean hasNodeDeleted = false;
-            for (CommonFlowChartNodeData parentNode : resultFlowData.keySet().toArray(new CommonFlowChartNodeData[0])) {
-                Set<CommonFlowChartNodeData> childrenNodes = resultFlowData.get(parentNode);
-                if (childrenNodes.isEmpty() && !CommonFlowChartNodeData.Category.STATE.equals(parentNode.getCategory())
-                        && !CommonFlowChartNodeData.Category.STATE_CURRENT.equals(parentNode.getCategory())) {
+            for (StateFlowChartNodeData parentNode : resultFlowNodes.keySet().toArray(new StateFlowChartNodeData[0])) {
+                if (resultFlowNodes.get(parentNode).isEmpty()
+                        && !StateFlowChartNodeData.Category.STATE.equals(parentNode.getCategory())) {
                     hasNodeDeleted = true;
-                    resultFlowData.remove(parentNode);
-                    for (Set<CommonFlowChartNodeData> children : resultFlowData.values()) {
+                    resultFlowNodes.remove(parentNode);
+                    for (Set<StateFlowChartNodeData> children : resultFlowNodes.values()) {
                         children.remove(parentNode);
                     }
                 }
@@ -465,22 +476,27 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
                 break;
             }
         }
-
-        return resultFlowData;
+        return resultFlowNodes;
     }
-
+    
     /**
-     * 递归解析事件的状态选择器，生成流程节点数据
+     * 递归解析事件的状态选择器，生成流程节点数据。针对选择器的不同场景进行决策:
+     * <pre>
+     * 简单选择器 -- 常规状态处理
+     * 单分支路径 -- 丢弃选择，将下一状态与父节点串联
+     * 俩分支路径 -- 产生两条不同分支路径的节点数据
+     * 
+     * </pre>
      */
-    private void parseStateChoice(final AbstractStateChoice targetChoice, final CommonFlowChartNodeData parentNode,
-                                  final Map<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> flowData,
+    private void parseStateChoice(final AbstractStateChoice targetChoice, final StateFlowChartNodeData parentNode,
+                                  final Map<StateFlowChartNodeData, Set<StateFlowChartNodeData>> flowData,
                                   final StateFormRevision stateRevision, final S form) {
         /**
          * 最终的简单状态值处理
          */
         if (targetChoice == null || targetChoice.isSimple()) {
             String stateValue = targetChoice == null ? null : targetChoice.getTargetState();
-            CommonFlowChartNodeData stateNode = new CommonFlowChartNodeData(stateValue, getStateDisplay(stateValue),
+            StateFlowChartNodeData stateNode = new StateFlowChartNodeData(stateValue, getStateDisplay(stateValue),
                                                                         stateRevision);
             if (!flowData.containsKey(stateNode)) {
                 flowData.put(stateNode, new HashSet<>());
@@ -491,51 +507,50 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
         /**
          * 状态选择器的递归，遍历其 true 和 false 的目标
          */
-        CommonFlowChartNodeData choiceNode = new CommonFlowChartNodeData(targetChoice);
-        if (!flowData.containsKey(choiceNode)) {
-            flowData.put(choiceNode, new HashSet<>());
+        Map<Boolean, AbstractStateChoice> branchTargets = new HashMap<>();
+        for (boolean yesNo : new boolean[] { true, false }) {
+            /**
+             * 1, 目标指向为 null， 意味着不会发生状态变化，此时做丢弃处理;
+             * 2, 根据流程实例定义明确选择器分支与流程实例无关，则丢弃
+             */
+            AbstractStateChoice yesNoChoice;
+            if ((yesNoChoice = yesNo ? targetChoice.getTrueState() : targetChoice.getFalseState()) == null
+                    || (form != null && !targetChoice.flowMatched(form, yesNo))) {
+                continue;
+            }
+            branchTargets.put(yesNo, yesNoChoice);
         }
-        flowData.get(choiceNode).add(parentNode);
-        for (boolean yesNo : new boolean[]{true, false}) {
+        
+        StateFlowChartNodeData choiceNode = null;
+        boolean targetChoiceDroped = branchTargets.size() <= 1;
+        for (Map.Entry<Boolean, AbstractStateChoice> branch : branchTargets.entrySet()) {
             /**
-             * 目标指向为 null， 意味着不会发生状态变化，此时做丢弃处理
+             * 当选择器仅有一条分支时，为流程显示合理简易，从流程图例中丢弃该分支
              */
-            AbstractStateChoice yesNoChoice = yesNo ? targetChoice.getTrueState() : targetChoice.getFalseState();
-            if (yesNoChoice == null) {
-                continue;
+            AbstractStateChoice yesNoChoice = branch.getValue();
+            if (targetChoiceDroped) {
+                if (!flowData.containsKey(choiceNode = yesNoChoice.isSimple()
+                        ? new StateFlowChartNodeData(yesNoChoice.getTargetState(),
+                                getStateDisplay(yesNoChoice.getTargetState()), null)
+                        : new StateFlowChartNodeData(yesNoChoice))) {
+                    flowData.put(choiceNode, new HashSet<>());
+                    flowData.get(choiceNode).add(parentNode);
+                }
+                parseStateChoice(yesNoChoice, parentNode, flowData, stateRevision, form);
+                return;
             }
-            if(form != null && !targetChoice.flowMatched(form, yesNo)) {
-                continue;
+            if (choiceNode == null && !flowData.containsKey(choiceNode = new StateFlowChartNodeData(targetChoice))) {
+                flowData.put(choiceNode, new HashSet<>());
+                flowData.get(choiceNode).add(parentNode);
             }
-            /**
-             * 对于简单选择器，为确保 YesNo 节点的唯一性，随机生成唯一键
-             */
-            CommonFlowChartNodeData yesNoNode = yesNoChoice.isSimple()
-                    ? new CommonFlowChartNodeData(yesNo, DataUtil.randomGuid())
-                    : new CommonFlowChartNodeData(yesNo, yesNoChoice.getClass().getName());
-            if (!flowData.containsKey(yesNoNode)) {
-                flowData.put(yesNoNode, new HashSet<>());
+            boolean yesNo = branch.getKey();
+            StateFlowChartNodeData yesNoFlowNode = new StateFlowChartNodeData(yesNo,
+                    yesNoChoice.isSimple() ? DataUtil.randomGuid() : yesNoChoice.getClass().getName());
+            if (!flowData.containsKey(yesNoFlowNode)) {
+                flowData.put(yesNoFlowNode, new HashSet<>());
             }
-            flowData.get(yesNoNode).add(choiceNode);
-
-            /**
-             * 对于简单选择器，直接创建其对应的状态节点
-             */
-            CommonFlowChartNodeData targetNode = yesNoChoice.isSimple()
-                    ? new CommonFlowChartNodeData(yesNoChoice.getTargetState(),
-                            getStateDisplay(yesNoChoice.getTargetState()), stateRevision)
-                    : new CommonFlowChartNodeData(yesNoChoice);
-            if (!flowData.containsKey(targetNode)) {
-                flowData.put(targetNode, new HashSet<>());
-            }
-            flowData.get(targetNode).add(yesNoNode);
-
-            /**
-             * 非简单选择器，则需要继续递归，生成流程节点数据
-             */
-            if (!yesNoChoice.isSimple()) {
-                parseStateChoice(yesNoChoice, yesNoNode, flowData, stateRevision, form);
-            }
+            flowData.get(yesNoFlowNode).add(choiceNode);
+            parseStateChoice(yesNoChoice, yesNoFlowNode, flowData, stateRevision, form);
         }
     }
 
@@ -553,11 +568,12 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
      * 获取特定类型（外部或内部）的操作
      *
      * @param external
-     *            true  表示外部 : 创建事件或有source states的事件;
-     *            false 表示内部 : 非创建事件, 且无 source states定义
+     *            true  表示外部 : 创建事件或有可执行状态（source states）的事件；
+     *            false 表示内部 : 未明确定义可执行状态（source states）的非创建事件；
      * @param targetState
-     *            限制仅获取目标状态为该值操作
+     *            限制仅获取目标状态为该值操作， null 视为不限；
      * @return
+     *            返回 Map 的 key 即为事件的名称（同一流程下具有唯一性），value 则为对应事件的定义
      */
     private Map<String, AbstractStateAction<S, ?, ?>> getFormActions(boolean external, String targetState) throws Exception {
         Map<String, AbstractStateAction<S, ?, ?>> actions;

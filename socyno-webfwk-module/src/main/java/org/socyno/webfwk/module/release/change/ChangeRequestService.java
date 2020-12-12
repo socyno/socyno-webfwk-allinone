@@ -12,6 +12,7 @@ import org.apache.http.NameValuePair;
 import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.release.change.ChangeRequestSimple.Category;
 import org.socyno.webfwk.module.release.change.ChangeRequestSimple.ChangeType;
+import org.socyno.webfwk.module.release.change.ChangeRequestSimple.ScopeType;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestReleaseId.OptionReleaseId;
 import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
@@ -116,10 +117,6 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         return "change_request";
     }
     
-    public String getKafkaFormName() {
-        return "release_change_request_kafka_topic";
-    }
-    
     @Getter
     public enum STATES implements StateFormStateBaseEnum {
         SubmitReady("submit_ready",          "待提交"),
@@ -131,6 +128,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         DbaRejected("dba_approved",          "DBA 审批拒绝"),
         Stage02Ready("stage02_ready",        "等待部署集成"),
         Stage02Failure("stage02_failure",     "集成部署失败"),
+        Stage02Success("stage02_success",     "集成部署成功"),
         Cancelled("cancelled",               "已经撤销"),
         ReleaseReady("release_ready",        "等待生产发布"),
         ReleaseSuccess("release_success",    "生产部署成功"),
@@ -459,17 +457,21 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         }
     }
     
-    @SuppressWarnings("unused")
-    private final AbstractStateChoice Stage02ResultChoice = new AbstractStateChoice("集成部署是否成功", 
+    private final AbstractStateChoice choiceDeployProduction = new AbstractStateChoice(
+            "是否需要部署生产？",
             STATES.ReleaseReady.getCode(),
-            STATES.Stage02Failure.getCode()) {
-
+            STATES.Stage02Success.getCode()) {
         @Override
-        protected boolean select(AbstractStateForm form) throws Exception {
-            return !STATES.Stage02Failure.getCode().equals(form.getState());
+        protected boolean select(AbstractStateForm form) {
+            return ((ChangeRequestSimple)getContextFormOrigin()).productionNeedToDeploy();
+        }
+        
+        @Override
+        public boolean flowMatched(AbstractStateForm originForm, boolean yesOrNo) {
+           return yesOrNo == select(originForm);
         }
     };
-
+    
     /**
      * 针对撤销操作，目前未针对类型进行拆分，但在很多场景下
      * 不同类型可能需要做一些变更回滚的操作，或者是权限控制
@@ -504,7 +506,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
     public class EventMarkDeploySuccess extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
         
         public EventMarkDeploySuccess() {
-            super("标记部署成功", getStateCodes(STATES.Stage02Failure, STATES.Stage02Ready), STATES.ReleaseReady.getCode());
+            super("标记部署成功", getStateCodes(STATES.Stage02Failure, STATES.Stage02Ready), choiceDeployProduction);
         }
         
         @Override
@@ -539,31 +541,42 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         }
     }
     
-    private final AbstractStateChoice choiceStage02Deploy = new AbstractStateChoice(
+    private final AbstractStateChoice choiceDeployStage02 = new AbstractStateChoice(
         "是否部署集成？", STATES.Stage02Ready.getCode(), STATES.ReleaseReady.getCode()) {
         @Override
         protected boolean select(AbstractStateForm form) {
             return ((ChangeRequestSimple)getContextFormOrigin()).stage02NeedToDeploy();
         }
-    };
-    
-    private final AbstractStateChoice choiceTechApprove = new AbstractStateChoice(
-        "是否需要DBA审批？", STATES.DbaApproval.getCode(), choiceStage02Deploy) {
-            @Override
-            protected boolean select(AbstractStateForm form) throws Exception {
-                return false;
-            }
-
+        
         @Override
         public boolean flowMatched(AbstractStateForm originForm, boolean yesOrNo) {
+           if (ScopeType.get(((ChangeRequestSimple)originForm).getScopeType()).isNeedDeployIntegration()) {
+               return yesOrNo;
+           }
+           return !yesOrNo;
+        }
+    };
+    
+    private final AbstractStateChoice choiceApprovalNeedDBA = new AbstractStateChoice(
+                    "是否需要DBA审批？", STATES.DbaApproval.getCode(), choiceDeployStage02) {
+        @Override
+        protected boolean select(AbstractStateForm form) throws Exception {
             return false;
+        }
+        
+        @Override
+        public boolean flowMatched(AbstractStateForm originForm, boolean yesOrNo) {
+            if (ChangeType.get(((ChangeRequestSimple)originForm).getChangeType()).isNeedDbaApproval()) {
+                return yesOrNo;
+            }
+            return !yesOrNo;
         }
     };
     
     public class EventTechApprove extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
         
         public EventTechApprove() {
-            super("技术审批通过", STATES.TechReady.getCode(), choiceTechApprove);
+            super("技术审批通过", STATES.TechReady.getCode(), choiceApprovalNeedDBA);
         }
         
         @Override

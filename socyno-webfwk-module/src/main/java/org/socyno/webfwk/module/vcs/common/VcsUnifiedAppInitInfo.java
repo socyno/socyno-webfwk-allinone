@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import org.socyno.webfwk.state.module.user.WindowsAdService;
-import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.remote.HttpUtil;
 import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;

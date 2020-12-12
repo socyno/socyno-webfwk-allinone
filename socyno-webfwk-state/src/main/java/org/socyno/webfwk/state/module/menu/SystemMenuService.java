@@ -27,7 +27,6 @@ import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
 import org.socyno.webfwk.state.module.feature.SystemFeatureService;
-import org.socyno.webfwk.state.module.user.WindowsAdService;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;

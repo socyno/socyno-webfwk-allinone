@@ -26,18 +26,20 @@ public class ChangeRequestSimple implements AbstractStateForm {
     
     @Getter
     public enum ChangeType {
-        CheckListOther("ck-other", "其他变更");
+        CheckListOther("ck-other", "其他变更", false);
         private final String code;
         private final String display;
+        private final boolean needDbaApproval;
         
-        ChangeType(String code, String display) {
+        ChangeType(String code, String display, boolean needDbaApproval) {
             this.code = code;
             this.display = display;
+            this.needDbaApproval = needDbaApproval;
         }
         
-        public static ChangeType get(String scopeType) {
+        public static ChangeType get(String changeType) {
             for (ChangeType v : ChangeType.values()) {
-                if (v.getCode().equalsIgnoreCase(scopeType) || v.name().equalsIgnoreCase(scopeType)) {
+                if (v.getCode().equalsIgnoreCase(changeType) || v.name().equalsIgnoreCase(changeType)) {
                     return v;
                 }
             }
@@ -97,16 +99,18 @@ public class ChangeRequestSimple implements AbstractStateForm {
     
     @Getter
     public enum ScopeType {
-        Production("production", "生产环境"),
-        Stage02("stage02", "集成环境"),
-        ProdAndStage02("prod&stage02", "集成和生产");
+        Production("production", "生产环境", false),
+        Stage02("stage02", "集成环境", true),
+        ProdAndStage02("prod&stage02", "集成和生产", true);
 
         private final String code;
         private final String display;
+        private final boolean needDeployIntegration;
         
-        ScopeType(String code, String display) {
+        ScopeType(String code, String display, boolean needDeployIntegration) {
             this.code = code;
             this.display = display;
+            this.needDeployIntegration = needDeployIntegration;
         }
         
         public static ScopeType get(String scopeType) {
@@ -125,13 +129,28 @@ public class ChangeRequestSimple implements AbstractStateForm {
             }
             return type.equals(Stage02) || type.equals(ProdAndStage02);
         }
+        
+        public static boolean productionIncluded(String scopeType) {
+            ScopeType type;
+            if ((type = get(scopeType)) == null) {
+                return false;
+            }
+            return type.equals(Production) || type.equals(ProdAndStage02);
+        }
     }
     
     /**
-     * 是否需要部署集成环境
+     * 是否可部署集成环境
      */
     public boolean stage02NeedToDeploy() {
         return ScopeType.stage02Included(getScopeType());
+    }
+    
+    /**
+     * 是否可部署生产环境
+     */
+    public boolean productionNeedToDeploy() {
+        return ScopeType.productionIncluded(getScopeType());
     }
     
     @Attributes(title = "变更单号")

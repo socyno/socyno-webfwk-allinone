@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.Getter;
 import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.deploy.cluster.FieldDeployNamespace;
 import org.socyno.webfwk.module.deploy.cluster.FieldDeployNamespace.OptionDeployClusterNamespace;

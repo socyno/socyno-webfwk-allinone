@@ -7,7 +7,6 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;

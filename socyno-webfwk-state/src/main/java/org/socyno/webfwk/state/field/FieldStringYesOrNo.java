@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import com.github.reinert.jjschema.v1.FieldType;
-import com.github.reinert.jjschema.v1.FieldType.FieldOptionsType;
 
 import lombok.Getter;
 

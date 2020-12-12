@@ -3,7 +3,6 @@ package org.socyno.webfwk.module.sysconfig;
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldType;
-import com.github.reinert.jjschema.v1.FieldType.FieldOptionsType;
 
 import lombok.Data;
 

@@ -301,11 +301,11 @@ class FormApi {
    * 执行表单创建事件
    * @param {string} formName
    */
-  loadFlowChart(formId, type) {
+  loadFlowChart(formId, unchanged) {
     return request({
       url: `/form/form/${this.formName}/flowchart/definition`,
       method: 'get',
-      params: { formId: formId, 'unchanged': type === 'unchanged' }
+      params: { formId: formId, 'unchanged': unchanged }
     })
   }
 

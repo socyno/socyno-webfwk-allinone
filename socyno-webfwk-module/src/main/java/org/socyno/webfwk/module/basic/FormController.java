@@ -66,28 +66,28 @@ public class FormController {
     @RequestMapping(value = "/list/{formName}", method = RequestMethod.POST)
     public R listForm(@PathVariable("formName") String formName, HttpServletRequest req) throws Exception {
         JsonElement data = CommonUtil.fromJson(new String(IOUtils.toByteArray(req.getInputStream()), "UTF-8"), JsonElement.class);
-        return R.ok().setData(CommonStateFormService.ListForm(formName, data));
+        return R.ok().setData(CommonStateFormService.listForm(formName, data));
     }
     
     @ResponseBody
     @RequestMapping(value = "/list/{formName}/withTotal", method = RequestMethod.POST)
     public R listFormWithTotal(@PathVariable("formName") String formName, HttpServletRequest req) throws Exception {
         JsonElement data = CommonUtil.fromJson(new String(IOUtils.toByteArray(req.getInputStream()), "UTF-8"), JsonElement.class);
-        return R.ok().setData(CommonStateFormService.ListFormWithTotal(formName, data));
+        return R.ok().setData(CommonStateFormService.listFormWithTotal(formName, data));
     }
     
     @ResponseBody
     @RequestMapping(value = "/list/{formName}/{queryName}", method = RequestMethod.POST)
     public R listFormByName(@PathVariable("formName") String formName, @PathVariable("queryName") String queryName, HttpServletRequest req) throws Exception {
         JsonElement data = CommonUtil.fromJson(new String(IOUtils.toByteArray(req.getInputStream()), "UTF-8"), JsonElement.class);
-        return R.ok().setData(CommonStateFormService.ListForm(formName, queryName, data));
+        return R.ok().setData(CommonStateFormService.listForm(formName, queryName, data));
     }
     
     @ResponseBody
     @RequestMapping(value = "/list/{formName}/{queryName}/withTotal", method = RequestMethod.POST)
     public R listFormWithTotalByName(@PathVariable("formName") String formName, @PathVariable("queryName") String queryName, HttpServletRequest req) throws Exception {
         JsonElement data = CommonUtil.fromJson(new String(IOUtils.toByteArray(req.getInputStream()), "UTF-8"), JsonElement.class);
-        return R.ok().setData(CommonStateFormService.ListFormWithTotal(formName, queryName, data));
+        return R.ok().setData(CommonStateFormService.listFormWithTotal(formName, queryName, data));
     }
     
     @ResponseBody

@@ -16,9 +16,9 @@ import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.exec.StateFormCustomFieldFormNotFoundException;
 import org.socyno.webfwk.state.field.FilterAbstractFrom;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
-import org.socyno.webfwk.state.model.CommonFlowChartDefinition;
-import org.socyno.webfwk.state.model.CommonFlowChartLinkData;
-import org.socyno.webfwk.state.model.CommonFlowChartNodeData;
+import org.socyno.webfwk.state.model.StateFlowChartDefinition;
+import org.socyno.webfwk.state.model.StateFlowChartLinkData;
+import org.socyno.webfwk.state.model.StateFlowChartNodeData;
 import org.socyno.webfwk.state.model.CommonSimpleLog;
 import org.socyno.webfwk.state.util.*;
 import org.socyno.webfwk.util.context.ContextUtil;
@@ -687,21 +687,21 @@ public class CommonStateFormService {
     /**
      * 检索表单
      */
-    public static PagedList<?> ListForm(String formName, JsonElement data) throws Exception {
+    public static PagedList<?> listForm(String formName, JsonElement data) throws Exception {
         return getStateFormInstance(formName).getServiceInstance().listForm(data);
     }
     
     /**
      * 检索表单
      */
-    public static PagedList<?> ListForm(String formName, String namedQuery, JsonElement data) throws Exception {
+    public static PagedList<?> listForm(String formName, String namedQuery, JsonElement data) throws Exception {
         return getStateFormInstance(formName).getServiceInstance().listForm(namedQuery, data);
     }
     
     /**
      * 检索表单（包括分页用的总条数）
      */
-    public static PagedListWithTotal<?> ListFormWithTotal(String formName, JsonElement data)
+    public static PagedListWithTotal<?> listFormWithTotal(String formName, JsonElement data)
                             throws Exception {
         return (PagedListWithTotal<?>) getStateFormInstance(formName).getServiceInstance().listFormWithTotal(data);
     }
@@ -709,7 +709,7 @@ public class CommonStateFormService {
     /**
      * 检索表单（包括分页用的总条数）
      */
-    public static PagedListWithTotal<?> ListFormWithTotal(String formName, String namedQuery, JsonElement data)
+    public static PagedListWithTotal<?> listFormWithTotal(String formName, String namedQuery, JsonElement data)
                             throws Exception {
         return (PagedListWithTotal<?>) getStateFormInstance(formName).getServiceInstance().listFormWithTotal(namedQuery, data);
     }
@@ -1020,45 +1020,46 @@ public class CommonStateFormService {
     /**
      * 获取表单的流程定义数据
      */
-    public static CommonFlowChartDefinition parseFormFlowDefinition(String formName, boolean removeUnChangedStateNode,
-            Long formId) throws Exception {
+    public static StateFlowChartDefinition parseFormFlowDefinition(String formName, boolean keepUnChanged, Long formId) throws Exception {
         CommonStateFormInstance instance = getStateFormInstance(formName);
         AbstractStateForm currentForm = null;
         if (formId != null) {
             currentForm = instance.getServiceInstance().getForm(formId);
         }
         AbstractStateFormServiceWithBaseDao<?> service = instance.getServiceInstance();
-        Map<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> flowData = service
-                .parseFormFlowChartDefinition(removeUnChangedStateNode, currentForm);
-        List<CommonFlowChartLinkData> flowLinkData = new ArrayList<>();
-        Set<CommonFlowChartNodeData> currentStateChildrenData = new HashSet<>();
-        for (Map.Entry<CommonFlowChartNodeData, Set<CommonFlowChartNodeData>> nodeEntry : flowData.entrySet()) {
-            Set<CommonFlowChartNodeData> nodeChildren = nodeEntry.getValue();
+        Map<StateFlowChartNodeData, Set<StateFlowChartNodeData>> flowNodeData = service
+                .parseFormFlowChartDefinition(keepUnChanged, currentForm);
+        List<StateFlowChartLinkData> flowLinkData = new ArrayList<>();
+        Set<StateFlowChartNodeData> currentStateChildNodes = new HashSet<>();
+        for (Map.Entry<StateFlowChartNodeData, Set<StateFlowChartNodeData>> nodeEntry : flowNodeData.entrySet()) {
+            boolean currentState = false;
+            Set<StateFlowChartNodeData> nodeChildren = nodeEntry.getValue();
             if (nodeChildren == null || nodeChildren.size() <= 0) {
                 continue;
             }
-            if (nodeEntry.getKey().getCategory() == CommonFlowChartNodeData.Category.STATE_CURRENT) {
-                currentStateChildrenData = nodeChildren;
+            if (nodeEntry.getKey().isCurrent()
+                    && nodeEntry.getKey().getCategory() == StateFlowChartNodeData.Category.STATE) {
+                currentState = true;
+                currentStateChildNodes = nodeChildren;
             }
-
-            for (CommonFlowChartNodeData c : nodeChildren) {
-                flowLinkData.add(new CommonFlowChartLinkData(nodeEntry.getKey().getKey(), c.getKey(),
-                        nodeEntry.getKey().getCategory() == CommonFlowChartNodeData.Category.STATE_CURRENT ? true : false));
+            for (StateFlowChartNodeData c : nodeChildren) {
+                flowLinkData.add(new StateFlowChartLinkData(nodeEntry.getKey().getKey(), c.getKey(), currentState));
             }
         }
-        if (currentStateChildrenData == null || currentStateChildrenData.isEmpty()) {
-            return new CommonFlowChartDefinition(flowData.keySet(), flowLinkData);
+        if (currentStateChildNodes == null || currentStateChildNodes.isEmpty()) {
+            return new StateFlowChartDefinition(flowNodeData.keySet(), flowLinkData);
         }
-        Set<CommonFlowChartNodeData> withApprovalNodeData = new HashSet<>();
-        for(CommonFlowChartNodeData nodeData : flowData.keySet()){
-            if (currentStateChildrenData.contains(nodeData) && nodeData.getCategory() == CommonFlowChartNodeData.Category.ACTION ) {
-                withApprovalNodeData.add(new CommonFlowChartNodeData(nodeData.getKey(), nodeData.getText(), 
+        Set<StateFlowChartNodeData> withApprovalNodeData = new HashSet<>();
+        for (StateFlowChartNodeData nodeData : flowNodeData.keySet()) {
+            if (currentStateChildNodes.contains(nodeData)
+                    && nodeData.getCategory() == StateFlowChartNodeData.Category.ACTION) {
+                withApprovalNodeData.add(new StateFlowChartNodeData(nodeData.getKey(), nodeData.getText(),
                         nodeData.getName(), service.getActionUserNameWithForm(nodeData.getName(), currentForm)));
             } else {
                 withApprovalNodeData.add(nodeData);
             }
         }
-        return new CommonFlowChartDefinition(withApprovalNodeData, flowLinkData);
+        return new StateFlowChartDefinition(withApprovalNodeData, flowLinkData);
     }
     
     /**

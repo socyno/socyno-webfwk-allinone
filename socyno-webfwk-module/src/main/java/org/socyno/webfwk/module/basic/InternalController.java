@@ -1,6 +1,5 @@
 package org.socyno.webfwk.module.basic;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.socyno.webfwk.module.sysjob.SystemJobStatusForm;
 import org.socyno.webfwk.module.sysjob.SystemJobDetailForm;
 import org.socyno.webfwk.module.sysjob.SystemJobDefaultQuery;
@@ -13,10 +12,8 @@ import org.socyno.webfwk.state.util.StateFormEventResultWebSocketViewLink;
 import org.socyno.webfwk.util.remote.R;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.springframework.web.bind.annotation.*;
-
 import com.google.gson.JsonElement;
 
-import java.util.*;
 
 /**
  * 内部使用的接口。

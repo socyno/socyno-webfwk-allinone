@@ -177,7 +177,7 @@ public abstract class AbstractAsyncTaskService {
                 log.error(e.toString(), e);
                 try {
                     if (logsOutputStream != null) {
-                        IOUtils.write(CommonUtil.stringifyStackTrace(e), logsOutputStream);
+                        IOUtils.write(CommonUtil.stringifyStackTrace(e), logsOutputStream, "UTF-8");
                     }
                 } catch(Exception ex) {
                     log.error(ex.toString(), ex);
@@ -236,7 +236,7 @@ public abstract class AbstractAsyncTaskService {
             ContextTaskFuture future = new ContextTaskFuture(lock, getTaskExecutor().submit(executor));
             TASK_FUTURES.put(taskId, future);
         } catch(Throwable ex) {
-            FileUtils.write(new File(logfile), CommonUtil.stringifyStackTrace(ex), true);
+            FileUtils.write(new File(logfile), CommonUtil.stringifyStackTrace(ex), "UTF-8", true);
             lockService.releaseQuietly(taskId, false);
         }
         return taskId;

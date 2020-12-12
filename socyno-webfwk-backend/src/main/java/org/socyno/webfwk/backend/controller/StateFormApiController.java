@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/api/form")
-public class CommonFormApiController extends FormController {
+public class StateFormApiController extends FormController {
 
 }

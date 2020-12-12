@@ -1,6 +1,5 @@
 package org.socyno.webfwk.state.service;
 
-import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.module.todo.*;
 import org.socyno.webfwk.util.model.PagedListWithTotal;
