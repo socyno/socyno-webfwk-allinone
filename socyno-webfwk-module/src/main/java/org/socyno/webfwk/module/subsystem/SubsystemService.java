@@ -1,11 +1,8 @@
 package org.socyno.webfwk.module.subsystem;
 
-import com.github.reinert.jjschema.v1.FieldOption;
-import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import lombok.Getter;
 import lombok.NonNull;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.socyno.webfwk.module.app.form.*;
 import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.department.FieldDepartment;
@@ -22,7 +19,7 @@ import org.socyno.webfwk.state.module.role.SystemRoleService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
-import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
+import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -43,9 +40,17 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SubsystemService extends AbstractStateFormServiceWithBaseDao<SubsystemFormDetail> {
+public class SubsystemService
+        extends AbstractStateFormServiceWithBaseDao<SubsystemFormDetail, SubsystemFormDefault, SubsystemFormSimple> {
     
-    public static final SubsystemService DEFAULT = new SubsystemService();
+    @Getter
+    private static final SubsystemService Instance = new SubsystemService();
+    
+    public SubsystemService() {
+        setStates(STATES.values());
+        setActions(EVENTS.values());
+        setQueries(QUERIES.values());
+    }
 
     static {
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionSubsystem.getInstance());
@@ -58,12 +63,7 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
     
     @Override
     protected AbstractDao getFormBaseDao() {
-        return getDao();
-    }
-    
-    @Override
-    public List<StateFormNamedQuery<?>> getFormNamedQueries() {
-        return QUERIES.getQueries();
+        return SystemTenantDataSource.getMain();
     }
     
     @Override
@@ -71,26 +71,13 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
         return "subsystem";
     }
     
-    public static AbstractDao getDao() {
-        return SystemTenantDataSource.getMain();
-    }
-    
     @Override
-    public List<? extends FieldOption> getStates() {
-        return STATES.getStatesAsOption();
-    }
-    
-    @Override
-    protected Map<String, AbstractStateAction<SubsystemFormDetail, ?, ?>> getFormActions() {
-        Map<String, AbstractStateAction<SubsystemFormDetail, ?, ?>> actions = new HashMap<>();
-        for (EVENTS event : EVENTS.values()) {
-            actions.put(event.getName(), event.getAction());
-        }
-        return actions;
+    public String getFormDisplay() {
+        return "业务系统";
     }
     
     @Getter
-    public static enum STATES implements StateFormStateBaseEnum {
+    public enum STATES implements StateFormStateBaseEnum {
         ENABLED("enabled", "有效")
         , DISABLED("disabled", "禁用")
         ;
@@ -102,174 +89,171 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
             this.code = code;
             this.name = name;
         }
+    }
+    
+    public class EventCreate extends AbstractStateSubmitAction<SubsystemFormDetail, SubsystemFormCreation> {
         
-        public static String[] stringify(STATES... states) {
-            if (states == null || states.length <= 0) {
-                return new String[0];
-            }
-            String[] result = new String[states.length];
-            for (int i = 0; i < states.length; i++) {
-                result[i] = states[i].getCode();
-            }
-            return result;
+        public EventCreate() {
+            super("添加", STATES.ENABLED.getCode());
         }
         
-        public static String[] stringifyEx(STATES... states) {
-            if (states == null) {
-                states = new STATES[0];
-            }
-            List<String> result = new ArrayList<>(states.length);
-            for (STATES s : STATES.values()) {
-                if (!ArrayUtils.contains(states, s)) {
-                    result.add(s.getCode());
-                }
-            }
-            return result.toArray(new String[0]);
+        @Override
+        @Authority(value = AuthorityScopeType.System)
+        public void check(String events, SubsystemFormDetail form, String sourceState) {
+            
         }
         
-        public static List<? extends FieldOption> getStatesAsOption() {
-            List<FieldOption> options = new ArrayList<>();
-            for (STATES s : STATES.values()) {
-                options.add(new FieldSimpleOption(s.getCode(), s.getName()));
-            }
-            return options;
+        @Override
+        public Long handle(String event, SubsystemFormDetail originForm, final SubsystemFormCreation form,
+                final String message) throws Exception {
+            AtomicLong id = new AtomicLong(0);
+            SubsystemBasicUtil.ensuerNameFormatValid(form.getCode());
+            SubsystemBasicUtil.ensureCodeOrNameNotExists(form.getCode(), form.getName(), null);
+            getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(getFormTable(), new ObjectMap()
+                    .put("code", form.getCode()).put("name", form.getName()).put("description", form.getDescription())),
+                    new ResultSetProcessor() {
+                        @Override
+                        public void process(ResultSet resultSet, Connection connection) throws Exception {
+                            resultSet.next();
+                            id.set(resultSet.getLong(1));
+                        }
+                    });
+            return id.get();
         }
     }
     
-    public static enum EVENTS implements StateFormEventBaseEnum {
+    public class EventUpdate extends AbstractStateAction<SubsystemFormDetail, SubsystemFormEdition, Void> {
         
-        Create(new AbstractStateSubmitAction<SubsystemFormDetail, SubsystemFormForCreate>("添加",
-                STATES.ENABLED.getCode()) {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.System)
-            public void check(String events, SubsystemFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Long handle(String event, SubsystemFormDetail originForm, final SubsystemFormForCreate form,
-                    final String message) throws Exception {
-                AtomicLong id = new AtomicLong(0);
-                SubsystemBasicUtil.ensuerNameFormatValid(form.getCode());
-                SubsystemBasicUtil.ensureCodeOrNameNotExists(form.getCode(), form.getName(), null);
-                getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(DEFAULT.getFormTable(), new ObjectMap()
-                        .put("code", form.getCode()).put("name", form.getName()).put("description", form.getDescription())),
-                        new ResultSetProcessor() {
-                            @Override
-                            public void process(ResultSet resultSet, Connection connection) throws Exception {
-                                resultSet.next();
-                                id.set(resultSet.getLong(1));
-                            }
-                        });
-                return id.get();
-            }
-        }),
+        public EventUpdate() {
+            super("编辑", getStateCodesEx(), "");
+        }
         
-        Update(new AbstractStateAction<SubsystemFormDetail, SubsystemFormForUpdate, Void>("编辑", STATES.stringifyEx(),
-                "") {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
-            public void check(String event, SubsystemFormDetail form, String sourceState) {
-                
-            }
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
+        public void check(String event, SubsystemFormDetail form, String sourceState) {
             
-            @Override
-            public Void handle(String event, SubsystemFormDetail originForm, final SubsystemFormForUpdate form,
-                    final String message) throws Exception {
-                SubsystemBasicUtil.ensureCodeOrNameNotExists(originForm.getCode(), form.getName(), originForm.getId());
-                getDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(DEFAULT.getFormTable(),
-                        new ObjectMap().put("=id", originForm.getId())
-                                .put("code", form.getCode())
-                                .put("name", form.getName())
-                                .put("description", form.getDescription())));
-                return null;
-            }
-        }),
+        }
         
-        Delete(new AbstractStateDeleteAction<SubsystemFormDetail>("删除", STATES.stringifyEx()) {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
-            public void check(String event, SubsystemFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                getDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(DEFAULT.getFormTable(),
-                        new ObjectMap().put("=id", originForm.getId())));
-                return null;
-            }
-        }),
+        @Override
+        public Void handle(String event, SubsystemFormDetail originForm, final SubsystemFormEdition form,
+                final String message) throws Exception {
+            SubsystemBasicUtil.ensureCodeOrNameNotExists(originForm.getCode(), form.getName(), originForm.getId());
+            getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
+                    new ObjectMap().put("=id", originForm.getId())
+                            .put("code", form.getCode())
+                            .put("name", form.getName())
+                            .put("description", form.getDescription())));
+            return null;
+        }
+    }
+    
+    public class EventDelete extends AbstractStateDeleteAction<SubsystemFormDetail> {
         
-        Disable(new AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void>("禁用",
-                STATES.stringifyEx(STATES.DISABLED), STATES.DISABLED.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
-            public void check(String event, SubsystemFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                return null;
-            }
-        }),
+        public EventDelete() {
+            super("删除", getStateCodesEx());
+        }
         
-        Enable(new AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void>("启用",
-                STATES.stringifyEx(STATES.ENABLED), STATES.ENABLED.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
-            public void check(String event, SubsystemFormDetail form, String sourceState) {
-                
-            }
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
+        public void check(String event, SubsystemFormDetail form, String sourceState) {
             
-            @Override
-            public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                return null;
-            }
-        }),
+        }
         
-        SyncCodePermission(new AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void>("同步代码仓授权", STATES.stringifyEx(), "") {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
-            public void check(String event, SubsystemFormDetail form, String sourceState) {
-                
-            }
+        @Override
+        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            getFormBaseDao().executeUpdate(
+                    SqlQueryUtil.prepareDeleteQuery(getFormTable(), new ObjectMap().put("=id", originForm.getId())));
+            return null;
+        }
+    }
+    
+    public class EventDisable extends AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void> {
+        
+        public EventDisable() {
+            super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
+        public void check(String event, SubsystemFormDetail form, String sourceState) {
             
-            @Override
-            public final Boolean messageRequired() {
-                return true;
-            }
+        }
+        
+        @Override
+        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            return null;
+        }
+    }
+    
+    public class EventEnable extends AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void> {
+        
+        public EventEnable() {
+            super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
+        public void check(String event, SubsystemFormDetail form, String sourceState) {
             
-            @Override
-            public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                VcsUnifiedService.CommonCloud.resetGroupMembers(originForm.getId());
-                return null;
-            }
-        })
+        }
+        
+        @Override
+        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            return null;
+        }
+    }
+    
+    public class EventSyncCodePermission extends AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void> {
+        
+        public EventSyncCodePermission() {
+            super("同步代码仓授权", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = SubsystemScopeIdParser.class)
+        public void check(String event, SubsystemFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public final Boolean messageRequired() {
+            return true;
+        }
+        
+        @Override
+        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            VcsUnifiedService.CommonCloud.resetGroupMembers(originForm.getId());
+            return null;
+        }
+    }
+    
+    @Getter
+    public enum EVENTS implements StateFormEventClassEnum {
+        
+        Create(EventCreate.class),
+        
+        Update(EventUpdate.class),
+        
+        Delete(EventDelete.class),
+        
+        Disable(EventDisable.class),
+        
+        Enable(EventEnable.class),
+        
+        SyncCodePermission(EventSyncCodePermission.class)
         ;
         
-        public String getName() {
-            return name().replaceAll("([^A-Z])([A-Z])", "$1_$2").toLowerCase();
-        }
-        
-        private final AbstractStateAction<SubsystemFormDetail, ?, ?> action;
-        
-        EVENTS(AbstractStateAction<SubsystemFormDetail, ?, ?> action) {
-            this.action = action;
-        }
-        
-        public AbstractStateAction<SubsystemFormDetail, ?, ?> getAction() {
-            return action;
+        private final Class<? extends AbstractStateAction<SubsystemFormDetail, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<SubsystemFormDetail, ?, ?>> eventClass) {
+            this.eventClass = eventClass;
         }
     }
     
-    public static class SubsystemScopeIdParser implements AuthorityScopeIdParser {
+    public class SubsystemScopeIdParser implements AuthorityScopeIdParser {
         @Override
         public Long getAuthorityScopeId(Object originForm) {
             SubsystemAbstractForm form = (SubsystemAbstractForm) originForm;
@@ -288,7 +272,7 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
     /**
      * 通过业务系统的编号或代码，查询业务系统及详情数据
      */
-    public <T extends SubsystemAbstractForm> T get(Class<T> clazz, Object idOrCode) throws Exception {
+    public <T extends SubsystemFormSimple> T get(Class<T> clazz, Object idOrCode) throws Exception {
         if (idOrCode == null || StringUtils.isBlank(idOrCode.toString())) {
             return null;
         }
@@ -314,7 +298,7 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
         /* 补全负责人数据 */
         if (SubsystemWithOwners.class.isAssignableFrom(itemClazz)) {
             Map<Long, List<OptionSystemUser>> subsysOwners;
-            if ((subsysOwners = SubsystemService.DEFAULT.getOwners(mappedResultSet.keySet().toArray(new Long[0]))) != null
+            if ((subsysOwners = getOwners(mappedResultSet.keySet().toArray(new Long[0]))) != null
                     && !subsysOwners.isEmpty()) {
                 for (Map.Entry<Long, List<OptionSystemUser>> e : subsysOwners.entrySet()) {
                     ((SubsystemWithOwners)mappedResultSet.get(e.getKey())).setOwners(e.getValue());
@@ -324,7 +308,7 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
         /* 补全产品线数据 */
         if (SubsystemWithDepartments.class.isAssignableFrom(itemClazz)) {
             Map<Long, List<OptionProductline>> subsysProds;
-            if ((subsysProds = SubsystemService.DEFAULT.getProductlines(mappedResultSet.keySet().toArray(new Long[0]))) != null
+            if ((subsysProds = getProductlines(mappedResultSet.keySet().toArray(new Long[0]))) != null
                     && !subsysProds.isEmpty()) {
                 for (Map.Entry<Long, List<OptionProductline>> e : subsysProds.entrySet()) {
                     ((SubsystemWithDepartments)mappedResultSet.get(e.getKey())).setProductlines(e.getValue());
@@ -541,30 +525,30 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
     /**
      * 通过业务系统的编号，获取清单
      */
-    private <T extends SubsystemAbstractForm> List<T> list(Class<T> clazz, boolean disableIncluded,
+    private <T extends SubsystemFormSimple> List<T> list(Class<T> clazz, boolean disableIncluded,
             Long... subsystemIds) throws Exception {
         if (subsystemIds == null || subsystemIds.length <= 0) {
             return Collections.emptyList();
         }
-        return list(clazz, new SubsystemListAllQuery(subsystemIds.length, 1L).setDisableIncluded(disableIncluded)
+        return list(clazz, new SubsystemQueryAll(subsystemIds.length, 1L).setDisableIncluded(disableIncluded)
                 .setIdsIn(StringUtils.join(subsystemIds, ','))).getList();
     }
     
     /**
      * 通过业务系统的代码，获取清单
      */
-    public <T extends SubsystemAbstractForm> List<T> list(Class<T> clazz, boolean disableIncluded,
+    public <T extends SubsystemFormSimple> List<T> list(Class<T> clazz, boolean disableIncluded,
             String... subsystemCodes) throws Exception {
         if (subsystemCodes == null || subsystemCodes.length <= 0) {
             return Collections.emptyList();
         }
-        return list(clazz, new SubsystemListAllQuery(subsystemCodes.length, 1L).setDisableIncluded(disableIncluded)
+        return list(clazz, new SubsystemQueryAll(subsystemCodes.length, 1L).setDisableIncluded(disableIncluded)
                 .setCodesIn(StringUtils.join(subsystemCodes, ','))).getList();
     }
     
-    public <T extends SubsystemAbstractForm> PagedList<T> list(@NonNull Class<T> clazz,
-            @NonNull SubsystemListAccessorQuery query) throws Exception {
-        return listFormX(clazz, query);
+    public <T extends SubsystemFormSimple> PagedList<T> list(@NonNull Class<T> clazz,
+            @NonNull SubsystemQueryAccessable query) throws Exception {
+        return listForm(clazz, query);
     }
     
     /**
@@ -572,9 +556,9 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
      */
     public List<? extends AbstractUser> collectAllCodePermGroupMembers(long subsystemId) throws Exception {
         List<Long> members = PermissionService.querySubsystemUsersByAuthKey(subsystemId, true,
-                new String[] { ApplicationService.DEFAULT.getCodeAccessFormEventKey(),
-                        ApplicationService.DEFAULT.getCodePushFormEventKey(),
-                        ApplicationService.DEFAULT.getCodeMaintainerFormEventKey() });
+                new String[] { ApplicationService.getInstance().getCodeAccessFormEventKey(),
+                        ApplicationService.getInstance().getCodePushFormEventKey(),
+                        ApplicationService.getInstance().getCodeMaintainerFormEventKey() });
         return ClassUtil.getSingltonInstance(FieldSystemUser.class).queryDynamicValues(members.toArray(new Long[0]));
     }
     
@@ -583,12 +567,12 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
      */
     public VcsUnifiedSubsystemInfo getCodePermGroupNameWithNamespace(long subsystemId) throws Exception {
         AbstractSystemTenant tenant;
-        if ((tenant = SystemTenantService.getSimple(SessionContext.getTenant())) == null
+        if ((tenant = SystemTenantService.getInstance().getSimple(SessionContext.getTenant())) == null
                 || StringUtils.isBlank(tenant.getCodeNamespace())) {
             throw new MessageException("获取租户代码空间未设置");
         }
-        SubsystemBasicForm subsystem;
-        if ((subsystem = get(SubsystemBasicForm.class, subsystemId)) == null) {
+        SubsystemFormSimple subsystem;
+        if ((subsystem = get(SubsystemFormSimple.class, subsystemId)) == null) {
             throw new MessageException("业务系统不存在,或已被删除");
         }
         return new VcsUnifiedSubsystemInfo(tenant.getCodeNamespace(), subsystem.getCode());
@@ -596,8 +580,8 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        ACCSESSOR(new StateFormNamedQuery<SubsystemListDefaultForm>("accessor", SubsystemListDefaultForm.class,
-                SubsystemListAccessorQuery.class));
+        ACCSESSOR(new StateFormNamedQuery<SubsystemFormDefault>("accessor", SubsystemFormDefault.class,
+                SubsystemQueryAccessable.class));
         
         private StateFormNamedQuery<?> namedQuery;
         
@@ -612,5 +596,11 @@ public class SubsystemService extends AbstractStateFormServiceWithBaseDao<Subsys
             }
             return queries;
         }
+    }
+
+    @Override
+    protected void fillExtraFormFields(Collection<? extends SubsystemFormSimple> forms) throws Exception {
+        // TODO Auto-generated method stub
+        
     }
 }

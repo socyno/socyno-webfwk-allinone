@@ -1,24 +1,19 @@
 package org.socyno.webfwk.module.department;
 
-import com.github.reinert.jjschema.v1.FieldOption;
-import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import lombok.Getter;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
-import org.socyno.webfwk.module.subsystem.SubsystemListAllQuery;
-import org.socyno.webfwk.module.subsystem.SubsystemListDefaultForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
+import org.socyno.webfwk.module.subsystem.SubsystemQueryAll;
+import org.socyno.webfwk.module.subsystem.SubsystemFormDefault;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
 import org.socyno.webfwk.state.authority.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.*;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
-import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
+import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -36,14 +31,22 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class DepartmentService extends AbstractStateFormServiceWithBaseDao<DepartmentFormDetail> {
+public class DepartmentService extends
+        AbstractStateFormServiceWithBaseDao<DepartmentFormDetail, DepartmentFormDefault, DepartmentFormSimple> {
     
     static {
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionDepartment.getInstance());
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionDepartmentCode.getInstance());
     }
     
-    public static final DepartmentService DEFAULT = new DepartmentService();
+    @Getter
+    private static final DepartmentService Instance = new DepartmentService();
+    
+    public DepartmentService() {
+        setStates(STATES.values());
+        setActions(EVENTS.values());
+        setQueries(QUERIES.values());
+    }
     
     @Override
     public String getFormTable() {
@@ -52,12 +55,7 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
     
     @Override
     protected AbstractDao getFormBaseDao() {
-        return getDao();
-    }
-    
-    @Override
-    public List<StateFormNamedQuery<?>> getFormNamedQueries() {
-        return QUERIES.getQueries();
+        return SystemTenantDataSource.getMain();
     }
     
     @Override
@@ -65,22 +63,9 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
         return "productline";
     }
     
-    public static AbstractDao getDao() {
-        return SystemTenantDataSource.getMain();
-    }
-    
     @Override
-    public List<? extends FieldOption> getStates() {
-        return STATES.getStatesAsOption();
-    }
-    
-    @Override
-    protected Map<String, AbstractStateAction<DepartmentFormDetail, ?, ?>> getFormActions() {
-        Map<String, AbstractStateAction<DepartmentFormDetail, ?, ?>> actions = new HashMap<>();
-        for (EVENTS event : EVENTS.values()) {
-            actions.put(event.getName(), event.getAction());
-        }
-        return actions;
+    public String getFormDisplay() {
+        return "组织部门";
     }
     
     @Getter
@@ -96,159 +81,154 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
             this.code = code;
             this.name = name;
         }
+    }
+    
+    public class EventCreate extends AbstractStateSubmitAction<DepartmentFormDetail, DepartmentFormCreation> {
         
-        public static String[] stringify(STATES... states) {
-            if (states == null || states.length <= 0) {
-                return new String[0];
-            }
-            String[] result = new String[states.length];
-            for (int i = 0; i < states.length; i++) {
-                result[i] = states[i].getCode();
-            }
-            return result;
+        public EventCreate() {
+            super("添加", STATES.ENABLED.getCode());
         }
         
-        public static String[] stringifyEx(STATES... states) {
-            if (states == null) {
-                states = new STATES[0];
-            }
-            List<String> result = new ArrayList<>(states.length);
-            for (STATES s : STATES.values()) {
-                if (!ArrayUtils.contains(states, s)) {
-                    result.add(s.getCode());
-                }
-            }
-            return result.toArray(new String[0]);
+        @Override
+        @Authority(value = AuthorityScopeType.System)
+        public void check(String events, DepartmentFormDetail form, String sourceState) {
+            
         }
         
-        public static List<? extends FieldOption> getStatesAsOption() {
-            List<FieldOption> options = new ArrayList<>();
-            for (STATES s : STATES.values()) {
-                options.add(new FieldSimpleOption(s.getCode(), s.getName()));
-            }
-            return options;
+        @Override
+        public Long handle(String event, DepartmentFormDetail originForm, final DepartmentFormCreation form,
+                final String message) throws Exception {
+            AtomicLong id = new AtomicLong(0);
+            DepartmentBasicUtil.ensuerNameFormatValid(form.getCode());
+            DepartmentBasicUtil.ensureCodeOrNameNotExists(form.getCode(), form.getName(), null);
+            getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
+                    getFormTable(), new ObjectMap()
+                        .put("code", form.getCode())
+                        .put("name", form.getName())
+                        .put("owner_id", form.getOwner())
+                        .put("description", form.getDescription())),
+                    new ResultSetProcessor() {
+                        @Override
+                        public void process(ResultSet resultSet, Connection connection) throws Exception {
+                            resultSet.next();
+                            id.set(resultSet.getLong(1));
+                        }
+                    });
+            return id.get();
         }
     }
     
-    public static enum EVENTS implements StateFormEventBaseEnum {
+    public class EventUpdate extends AbstractStateAction<DepartmentFormDetail, DepartmentFormEditon, Void> {
         
-        Create(new AbstractStateSubmitAction<DepartmentFormDetail, DepartmentFormForCreate>("添加",
-                STATES.ENABLED.getCode()) {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.System)
-            public void check(String events, DepartmentFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Long handle(String event, DepartmentFormDetail originForm, final DepartmentFormForCreate form,
-                    final String message) throws Exception {
-                AtomicLong id = new AtomicLong(0);
-                DepartmentBasicUtil.ensuerNameFormatValid(form.getCode());
-                DepartmentBasicUtil.ensureCodeOrNameNotExists(form.getCode(), form.getName(), null);
-                getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-                        DEFAULT.getFormTable(), new ObjectMap()
-                            .put("code", form.getCode())
-                            .put("name", form.getName())
-                            .put("owner_id", form.getOwner())
-                            .put("description", form.getDescription())),
-                        new ResultSetProcessor() {
-                            @Override
-                            public void process(ResultSet resultSet, Connection connection) throws Exception {
-                                resultSet.next();
-                                id.set(resultSet.getLong(1));
-                            }
-                        });
-                return id.get();
-            }
-        }),
-        
-        Update(new AbstractStateAction<DepartmentFormDetail, DepartmentFormForUpdate, Void>("编辑", STATES.stringifyEx(),
-                "") {
-            @Override
-            @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
-            public void check(String event, DepartmentFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, DepartmentFormDetail originForm, final DepartmentFormForUpdate form,
-                    final String message) throws Exception {
-                DepartmentBasicUtil.ensureCodeOrNameNotExists(originForm.getCode(), form.getName(), originForm.getId());
-                getDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
-                        DEFAULT.getFormTable(), new ObjectMap()
-                            .put("=id", originForm.getId())
-                            .put("name", form.getName())
-                            .put("owner_id", form.getOwner().getId())
-                            .put("description", form.getDescription())
-                        ));
-                if (form.getSubsystems() != null) {
-                    getDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery("productline_subsystem",
-                            new ObjectMap().put("=productline_id", originForm.getId())));
-                    for (SubsystemBasicForm subsystem : form.getSubsystems()) {
-                        getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery("productline_subsystem", new ObjectMap()
-                                .put("=productline_id", originForm.getId()).put("subsystem_id", subsystem.getId())));
-                    }
-                }
-                return null;
-            }
-        }),
-        
-        Delete(new AbstractStateDeleteAction<DepartmentFormDetail>("删除", STATES.stringifyEx()) {
-            @Override
-            @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
-            public void check(String event, DepartmentFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, DepartmentFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                getDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(DEFAULT.getFormTable(),
-                        new ObjectMap().put("=id", originForm.getId())));
-                return null;
-            }
-        }),
-        
-        Disable(new AbstractStateAction<DepartmentFormDetail, BasicStateForm, Void>("禁用",
-                STATES.stringifyEx(STATES.DISABLED), STATES.DISABLED.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
-            public void check(String event, DepartmentFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, DepartmentFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                return null;
-            }
-        }),
-        
-        Enable(new AbstractStateAction<DepartmentFormDetail, BasicStateForm, Void>("启用",
-                STATES.stringifyEx(STATES.ENABLED), STATES.ENABLED.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
-            public void check(String event, DepartmentFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, DepartmentFormDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                return null;
-            }
-        });
-        
-        private final AbstractStateAction<DepartmentFormDetail, ?, ?> action;
-        
-        EVENTS(AbstractStateAction<DepartmentFormDetail, ?, ?> action) {
-            this.action = action;
+        public EventUpdate() {
+            super("编辑", getStateCodesEx(), "");
         }
         
-        public AbstractStateAction<DepartmentFormDetail, ?, ?> getAction() {
-            return action;
+        @Override
+        @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
+        public void check(String event, DepartmentFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, DepartmentFormDetail originForm, final DepartmentFormEditon form,
+                final String message) throws Exception {
+            DepartmentBasicUtil.ensureCodeOrNameNotExists(originForm.getCode(), form.getName(), originForm.getId());
+            getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
+                    getFormTable(), new ObjectMap()
+                        .put("=id", originForm.getId())
+                        .put("name", form.getName())
+                        .put("owner_id", form.getOwner().getId())
+                        .put("description", form.getDescription())
+                    ));
+            if (form.getSubsystems() != null) {
+                getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery("productline_subsystem",
+                        new ObjectMap().put("=productline_id", originForm.getId())));
+                for (SubsystemFormSimple subsystem : form.getSubsystems()) {
+                    getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery("productline_subsystem", new ObjectMap()
+                            .put("=productline_id", originForm.getId()).put("subsystem_id", subsystem.getId())));
+                }
+            }
+            return null;
+        }
+    }
+    
+    public class EventDelete extends AbstractStateDeleteAction<DepartmentFormDetail> {
+        
+        public EventDelete() {
+            super("删除", getStateCodesEx());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
+        public void check(String event, DepartmentFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, DepartmentFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            getFormBaseDao().executeUpdate(
+                    SqlQueryUtil.prepareDeleteQuery(getFormTable(), new ObjectMap().put("=id", originForm.getId())));
+            return null;
+        }
+    }
+    
+    public class EventDisable extends AbstractStateAction<DepartmentFormDetail, BasicStateForm, Void> {
+        
+        public EventDisable() {
+            super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
+        public void check(String event, DepartmentFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, DepartmentFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            return null;
+        }
+    }
+    
+    public class EventEnable extends AbstractStateAction<DepartmentFormDetail, BasicStateForm, Void> {
+        
+        public EventEnable() {
+            super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.System, checker = ProductlineOwnerChecker.class)
+        public void check(String event, DepartmentFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, DepartmentFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            return null;
+        }
+    }
+    
+    @Getter
+    public enum EVENTS implements StateFormEventClassEnum {
+        
+        Create(EventCreate.class),
+        
+        Update(EventUpdate.class),
+        
+        Delete(EventDelete.class),
+        
+        Disable(EventDisable.class),
+        
+        Enable(EventEnable.class);
+        
+        private final Class<? extends AbstractStateAction<DepartmentFormDetail, ?, ?>> eventClass;
+        
+        EVENTS(Class<? extends AbstractStateAction<DepartmentFormDetail, ?, ?>> eventClass) {
+            this.eventClass = eventClass;
         }
     }
     
@@ -256,7 +236,7 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
      * 
      * 产品线的负责人检查器
      */
-    public static class ProductlineOwnerChecker implements AuthoritySpecialChecker {
+    public class ProductlineOwnerChecker implements AuthoritySpecialChecker {
         @Override
         public boolean check(Object originForm) throws Exception {
             DepartmentWithOwner ownerForm = (DepartmentWithOwner) originForm;
@@ -298,7 +278,7 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
         }
         List<T> list = queryFormWithStateRevision(clazz,
                 String.format("%s WHERE s.id IN (%s) ",
-                        String.format(DepartmentListDefaultQuery.SQL_SELECT_FORM, getFormTable()),
+                        String.format(DepartmentQueryDefault.SQL_SELECT_FORM, getFormTable()),
                         CommonUtil.join("?", productlineIds.length, ",")),
                 productlineIds);
         if (list == null || list.size() != 1) {
@@ -317,7 +297,7 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
         }
         List<T> list = queryFormWithStateRevision(clazz,
                 String.format("%s WHERE s.code IN (%s) ",
-                        String.format(DepartmentListDefaultQuery.SQL_SELECT_FORM, getFormTable()),
+                        String.format(DepartmentQueryDefault.SQL_SELECT_FORM, getFormTable()),
                         CommonUtil.join("?", productlineCodes.length, ",")),
                 productlineCodes);
         if (list == null || list.size() != 1) {
@@ -352,10 +332,10 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
         
         /* 填补业务系统清单 */
         if (DepartmentWithSubsystems.class.isAssignableFrom(itemClazz)) {
-            Map<Long, List<SubsystemBasicForm>> productlineSubsystems;
+            Map<Long, List<SubsystemFormSimple>> productlineSubsystems;
             if ((productlineSubsystems = getSubsystems(mapResultSet.keySet().toArray(new Long[0]))) != null
                     && !productlineSubsystems.isEmpty()) {
-                for (Map.Entry<Long, List<SubsystemBasicForm>> e : productlineSubsystems.entrySet()) {
+                for (Map.Entry<Long, List<SubsystemFormSimple>> e : productlineSubsystems.entrySet()) {
                     ((DepartmentWithSubsystems) mapResultSet.get(e.getKey())).setSubsystems(e.getValue());
                 }
             }
@@ -410,14 +390,14 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
     /**
      * 获取产品线的业务系统清单
      */
-    List<SubsystemBasicForm> getSubsystems(Long productlineId) throws Exception {
+    List<SubsystemFormSimple> getSubsystems(Long productlineId) throws Exception {
         return getSubsystems(new Object[] {productlineId}).get(productlineId);
     }
     
     /**
      * 获取产品线的业务系统清单(不包括已下线)
      */
-    private Map<Long, List<SubsystemBasicForm>> getSubsystems(Object[] productlineIds) throws Exception {
+    private Map<Long, List<SubsystemFormSimple>> getSubsystems(Object[] productlineIds) throws Exception {
         if (productlineIds == null || productlineIds.length <= 0) {
             return Collections.emptyMap();
         }
@@ -437,16 +417,16 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
             subsyproductIds.get(subsystemId).add((Long) prodsubsysId.get("productline_id"));
         }
         
-        List<SubsystemListDefaultForm> subsystemAll;
-        if ((subsystemAll = SubsystemService.DEFAULT.list(SubsystemListDefaultForm.class,
-                new SubsystemListAllQuery(subsyproductIds.size(), 1L).setDisableIncluded(false)
+        List<SubsystemFormDefault> subsystemAll;
+        if ((subsystemAll = SubsystemService.getInstance().list(SubsystemFormDefault.class,
+                new SubsystemQueryAll(subsyproductIds.size(), 1L).setDisableIncluded(false)
                         .setIdsIn(StringUtils.join(subsyproductIds.keySet(), ',')))
                 .getList()) == null || subsystemAll.size() <= 0) {
             return Collections.emptyMap();
         }
         
-        Map<Long, List<SubsystemBasicForm>> result = new HashMap<>();
-        for (SubsystemBasicForm subsystem : subsystemAll) {
+        Map<Long, List<SubsystemFormSimple>> result = new HashMap<>();
+        for (SubsystemFormSimple subsystem : subsystemAll) {
             for (long productlineId : subsyproductIds.get(subsystem.getId())) {
                 if (!result.containsKey(productlineId)) {
                     result.put(productlineId, new ArrayList<>());
@@ -458,26 +438,22 @@ public class DepartmentService extends AbstractStateFormServiceWithBaseDao<Depar
     }
     
     @Getter
-    public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<DepartmentListDefaultForm>("default", DepartmentListDefaultForm.class,
-                DepartmentListDefaultQuery.class)),
-        OPTIONS(new StateFormNamedQuery<DepartmentBasicForm>("options", DepartmentBasicForm.class,
-                DepartmentListDefaultQueryForOptions.class)),
-        DETAILS(new StateFormNamedQuery<DepartmentFormDetail>("details", DepartmentFormDetail.class,
-                DepartmentListDefaultQuery.class));
+    public enum QUERIES implements StateFormQueryBaseEnum {
+        DEFAULT(new StateFormNamedQuery<DepartmentFormDefault>("默认查询", DepartmentFormDefault.class,
+                DepartmentQueryDefault.class)),
+        OPTIONS(new StateFormNamedQuery<DepartmentFormDefault>("选项查询", DepartmentFormDefault.class,
+                DepartmentQueryOptions.class));
         
         private StateFormNamedQuery<?> namedQuery;
         
         QUERIES(StateFormNamedQuery<?> namedQuery) {
             this.namedQuery = namedQuery;
         }
+    }
+
+    @Override
+    protected void fillExtraFormFields(Collection<? extends DepartmentFormSimple> forms) throws Exception {
+        // TODO Auto-generated method stub
         
-        public static List<StateFormNamedQuery<?>> getQueries() {
-            List<StateFormNamedQuery<?>> queries = new ArrayList<>();
-            for (DepartmentService.QUERIES item : DepartmentService.QUERIES.values()) {
-                queries.add(item.getNamedQuery());
-            }
-            return queries;
-        }
     }
 }

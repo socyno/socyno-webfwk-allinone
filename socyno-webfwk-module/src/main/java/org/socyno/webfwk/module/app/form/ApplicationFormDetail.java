@@ -13,13 +13,13 @@ import java.util.Collections;
 import java.util.List;
 
 import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
-import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.vcs.common.VcsType;
 
 @Getter
 @Setter
 @ToString
-public class ApplicationFormDetail extends ApplicationFormSimple
+public class ApplicationFormDetail extends ApplicationFormDefault
         implements ApplicationWithSubsystemEntity, ApplicationAbstractForm {
     
     @Getter
@@ -62,7 +62,7 @@ public class ApplicationFormDetail extends ApplicationFormSimple
     public static class FieldOptionsState extends FieldType {
         @Override
         public List<? extends FieldOption> getStaticOptions() {
-            return ApplicationService.DEFAULT.getStates();
+            return ApplicationService.getInstance().getStates();
         }
         
         @Override
@@ -175,5 +175,5 @@ public class ApplicationFormDetail extends ApplicationFormSimple
     }
     
     @Attributes(title = "业务系统", type = FieldSubsystemAccessors.class)
-    private SubsystemBasicForm subsystem;
+    private SubsystemFormSimple subsystem;
 }

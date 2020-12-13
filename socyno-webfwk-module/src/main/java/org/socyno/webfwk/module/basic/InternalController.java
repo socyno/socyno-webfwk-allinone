@@ -1,10 +1,10 @@
 package org.socyno.webfwk.module.basic;
 
-import org.socyno.webfwk.module.sysjob.SystemJobStatusForm;
-import org.socyno.webfwk.module.sysjob.SystemJobDetailForm;
-import org.socyno.webfwk.module.sysjob.SystemJobDefaultQuery;
+import org.socyno.webfwk.module.sysjob.SystemJobFormStatus;
+import org.socyno.webfwk.module.sysjob.SystemJobFormDetail;
+import org.socyno.webfwk.module.sysjob.SystemJobQueryDefault;
 import org.socyno.webfwk.module.sysjob.SystemJobService;
-import org.socyno.webfwk.module.systenant.SystemTenantListDefaultQuery;
+import org.socyno.webfwk.module.systenant.SystemTenantQueryDefault;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.state.basic.DynamicStateForm;
 import org.socyno.webfwk.state.module.user.SystemUserService;
@@ -32,8 +32,8 @@ public class InternalController {
      */
     @RequestMapping(value = "/tenants/enabled/{page}", method = RequestMethod.GET)
     public R queryEnabledTenants(@PathVariable long page) throws Exception {
-        return R.ok().setData(SystemTenantService.DEFAULT.listForm(SystemTenantService.QUERIES.DEFAULT,
-                new SystemTenantListDefaultQuery(page, 100).setDisableIncluded(false)));
+        return R.ok().setData(SystemTenantService.getInstance().listForm(SystemTenantService.QUERIES.DEFAULT,
+                new SystemTenantQueryDefault(page, 100).setDisableIncluded(false)));
     }
     
     /**
@@ -42,8 +42,8 @@ public class InternalController {
     @RequestMapping(value = "/tenants/{tenant}/schedules/{page}", method = RequestMethod.GET)
     public R queryTenantSchedules(@PathVariable String tenant, @PathVariable long page) throws Exception {
         sudoToInternalJobUser(tenant);
-        return R.ok().setData(SystemJobService.DEFAULT.listForm(SystemJobService.QUERIES.DEFAULT,
-                new SystemJobDefaultQuery(page, 100).setOnlyScheduled(true)));
+        return R.ok().setData(SystemJobService.getInstance().listForm(SystemJobService.QUERIES.DEFAULT,
+                new SystemJobQueryDefault(page, 100).setOnlyScheduled(true)));
     }
     
     /**
@@ -52,12 +52,12 @@ public class InternalController {
     @RequestMapping(value = "/tenants/{tenant}/schedules/{scheduleId}/execute", method = RequestMethod.POST)
     public R executeTenantScheduleJob(@PathVariable String tenant, @PathVariable long scheduleId) throws Exception {
         sudoToInternalJobUser(tenant);
-        SystemJobDetailForm schedule = SystemJobService.DEFAULT.getForm(scheduleId);
+        SystemJobFormDetail schedule = SystemJobService.getInstance().getForm(scheduleId);
         DynamicStateForm form = new DynamicStateForm();
         form.setId(scheduleId);
         form.setRevision(schedule.getRevision());
         form.setJsonData(CommonUtil.fromJson("{}", JsonElement.class));
-        return R.ok().setData(SystemJobService.DEFAULT.triggerAction(
+        return R.ok().setData(SystemJobService.getInstance().triggerAction(
                 SystemJobService.EVENTS.Execute.getName(), form, StateFormEventResultWebSocketViewLink.class));
     }
     
@@ -68,10 +68,10 @@ public class InternalController {
     public R queryTenantScheduledJobStatus(@PathVariable String tenant, @PathVariable long scheduleId,
             @PathVariable long jobId) throws Exception {
         sudoToInternalJobUser(tenant);
-        SystemJobStatusForm form = new SystemJobStatusForm();
+        SystemJobFormStatus form = new SystemJobFormStatus();
         form.setId(scheduleId);
         form.setJobId(jobId);
-        return R.ok().setData(SystemJobService.DEFAULT.triggerAction(
-                SystemJobService.EVENTS.JobStatus.getName(), form, SystemJobStatusForm.class));
+        return R.ok().setData(SystemJobService.getInstance().triggerAction(
+                SystemJobService.EVENTS.JobStatus.getName(), form, SystemJobFormStatus.class));
     }
 }

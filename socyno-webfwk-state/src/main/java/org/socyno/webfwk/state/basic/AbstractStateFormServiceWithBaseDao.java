@@ -17,13 +17,15 @@ import org.socyno.webfwk.state.model.CommonSimpleLog;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.service.SimpleLockService;
 import org.socyno.webfwk.state.service.SimpleLogService;
+import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormQueryDefinition;
 import org.socyno.webfwk.state.util.StateFormRevision;
+import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
 import org.socyno.webfwk.util.context.HttpMessageConverter;
 import org.socyno.webfwk.util.context.SessionContext;
-import org.socyno.webfwk.util.exception.AbstractMethodUnimplimentedException;
+import org.socyno.webfwk.util.exception.MessageException;
 import org.socyno.webfwk.util.model.ObjectMap;
 import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.model.PagedListWithTotal;
@@ -33,28 +35,203 @@ import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
 import org.socyno.webfwk.util.tmpl.EnjoyUtil;
+import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.state.util.StateFormActionDefinition.EventType;
 
 import com.github.reinert.jjschema.v1.FieldOption;
 
 @Getter
-public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStateForm> extends AbstractStateFormService<F> {
+public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends F, F extends AbstractStateForm> extends AbstractStateFormService<F> {
     
     protected abstract String getFormTable();
     
+    protected abstract String getFormDisplay();
+    
     protected abstract AbstractDao getFormBaseDao();
+    
+    protected abstract void fillExtraFormFields(Collection<? extends F> forms) throws Exception;
+    
+    private final Map<String, StateFormStateBaseEnum> states = new HashMap<>();
+    
+    private final Map<String, StateFormNamedQuery<? extends L>> queries = new HashMap<>();
+    
+    private final Map<String, AbstractStateAction<D, ?, ?>> actions = new HashMap<>();
+    
+    @SuppressWarnings("unchecked")
+    public Class<D> getDetailFormClass() {
+        return (Class<D>) ClassUtil.getActualParameterizedType(getClass(), AbstractStateFormServiceWithBaseDao.class,
+                0);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Class<D> getDefaultFormClass() {
+        return (Class<D>) ClassUtil.getActualParameterizedType(getClass(), AbstractStateFormServiceWithBaseDao.class,
+                1);
+    }
+    
+    @SafeVarargs
+    protected final void fillExtraFormFields(F ...forms) throws Exception {
+        if (forms == null) {
+            return;
+        }
+        fillExtraFormFields(Arrays.asList(forms));
+    }
+    
+    @Override
+    public <T extends F> T getForm(Class<T> clazz, long formId) throws Exception {
+        T form = loadFormNoStateRevision(clazz, formId);
+        fillExtraFormFields(form);
+        return form;
+    }
+    
+    @Override
+    public List<? extends FieldOption> getStates() {
+        return new ArrayList<>(states.values());
+    }
+    
+    @Override
+    protected String[] getFormActionNames() {
+        return actions.keySet().toArray(new String[0]);
+    }
+    
+    @Override
+    protected AbstractStateAction<? extends D, ?, ?> getFormAction(String event) {
+        return actions.get(event);
+    }
+    
+    public Map<String, StateFormNamedQuery<? extends L>> getFormQueries() {
+        return Collections.unmodifiableMap(queries);
+    }
+    
+    protected void setQuery(String name, StateFormNamedQuery<? extends L> query) {
+        if (query == null) {
+            queries.remove(name);
+            return;
+        }
+        queries.put(name, query);
+    }
+    @SuppressWarnings("unchecked")
+    protected void setQueries(StateFormQueryBaseEnum... queries) {
+        if (queries == null || queries.length <= 0) {
+            return;
+        }
+        for (StateFormQueryBaseEnum q : queries) {
+            if (q == null) {
+                continue;
+            }
+            if (q.getNamedQuery() == null || !getDefaultFormClass().equals(q.getNamedQuery().getResultClass())) {
+                throw new MessageException(
+                        String.format("Named query result class must be %s", getDefaultFormClass().getName()));
+            }
+            setQuery(q.name(), (StateFormNamedQuery<? extends L>) q.getNamedQuery());
+        }
+    }
+    
+    private void setState(StateFormStateBaseEnum state) {
+        states.put(state.getCode(), state);
+    }
+    
+    /**
+     * 
+     * 获取给定值的状态码列表
+     * 
+     */
+    protected String[] getStateCodes(StateFormStateBaseEnum... states) {
+        if (states == null || states.length <= 0) {
+            return new String[0];
+        }
+        List<String> result = new ArrayList<>(states.length);
+        for (StateFormStateBaseEnum s : states) {
+            if (s == null) {
+                continue;
+            }
+            result.add(s.getCode());
+        }
+        return result.toArray(new String[0]);
+    }
+    
+    /**
+     * 
+     * 获取排除给定值的状态码列表
+     * 
+     */
+    protected String[] getStateCodesEx(StateFormStateBaseEnum... exclusions) {
+        if (exclusions == null) {
+            exclusions = new StateFormStateBaseEnum[0];
+        }
+        List<String> excodes = new ArrayList<>();
+        for (StateFormStateBaseEnum e : exclusions) {
+            if (e == null) {
+                continue;
+            }
+            excodes.add(e.getCode());
+        }
+        List<String> result = new ArrayList<>(states.size());
+        for (String s : states.keySet()) {
+            if (s == null || excodes.contains(s)) {
+                continue;
+            }
+            result.add(s);
+        }
+        return result.toArray(new String[0]);
+    }
+    
+    protected void setStates(StateFormStateBaseEnum ...states) {
+        if (states ==  null || states.length <= 0) {
+            return;
+        }
+        for (StateFormStateBaseEnum s : states) {
+             setState(s);
+        }
+    }
+    
+    private void setAction(String event, AbstractStateAction<D, ?, ?> action) {
+        if (action == null) {
+            actions.remove(event);
+            return;
+        }
+        actions.put(event, action);
+    }
+    
+    @SuppressWarnings("unchecked")
+    protected void setActions(StateFormEventClassEnum ...events) {
+        if (events == null || events.length <= 0) {
+            return;
+        }
+        for (StateFormEventClassEnum e : events) {
+            if (e == null) {
+                continue;
+            }
+            if (e.getEventClass() == null) {
+                setAction(e.getName(), null);
+                continue;
+            }
+            try {
+                setAction(e.getName(), (AbstractStateAction<D, ?, ?>) createInstance(e.getEventClass()));
+            } catch (RuntimeException x) {
+                throw (RuntimeException) x;
+            } catch (Exception x) {
+                throw new RuntimeException(x);
+            }
+        }
+    }
     
     /**
      * 获取默认（第一个）的预定义查询
      * @return
      */
-    public StateFormNamedQuery<?> getFormDefaultQuery() {
-        List<StateFormNamedQuery<?>> queries;
-        if ((queries = getFormNamedQueries()) == null || queries.isEmpty()) {
+    public StateFormNamedQuery<? extends L> getFormDefaultQuery() {
+        Map<String, StateFormNamedQuery<? extends L>> queries;
+        if ((queries = getFormQueries()) == null || queries.isEmpty()) {
             return null;
         }
-        for (StateFormNamedQuery<?>query : queries) {
+        for (String name : queries.keySet()) {
+            if ("default".equalsIgnoreCase(name)) {
+                return queries.get(name);
+            }
+        }
+        for (StateFormNamedQuery<? extends L>query : queries.values()) {
             if (query != null) {
                  return query;
             }
@@ -63,31 +240,21 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
     }
     
     /**
-     * 获取指定名称的预定义查询
-     * @param name
-     * @return 不存在则返回  null
+     * 获取自定名称的查询
      */
-    public StateFormNamedQuery<?> getFormNamedQuery(String name) {
-        if (StringUtils.isBlank(name)) {
+    public StateFormNamedQuery<? extends L> getFormNamedQuery(String name) {
+        Map<String, StateFormNamedQuery<? extends L>> queries;
+        if ((queries = getFormQueries()) == null || queries.isEmpty()) {
             return null;
         }
-        List<StateFormNamedQuery<?>> queries;
-        if ((queries = getFormNamedQueries()) == null || queries.isEmpty()) {
-            return null;
-        }
-        for (StateFormNamedQuery<?> query : queries) {
-            if (name.equals(query.getName())) {
-                return query;
-            }
-        }
-        return null;
+        return queries.get(name);
     }
     
-    /**
-     * 获取表单的预定义查询列表
-     * @return
-     */
-    public abstract List<StateFormNamedQuery<?>> getFormNamedQueries();
+//    /**
+//     * 获取表单的预定义查询列表
+//     * @return
+//     */
+//    public abstract List<StateFormNamedQuery<?>> getFormNamedQueries();
     
     public String getFormIdField() {
         return "id";
@@ -211,6 +378,30 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
         return getFormBaseDao().queryAsList(entityClass, sql, args, mappAll);
     }
     
+    @Override
+    public <T extends F> List<T> listForm(@NonNull Class<T> clazz, @NonNull AbstractStateFormFilter<T> filter) throws Exception {
+        return filter.apply(clazz);
+    }
+    
+    public <T extends F> PagedList<T> listForm(@NonNull Class<T> resultClazz, @NonNull AbstractStateFormQuery query)
+                        throws Exception {
+        List<T> resutSet = listForm(resultClazz, queryToFilter(resultClazz, query));
+        return new PagedList<T>().setPage(query.getPage()).setLimit(query.getLimit())
+                            .setList(query.processResultSet(resultClazz, resutSet));
+    }
+    
+    public PagedList<? extends F> listForm(@NonNull StateFormNamedQuery<? extends F> namedQuery, @NonNull Object condition) throws Exception {
+        return listForm(namedQuery.getResultClass(), (AbstractStateFormQuery)HttpMessageConverter.toInstance(namedQuery.getQueryClass(), condition));
+    }
+    
+    public PagedList<? extends F> listForm(@NonNull Object condition) throws Exception {
+        StateFormNamedQuery<? extends F> query;
+        if ((query = getFormDefaultQuery()) == null) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), "<DEFAULT>");
+        }
+        return listForm(query, condition);
+    }
+    
     /**
      * 根据预定义的查询名称和条件数据，获取表单结果集
      * @param namedQuery 查询名称
@@ -218,28 +409,50 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
      * @return
      * @throws Exception
      */
-    public PagedList<?> listForm(String namedQuery, @NonNull Object condition) throws Exception {
+    @SuppressWarnings("unchecked")
+    public PagedList<? extends F> listForm(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
         StateFormNamedQuery<?> query;
+        if ((query = namedQuery.getNamedQuery()) == null || !getFormClass().isAssignableFrom(query.getResultClass())) {
+            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
+        }
+        return listForm((StateFormNamedQuery<? extends F>)query, condition);
+    }
+    
+    
+    /**
+     * 根据预定义的查询名称和条件数据，获取表单结果集
+     * @param namedQuery 查询名称
+     * @param condition  查询条件数据
+     * @return
+     * @throws Exception
+     */
+    public PagedList<? extends F> listForm(String namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<? extends F> query;
         if ((query = getFormNamedQuery(namedQuery)) == null) {
             throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery);
         }
-        return listFormX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+        return listForm(query, condition);
+    }
+
+    public <T extends F> PagedListWithTotal<T> listFormWithTotal(@NonNull Class<T> resultClazz,
+                        @NonNull AbstractStateFormQuery query) throws Exception {
+        List<T> resutSet = listForm(resultClazz, queryToFilter(resultClazz, query));
+        long total = (resutSet == null || resutSet.size() <= 0 || resutSet.size() >= query.getLimit())
+                                    ? getListFormTotal(query) : (query.getOffset() + resutSet.size());
+       return new PagedListWithTotal<T>().setPage(query.getPage()).setLimit(query.getLimit()).setTotal(total)
+                               .setList(query.processResultSet(resultClazz, resutSet));
     }
     
-    public PagedList<?> listForm(@NonNull Object condition) throws Exception {
-        StateFormNamedQuery<?> query;
+    public PagedListWithTotal<? extends F> listFormWithTotal(@NonNull StateFormNamedQuery<? extends F> namedQuery, @NonNull Object condition) throws Exception {
+        return listFormWithTotal(namedQuery.getResultClass(), (AbstractStateFormQuery)HttpMessageConverter.toInstance(namedQuery.getQueryClass(), condition));
+    }
+    
+    public PagedListWithTotal<? extends F> listFormWithTotal(@NonNull Object condition) throws Exception {
+        StateFormNamedQuery<? extends F> query;
         if ((query = getFormDefaultQuery()) == null) {
             throw new StateFormNamedQueryNotFoundException(getFormName(), "<DEFAULT>");
         }
-        return listFormX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
-    }
-    
-    public PagedList<?> listForm(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
-        StateFormNamedQuery<?> query;
-        if ((query = namedQuery.getNamedQuery()) == null) {
-            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
-        }
-        return listFormX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+        return listFormWithTotal(query, condition);
     }
     
     /**
@@ -249,28 +462,33 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
      * @return
      * @throws Exception
      */
-    public PagedListWithTotal<?> listFormWithTotal(String namedQuery, @NonNull Object condition) throws Exception {
-        StateFormNamedQuery<?> query;
+    public PagedListWithTotal<? extends F> listFormWithTotal(String namedQuery, @NonNull Object condition) throws Exception {
+        StateFormNamedQuery<? extends F> query;
         if ((query = getFormNamedQuery(namedQuery)) == null) {
             throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery);
         }
-        return listFormWithTotalX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
-    }
+        return listFormWithTotal(query, condition);
+    } 
     
-    public PagedListWithTotal<?> listFormWithTotal(@NonNull Object condition) throws Exception {
+    /**
+     * 根据预定义的查询名称和条件数据，获取表单结果集(同时返回结果集总条数)
+     * @param namedQuery 查询名称
+     * @param condition  查询条件数据
+     * @return
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public PagedListWithTotal<? extends F> listFormWithTotal(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
         StateFormNamedQuery<?> query;
-        if ((query = getFormDefaultQuery()) == null) {
-            throw new StateFormNamedQueryNotFoundException(getFormName(), "<DEFAULT>");
-        }
-        return listFormWithTotalX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
-    }
-
-    public PagedListWithTotal<?> listFormWithTotal(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
-        StateFormNamedQuery<?> query;
-        if ((query = namedQuery.getNamedQuery()) == null) {
+        if ((query = namedQuery.getNamedQuery()) == null || !getFormClass().isAssignableFrom(query.getResultClass())) {
             throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
         }
-        return listFormWithTotalX(query.getResultClass(), HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+        return listFormWithTotal((StateFormNamedQuery<? extends F>)query, condition);
+    }
+    
+    public long getListFormTotal(@NonNull AbstractStateFormQuery query) throws Exception {
+        AbstractSqlStatement sql = query.prepareSqlTotal();
+        return getFormBaseDao().queryAsObject(Long.class, sql.getSql(), sql.getValues());
     }
     
     /**
@@ -280,37 +498,12 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
      * @return
      * @throws Exception
      */
-    public long getListFormTotal(String namedQuery, @NonNull Object condition) throws Exception {
-        StateFormNamedQuery<?> query;
-        if ((query = getFormNamedQuery(namedQuery)) == null) {
-            throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery);
-        }
-        return getListFormTotal(HttpMessageConverter.toInstance(query.getQueryClass(), condition));
+    public long getListFormTotal(@NonNull String namedQuery, @NonNull Object condition) throws Exception {
+        return getListFormTotal(getFormNamedQuery(namedQuery), condition);
     }
     
-    protected <T extends AbstractStateForm> PagedList<T> listFormX(@NonNull Class<T> resultClazz, @NonNull AbstractStateFormQuery filter)
-                        throws Exception {
-        AbstractSqlStatement query = filter.prepareSqlQuery();
-        List<T> resutSet = queryFormWithStateRevision(resultClazz, query.getSql(), query.getValues(), 
-                        getExtraFieldMapper(resultClazz, filter.getFieldMapper()));
-        return new PagedList<T>().setPage(filter.getPage()).setLimit(filter.getLimit())
-                            .setList(filter.processResultSet(resultClazz, resutSet));
-    }
-    
-    protected <T extends AbstractStateForm> PagedListWithTotal<T> listFormWithTotalX(@NonNull Class<T> resultClazz,
-                        @NonNull AbstractStateFormQuery filter) throws Exception {
-        AbstractSqlStatement query = filter.prepareSqlQuery();
-        List<T> resutSet = queryFormWithStateRevision(resultClazz, query.getSql(), query.getValues(), 
-                        getExtraFieldMapper(resultClazz, filter.getFieldMapper()));
-        long total = (resutSet == null || resutSet.size() <= 0 || resutSet.size() >= filter.getLimit())
-                                    ? getListFormTotal(filter) : (filter.getOffset() + resutSet.size());
-       return new PagedListWithTotal<T>().setPage(filter.getPage()).setLimit(filter.getLimit()).setTotal(total)
-                               .setList(filter.processResultSet(resultClazz, resutSet));
-    }
-    
-    public long getListFormTotal(@NonNull AbstractStateFormQuery query) throws Exception {
-        AbstractSqlStatement sql = query.prepareSqlTotal();
-        return getFormBaseDao().queryAsObject(Long.class, sql.getSql(), sql.getValues());
+    public long getListFormTotal(@NonNull StateFormNamedQuery<?> namedQuery, @NonNull Object condition) throws Exception {
+        return getListFormTotal(HttpMessageConverter.toInstance(namedQuery.getQueryClass(), condition));
     }
     
     /**
@@ -348,13 +541,8 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
     }
     
     @Override
-    public F getForm(long formId) throws Exception {
-        return loadFormNoStateRevision(getFormClass() , formId);
-    }
-    
-    @Override
-    public <T extends F> T getForm(Class<T> clazz, long formId) throws Exception {
-        throw new  AbstractMethodUnimplimentedException();
+    public D getForm(long formId) throws Exception {
+        return getForm(getDetailFormClass(), formId);
     }
     
     @Override
@@ -500,15 +688,16 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
      * 获取表单的外部事件定义
      * 
      */
-    public List<StateFormQueryDefinition> getFormQueryDefinition() throws Exception {
-        List<StateFormNamedQuery<?>> queries;
+    public final List<StateFormQueryDefinition> getFormQueryDefinition() throws Exception {
+        Map<String, StateFormNamedQuery<? extends L>> queries;
         List<StateFormQueryDefinition> definitions = new ArrayList<>();
-        if ((queries = getFormNamedQueries() ) != null) {
-            for (StateFormNamedQuery<?> query : queries) {
+        if ((queries = getFormQueries()) != null) {
+            for (Map.Entry<String, StateFormNamedQuery<? extends L>> query : queries.entrySet()) {
                 if (query == null) {
                     continue;
                 }
-                definitions.add(StateFormQueryDefinition.fromStateQuery(getFormName(), query.getName(), query));
+                definitions
+                        .add(StateFormQueryDefinition.fromStateQuery(getFormName(), query.getKey(), query.getValue()));
             }
         }
         return definitions;
@@ -550,7 +739,6 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
                 SQL_QUERY_MULTIPLE_APPROVAL_BY_APPROVE, new Object[]{event, form.getId(), getFormName()});
     }
 
-
     /**
      * UPDATE system_form_multiple_choice_status s
      * SET s.fail = 1
@@ -569,5 +757,19 @@ public abstract class AbstractStateFormServiceWithBaseDao<F extends AbstractStat
         }else{
             getFormBaseDao().executeUpdate(String.format(SQL_UPDATE_MULTIPLE_APPROVAL,""), new Object[]{form.getId(), getFormName()});
         }
+    }
+    
+    protected <T extends F> AbstractStateFormFilter<T> queryToFilter(final @NonNull Class<T> clazz,
+            final @NonNull AbstractStateFormQuery query) {
+        return new AbstractStateFormFilter<T>() {
+            @Override
+            public List<T> apply(Class<T> clazz) throws Exception {
+                AbstractSqlStatement sql = query.prepareSqlQuery();
+                List<T> list = queryFormWithStateRevision(clazz, sql.getSql(), sql.getValues(),
+                        getExtraFieldMapper(clazz, query.getFieldMapper()));
+                fillExtraFormFields(list);
+                return list;
+            }
+        };
     }
 }

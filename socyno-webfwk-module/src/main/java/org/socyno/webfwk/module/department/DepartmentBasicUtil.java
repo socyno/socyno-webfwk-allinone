@@ -15,9 +15,11 @@ public class DepartmentBasicUtil {
     
     public static void ensureCodeOrNameNotExists(String code, String name, Long thisId) throws Exception {
         
-        String sql = String.format("SELECT COUNT(*) FROM %s s WHERE (s.code LIKE ? OR s.name LIKE ?) %s", 
-                DepartmentService.DEFAULT.getFormTable(), thisId == null ? "" : String.format("AND s.id != %s", thisId));
-        if (DepartmentService.DEFAULT.getFormBaseDao().queryAsObject(Long.class, sql, new Object[] { code, name }) > 0) {
+        String sql = String.format("SELECT COUNT(*) FROM %s s WHERE (s.code LIKE ? OR s.name LIKE ?) %s",
+                DepartmentService.getInstance().getFormTable(),
+                thisId == null ? "" : String.format("AND s.id != %s", thisId));
+        if (DepartmentService.getInstance().getFormBaseDao().queryAsObject(Long.class, sql,
+                new Object[] { code, name }) > 0) {
             throw new NamingConflictedException("产品线的名称或代码已经被占用");
         }
     }

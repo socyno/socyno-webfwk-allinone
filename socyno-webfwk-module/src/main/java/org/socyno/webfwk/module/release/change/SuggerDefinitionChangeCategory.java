@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.socyno.webfwk.module.release.change.ChangeRequestSimple.Category;
+import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.Category;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestCategory.OptionChangeCategory;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.Definition;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.OptionClass;

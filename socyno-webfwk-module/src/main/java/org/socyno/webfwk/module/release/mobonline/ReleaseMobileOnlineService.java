@@ -9,7 +9,7 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateChoice;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.AbstractStateTodoApprovalAction;
 import org.socyno.webfwk.state.basic.AbstractStateTodoCloseAction;
@@ -20,8 +20,8 @@ import org.socyno.webfwk.state.model.CommonAttachementItem;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
-import org.socyno.webfwk.state.module.user.SystemUserSimple;
-import org.socyno.webfwk.state.service.CommonAttachmentService;
+import org.socyno.webfwk.state.module.user.SystemUserFormSimple;
+import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -43,15 +43,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBaseDaoV2<ReleaseMobileOnlineSimpleForm> {
-
-    public ReleaseMobileOnlineService(){
+public class ReleaseMobileOnlineService extends
+        AbstractStateFormServiceWithBaseDao<ReleaseMobileOnlineFormDetail, ReleaseMobileOnlineFormDefault, ReleaseMobileOnlineFormSimple> {
+    
+    private ReleaseMobileOnlineService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
-
-    public static final String FORM_DISPLAY = "上架应用商店";
+    
+    @Getter
+    private static final ReleaseMobileOnlineService Instance = new ReleaseMobileOnlineService();
 
     @Getter
     public enum STATES implements StateFormStateBaseEnum {
@@ -107,15 +109,15 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         SpecialApprovalClose(EventSpecialApprovalClose.class);
 
 
-        private final Class<? extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, ?, ?>> eventClass;
-        EVENTS(Class<? extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, ?, ?>> eventClass) {
+        private final Class<? extends AbstractStateAction<ReleaseMobileOnlineFormSimple, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<ReleaseMobileOnlineFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<ReleaseMobileOnlineDefaultForm>("默认查询", ReleaseMobileOnlineDefaultForm.class,
+        DEFAULT(new StateFormNamedQuery<ReleaseMobileOnlineFormDefault>("默认查询", ReleaseMobileOnlineFormDefault.class,
                 ReleaseMobileOnlineDefaultQuery.class));
         
         private StateFormNamedQuery<?> namedQuery;
@@ -125,15 +127,13 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         }
     }
     
-    public static final ReleaseMobileOnlineService DEFAULT = new ReleaseMobileOnlineService();
-    
     @Override
-    protected void fillExtraFormFields(Collection<? extends ReleaseMobileOnlineSimpleForm> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends ReleaseMobileOnlineFormSimple> forms) throws Exception {
         DefaultStateFormSugger.getInstance().apply(forms);
         
         Map<Long, ReleaseMobileOnlineWithAttachements> withAttachements = new HashMap<>();
         Map<Long, ReleaseMobileOnlineWithAppStore> withStore = new HashMap<>();
-        for (ReleaseMobileOnlineSimpleForm form : forms) {
+        for (ReleaseMobileOnlineFormSimple form : forms) {
             if (form == null) {
                 continue;
             }
@@ -161,7 +161,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         }
         
         if (withAttachements.size() > 0) {
-            List<CommonAttachementItem> attachements = CommonAttachmentService.queryByTargetFormFeild(getFormName(),
+            List<CommonAttachementItem> attachements = AttachmentService.queryByTargetFormFeild(getFormName(),
                     "attachements", withAttachements.keySet().toArray());
             Map<Long, List<CommonAttachementItem>> allFormAttachements = new HashMap<>();
             List<CommonAttachementItem> singleFormAttachements;
@@ -181,7 +181,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
             List<OptionReleaseMobileOnlineAppStore> ports = queryItemStoreIds(withStore.keySet().toArray(new Long[0]));
             Map<Long, List<OptionReleaseMobileOnlineAppStore>> stores = ports.stream()
                     .collect(Collectors.groupingBy(OptionReleaseMobileOnlineAppStore::getReleaseAppStoreId));
-            for (ReleaseMobileOnlineSimpleForm form : forms) {
+            for (ReleaseMobileOnlineFormSimple form : forms) {
                 if (form.getItemStore() == null) {
                     form.setItemStore(stores.get(form.getId()));
                 }
@@ -218,11 +218,16 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         return "release_app_store";
     }
     
+    @Override
+    public String getFormDisplay() {
+        return "市场发布";
+    }
+    
     public static class userChecker implements AuthoritySpecialChecker {
         
         @Override
         public boolean check(Object form) {
-            return form != null && SessionContext.getUserId().equals(((ReleaseMobileOnlineSimpleForm) form).getCreatedBy());
+            return form != null && SessionContext.getUserId().equals(((ReleaseMobileOnlineFormSimple) form).getCreatedBy());
         }
         
     }
@@ -232,7 +237,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         @Override
         public boolean check(Object form) {
             return form != null
-                    && SessionContext.getUserId().equals(((ReleaseMobileOnlineSimpleForm) form).getApprover().getId());
+                    && SessionContext.getUserId().equals(((ReleaseMobileOnlineFormSimple) form).getApprover().getId());
         }
         
     }
@@ -242,12 +247,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         @Override
         public boolean check(Object form) {
             return form != null
-                    && SessionContext.getUserId().equals(((ReleaseMobileOnlineSimpleForm) form).getSpecialApprover().getId());
+                    && SessionContext.getUserId().equals(((ReleaseMobileOnlineFormSimple) form).getSpecialApprover().getId());
         }
         
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<ReleaseMobileOnlineSimpleForm, ReleaseMobileOnlineCreation> {
+    public class EventCreate extends AbstractStateSubmitAction<ReleaseMobileOnlineFormSimple, ReleaseMobileOnlineFormCreate> {
         
         public EventCreate() {
             super("申请", STATES.CREATED.getCode());
@@ -255,12 +260,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, ReleaseMobileOnlineSimpleForm form, String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple form, String message) {
             
         }
         
         @Override
-        public Long handle(String event, ReleaseMobileOnlineSimpleForm originForm, ReleaseMobileOnlineCreation form, String message)
+        public Long handle(String event, ReleaseMobileOnlineFormSimple originForm, ReleaseMobileOnlineFormCreate form, String message)
                 throws Exception {
             OptionReleaseMobileOnlineApplication releaseAppStorDeploy = queryConfigurationInformation(
                     form.getApplicationName());
@@ -307,12 +312,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
             for (CommonAttachementItem item : upload) {
                 attachementIds.add(item.getId());
             }
-            CommonAttachmentService.cleanByTargetFormField(getFormName(), id, "attachements");
-            CommonAttachmentService.bindWithForm(getFormName(), id, attachementIds.toArray(new Long[0]));
+            AttachmentService.cleanByTargetFormField(getFormName(), id, "attachements");
+            AttachmentService.bindWithForm(getFormName(), id, attachementIds.toArray(new Long[0]));
         }
     }
     
-    public class EventEdit extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, ReleaseMobileOnlineForUpdate, Void> {
+    public class EventEdit extends AbstractStateAction<ReleaseMobileOnlineFormSimple, ReleaseMobileOnlineFormUpdate, Void> {
         
         public EventEdit() {
             super("编辑", getStateCodes(STATES.APPROVAL_REJECT, STATES.SPECIAL_APPROVER_REJECT),
@@ -321,12 +326,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = userChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, ReleaseMobileOnlineForUpdate form,
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, ReleaseMobileOnlineFormUpdate form,
                 String message) throws Exception {
             OptionReleaseMobileOnlineApplication releaseAppStorDeploy = queryConfigurationInformation(
                     form.getApplicationName());
@@ -360,7 +365,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
     }
     
     public class EventSupplementaryAttachment
-            extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, ReleaseMobileOnlineForAttachment, Void> {
+            extends AbstractStateAction<ReleaseMobileOnlineFormSimple, ReleaseMobileOnlineFormUpload, Void> {
         
         public EventSupplementaryAttachment() {
             super("上架信息补充", getStateCodes(STATES.EXECUTION), "");
@@ -368,12 +373,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = userChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event , ReleaseMobileOnlineSimpleForm originForm , ReleaseMobileOnlineForAttachment form , String message) throws Exception{
+        public Void handle(String event , ReleaseMobileOnlineFormSimple originForm , ReleaseMobileOnlineFormUpload form , String message) throws Exception{
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                     getFormTable(), new ObjectMap()
                             .put("=id", form.getId())
@@ -386,7 +391,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
     }
     
     public class EventsStoreStatusOperations
-            extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, ReleaseMobileOnlineForStatus, R> {
+            extends AbstractStateAction<ReleaseMobileOnlineFormSimple, ReleaseMobileOnlineFormStatus, R> {
         
         public EventsStoreStatusOperations() {
             super("状态变更", getStateCodes(STATES.EXECUTION), "");
@@ -394,7 +399,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, String message) {
             
         }
         
@@ -404,7 +409,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         }
         
         @Override
-        public R handle(String event , ReleaseMobileOnlineSimpleForm originForm , ReleaseMobileOnlineForStatus form , String message) throws Exception {
+        public R handle(String event , ReleaseMobileOnlineFormSimple originForm , ReleaseMobileOnlineFormStatus form , String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                     "release_app_status", new ObjectMap()
                             .put("=release_app_store_id", form.getId())
@@ -419,7 +424,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
     }
     
-    public class EventAbolition extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventAbolition extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventAbolition() {
             super("废除", getStateCodes(STATES.APPROVAL_REJECT, STATES.SPECIAL_APPROVER_REJECT), STATES.END.getCode());
@@ -427,12 +432,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = userChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, String sourceState) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, String sourceState)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, String sourceState)
                 throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
                     new ObjectMap().put("=id", originForm.getId()).put("end_result", "撤销")));
@@ -440,7 +445,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         }
     }
     
-    public class EventApprovalPassed extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventApprovalPassed extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventApprovalPassed() {
             super("审批通过", getStateCodes(STATES.CREATED), new AbstractStateChoice("是否包含特殊审批人？",
@@ -448,7 +453,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
                 @SneakyThrows
                 @Override
                 protected boolean select(AbstractStateForm abstractStateForm) {
-                    Long specialApprover = DEFAULT.getFormBaseDao().queryAsObject(Long.class,
+                    Long specialApprover = getFormBaseDao().queryAsObject(Long.class,
                             "select special_approver from release_app_online where id = ?",
                             new Object[] { abstractStateForm.getId() });
                     if (specialApprover != null) {
@@ -461,19 +466,19 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = approveUserChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, final String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, final String message) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, final String message)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, final String message)
                 throws Exception {
             return null;
         }
         
     }
     
-    public class EventApprovalReject extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventApprovalReject extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventApprovalReject() {
             super("审批拒绝", getStateCodes(STATES.CREATED), STATES.APPROVAL_REJECT.getCode());
@@ -481,12 +486,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = approveUserChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, String sourceState) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, final String message)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, final String message)
                 throws Exception {
             return null;
         }
@@ -498,7 +503,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
     }
     
-    public class EventSpecialApprovalPassed extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventSpecialApprovalPassed extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventSpecialApprovalPassed() {
             super("审批通过(s)", getStateCodes(STATES.WAIT_SPECIAL_APPROVER), STATES.EXECUTION.getCode());
@@ -506,19 +511,19 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = specialApproveUserChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, final String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, final String message) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, final String message)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, final String message)
                 throws Exception {
             return null;
         }
         
     }
     
-    public class EventSpecialApprovalReject extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventSpecialApprovalReject extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventSpecialApprovalReject() {
             super("审批拒绝(s)", getStateCodes(STATES.WAIT_SPECIAL_APPROVER), STATES.SPECIAL_APPROVER_REJECT.getCode());
@@ -526,12 +531,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = specialApproveUserChecker.class)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, String sourceState) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, final String message)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, final String message)
                 throws Exception {
             return null;
         }
@@ -543,7 +548,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
     }
     
-    public class EventReleaseComplete extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventReleaseComplete extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventReleaseComplete() {
             super("结束", getStateCodes(STATES.EXECUTION), STATES.END.getCode());
@@ -551,12 +556,12 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, final String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, final String message) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, final String message)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, final String message)
                 throws Exception {
             Map<String, Integer> mapStatus = new HashMap<>();
             for (OptionReleaseMobileOnlineAppStore store : originForm.getItemStore()) {
@@ -583,7 +588,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
     }
     
-    public class EventSendEmail extends AbstractStateAction<ReleaseMobileOnlineSimpleForm, BasicStateForm, Void> {
+    public class EventSendEmail extends AbstractStateAction<ReleaseMobileOnlineFormSimple, BasicStateForm, Void> {
         
         public EventSendEmail() {
             super("上架状态邮件通知", STATES.EXECUTION.getCode(), "");
@@ -591,34 +596,34 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, ReleaseMobileOnlineSimpleForm originForm, final String message) {
+        public void check(String event, ReleaseMobileOnlineFormSimple originForm, final String message) {
             
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileOnlineSimpleForm originForm, BasicStateForm form, String message)
+        public Void handle(String event, ReleaseMobileOnlineFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             operationNotification(event, originForm);
             return null;
         }
     }
     
-    public class EventApprovalCreate extends AbstractStateTodoApprovalAction<ReleaseMobileOnlineSimpleForm> {
+    public class EventApprovalCreate extends AbstractStateTodoApprovalAction<ReleaseMobileOnlineFormSimple> {
         
         public EventApprovalCreate() {
             super("创建上架审批人待办事项", STATES.CREATED.getCode());
         }
         
         @Override
-        protected String getTodoTitle(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form)
+        protected String getTodoTitle(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            return String.format("%s:%s - %s", FORM_DISPLAY, getForm(form.getId()).getApplicationName(), "应用上架审批");
+            return String.format("%s:%s - %s", getFormDisplay(), getForm(form.getId()).getApplicationName(), "应用上架审批");
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form)
+        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            SystemUserSimple systemUserSimple = SystemUserService.DEFAULT
+            SystemUserFormSimple systemUserSimple = SystemUserService.DEFAULT
                     .getSimple(getForm(form.getId()).getApprover().getId());
             long[] scmUser = ConvertUtil
                     .asNonNullUniquePrimitiveLongArray(getActionUserIds(EVENTS.ReleaseComplete.getName(), originForm));
@@ -631,77 +636,77 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
         }
         
         @Override
-        protected String getNextRejectEvent(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form) {
+        protected String getNextRejectEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form) {
             return EVENTS.ApprovalReject.getName();
         }
         
         @Override
-        protected String getNextApproveEvent(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form) {
+        protected String getNextApproveEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form) {
             return EVENTS.ApprovalPassed.getName();
         }
     }
     
-    public class EventApprovalClose extends AbstractStateTodoCloseAction<ReleaseMobileOnlineSimpleForm> {
+    public class EventApprovalClose extends AbstractStateTodoCloseAction<ReleaseMobileOnlineFormSimple> {
         
         public EventApprovalClose() {
             super("关闭上架审批人待办事项", STATES.CREATED.getCode());
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form)
+        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
             return EVENTS.ApprovalCreate.getName();
         }
     }
     
-    public class EventSpecialApprovalCreate extends AbstractStateTodoApprovalAction<ReleaseMobileOnlineSimpleForm> {
+    public class EventSpecialApprovalCreate extends AbstractStateTodoApprovalAction<ReleaseMobileOnlineFormSimple> {
         
         public EventSpecialApprovalCreate() {
             super("创建上架特殊审批人待办事项", STATES.WAIT_SPECIAL_APPROVER.getCode());
         }
         
         @Override
-        protected String getTodoTitle(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form)
+        protected String getTodoTitle(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            return String.format("%s:%s - %s", FORM_DISPLAY, getForm(form.getId()).getApplicationName(),
+            return String.format("%s:%s - %s", getFormDisplay(), getForm(form.getId()).getApplicationName(),
                     "应用上架审批-额外审批人");
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form)
+        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            SystemUserSimple systemUserSimple = (SystemUserSimple) SystemUserService.DEFAULT
+            SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.DEFAULT
                     .getSimple(getForm(form.getId()).getSpecialApprover().getId());
             return ConvertUtil.asNonNullUniquePrimitiveLongArray(systemUserSimple.getId());
         }
         
         @Override
-        protected String getNextRejectEvent(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form) {
+        protected String getNextRejectEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form) {
             return EVENTS.SpecialApprovalReject.getName();
         }
         
         @Override
-        protected String getNextApproveEvent(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form) {
+        protected String getNextApproveEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form) {
             return EVENTS.SpecialApprovalPassed.getName();
         }
     }
     
-    public class EventSpecialApprovalClose extends AbstractStateTodoCloseAction<ReleaseMobileOnlineSimpleForm> {
+    public class EventSpecialApprovalClose extends AbstractStateTodoCloseAction<ReleaseMobileOnlineFormSimple> {
         
         public EventSpecialApprovalClose() {
             super("关闭上架特殊审批人待办事项", STATES.WAIT_SPECIAL_APPROVER.getCode());
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineSimpleForm originForm, AbstractStateForm form)
+        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
             return EVENTS.SpecialApprovalCreate.getName();
         }
     }
     
     @Override
-    public ReleaseMobileOnlineDetailFrom getForm(long formId) throws Exception {
-        return getForm(ReleaseMobileOnlineDetailFrom.class, formId);
+    public ReleaseMobileOnlineFormDetail getForm(long formId) throws Exception {
+        return getForm(ReleaseMobileOnlineFormDetail.class, formId);
     }
     
     public OptionReleaseMobileOnlineApplication queryConfigurationInformation(String applicationName) throws Exception {
@@ -751,7 +756,7 @@ public class ReleaseMobileOnlineService extends AbstractStateFormServiceWithBase
      * @param originForm
      * @throws Exception
      */
-    public void operationNotification(String event, ReleaseMobileOnlineSimpleForm originForm) throws Exception {
+    public void operationNotification(String event, ReleaseMobileOnlineFormSimple originForm) throws Exception {
         List<OptionSystemUser> users;
         Set<Long> userIds = new HashSet<>();
         userIds.add(originForm.getCreatedBy());

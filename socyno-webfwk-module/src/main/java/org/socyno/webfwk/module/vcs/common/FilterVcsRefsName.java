@@ -66,7 +66,7 @@ public class FilterVcsRefsName extends FilterBasicKeyword implements FieldOption
     }
     
     public FilterVcsRefsName(Long applicationId, VcsRefsType vcsRefsType, String keyword) {
-        super(keyword, ApplicationService.DEFAULT.getFormName(), applicationId);
+        super(keyword, ApplicationService.getInstance().getFormName(), applicationId);
         if (vcsRefsType != null) {
             setVcsRefsType(vcsRefsType.name());
         }

@@ -3,7 +3,7 @@ package org.socyno.webfwk.module.app.form;
 import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsApplicationType;
 import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsCodeLevel;
 import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsYesOrNo;
-import org.socyno.webfwk.module.release.build.FieldSysBuildService;
+import org.socyno.webfwk.module.release.build.FieldBuildService;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -45,7 +45,7 @@ public class ApplicationFormForEdit implements ApplicationAbstractForm {
     @Attributes(title = "类型", readonly = true, type = FieldOptionsApplicationType.class)
     private String type;
     
-    @Attributes(title = "构建服务", required = true, type = FieldSysBuildService.class)
+    @Attributes(title = "构建服务", required = true, type = FieldBuildService.class)
     private String buildService;
     
     @Attributes(title = "质量分级", required = true, type = FieldOptionsCodeLevel.class)

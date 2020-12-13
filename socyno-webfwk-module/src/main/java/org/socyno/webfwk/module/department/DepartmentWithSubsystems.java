@@ -2,11 +2,11 @@ package org.socyno.webfwk.module.department;
 
 import java.util.List;
 
-import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 
 public interface DepartmentWithSubsystems {
     
-    public List<SubsystemBasicForm> getSubsystems();
+    public List<SubsystemFormSimple> getSubsystems();
     
-    public void setSubsystems(List<SubsystemBasicForm> subsystems);
+    public void setSubsystems(List<SubsystemFormSimple> subsystems);
 }

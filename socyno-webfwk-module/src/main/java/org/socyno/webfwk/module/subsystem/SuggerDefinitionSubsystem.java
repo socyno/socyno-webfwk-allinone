@@ -18,10 +18,10 @@ public class SuggerDefinitionSubsystem extends Definition {
     @Getter
     private static final SuggerDefinitionSubsystem instance = new SuggerDefinitionSubsystem();
     
-    private static final OptionClass<?> optionClass = new OptionClass<SubsystemBasicForm>() {
+    private static final OptionClass<?> optionClass = new OptionClass<SubsystemFormSimple>() {
         @Override
-        protected Class<SubsystemBasicForm> getType() {
-            return SubsystemBasicForm.class;
+        protected Class<SubsystemFormSimple> getType() {
+            return SubsystemFormSimple.class;
         }
         
         @Override
@@ -30,13 +30,13 @@ public class SuggerDefinitionSubsystem extends Definition {
         }
         
         @Override
-        protected Collection<SubsystemBasicForm> queryOptions(Collection<SubsystemBasicForm> values) throws Exception {
+        protected Collection<SubsystemFormSimple> queryOptions(Collection<SubsystemFormSimple> values) throws Exception {
             if (values == null) {
                 return null;
             }
             String optionValue;
             Set<String> optionValues = new HashSet<>();
-            for (SubsystemBasicForm v : values) {
+            for (SubsystemFormSimple v : values) {
                 if ((optionValue = v.getOptionValue()) != null) {
                     optionValues.add(optionValue);
                 }
@@ -46,7 +46,7 @@ public class SuggerDefinitionSubsystem extends Definition {
         }
         
         @Override
-        protected void fillOriginOption(Object form, SubsystemBasicForm origin, OptionWrapper wrapper, Field field,
+        protected void fillOriginOption(Object form, SubsystemFormSimple origin, OptionWrapper wrapper, Field field,
                 Attributes fieldAttrs) throws Exception {
             return;
         }

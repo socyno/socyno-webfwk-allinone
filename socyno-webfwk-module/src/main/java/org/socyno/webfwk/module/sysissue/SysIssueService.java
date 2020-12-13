@@ -13,7 +13,7 @@ import org.socyno.webfwk.state.field.*;
 import org.socyno.webfwk.state.model.CommonAttachementItem;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
-import org.socyno.webfwk.state.service.CommonAttachmentService;
+import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
 import org.socyno.webfwk.state.sugger.SuggerDefinitionFormAttachment;
 import org.socyno.webfwk.state.util.*;
@@ -27,7 +27,8 @@ import org.socyno.webfwk.util.sql.SqlQueryUtil;
 import org.socyno.webfwk.util.tool.ConvertUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
-public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIssueFormSimple> {
+public class SysIssueService
+        extends AbstractStateFormServiceWithBaseDao<SysIssueFormDetail, SysIssueFormDefault, SysIssueFormSimple> {
     
     public static class IsAssigneeChecker implements AuthoritySpecialChecker {
         @Override
@@ -113,13 +114,13 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
     }
     
-    public class EventSubmit extends AbstractStateSubmitAction<SysIssueFormSimple, SysIssueFormForCreation> {
+    public class EventSubmit extends AbstractStateSubmitAction<SysIssueFormSimple, SysIssueFormCreation> {
         public EventSubmit() {
             super("提交", STATES.SUBMITTED.getCode());
         }
         
         @Override
-        public Long handle(String event, SysIssueFormSimple originForm, final SysIssueFormForCreation form, String message) throws Exception {
+        public Long handle(String event, SysIssueFormSimple originForm, final SysIssueFormCreation form, String message) throws Exception {
             AtomicLong id = new AtomicLong(0);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
                     getFormTable(), new ObjectMap()
@@ -153,12 +154,12 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
                 }
                 attachementIds.add(item.getId());
             }
-            CommonAttachmentService.cleanByTargetFormField(getFormName(), id, "attachments");
-            CommonAttachmentService.bindWithForm(getFormName(), id, attachementIds.toArray(new Long[0]));
+            AttachmentService.cleanByTargetFormField(getFormName(), id, "attachments");
+            AttachmentService.bindWithForm(getFormName(), id, attachementIds.toArray(new Long[0]));
         }
     }
     
-    public class EventReSubmit extends AbstractStateAction<SysIssueFormSimple, SysIssueFormForEdit, Void> {
+    public class EventReSubmit extends AbstractStateAction<SysIssueFormSimple, SysIssueFormEdit, Void> {
         
         public EventReSubmit() {
             super("重新提交", getStateCodes(STATES.REJECTED), STATES.SUBMITTED.getCode());
@@ -176,7 +177,7 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
         
         @Override
-        public Void handle(String event, SysIssueFormSimple originForm, final SysIssueFormForEdit form, final String message) throws Exception {
+        public Void handle(String event, SysIssueFormSimple originForm, final SysIssueFormEdit form, final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                     getFormTable(), new ObjectMap()
                             .put("=id", form.getId())
@@ -237,7 +238,7 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
     }
     
-    public class EventAssign extends AbstractStateAction<SysIssueFormSimple, SysIssueFormForAssign, Void> {
+    public class EventAssign extends AbstractStateAction<SysIssueFormSimple, SysIssueFormAssign, Void> {
         public EventAssign() {
             super("分配", getStateCodes(STATES.SUBMITTED, STATES.ASSIGNED, 
                         STATES.ACCEPTED, STATES.PAUSED, STATES.CLOSED),
@@ -250,7 +251,7 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
         
         @Override
-        public Void handle(String event, SysIssueFormSimple originForm, SysIssueFormForAssign form, String message)
+        public Void handle(String event, SysIssueFormSimple originForm, SysIssueFormAssign form, String message)
                 throws Exception {
             AbstractUser sysUser;
             if ((sysUser = SystemUserService.DEFAULT.getSimple(form.getAssignee().getOptionValue())) == null
@@ -295,7 +296,7 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
     }
     
-    public class EventClose extends AbstractStateAction<SysIssueFormSimple, SysIssueFormForClose, Void> {
+    public class EventClose extends AbstractStateAction<SysIssueFormSimple, SysIssueFormClose, Void> {
         public EventClose() {
             super("关闭", getStateCodesEx(STATES.SUBMITTED, STATES.REJECTED, STATES.CLOSED), STATES.CLOSED.getCode());
         }
@@ -306,7 +307,7 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
         
         @Override
-        public Void handle(String event, SysIssueFormSimple originForm, SysIssueFormForClose form, String message)
+        public Void handle(String event, SysIssueFormSimple originForm, SysIssueFormClose form, String message)
                 throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(), new ObjectMap()
                     .put("=id", form.getId()).put("result", form.getResult()).put("resolution", form.getResolution())));
@@ -337,7 +338,7 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         
         @Override
         protected long[] getTodoAssignees(String event, SysIssueFormSimple originForm, AbstractStateForm form) {
-            return new long[] {((SysIssueFormForAssign)form).getAssignee().getId()};
+            return new long[] {((SysIssueFormAssign)form).getAssignee().getId()};
         }
     }
     
@@ -366,8 +367,8 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
     
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SysIssueListDefaultForm>("default",
-                SysIssueListDefaultForm.class, SysIssueListDefaultQuery.class));
+        DEFAULT(new StateFormNamedQuery<SysIssueFormDefault>("default",
+                SysIssueFormDefault.class, SysIssueQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
 
         QUERIES(StateFormNamedQuery<?> namedQuery) {
@@ -375,13 +376,14 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
         }
     }
     
-    public static final SysIssueService DEFAULT = new SysIssueService();
+    @Getter
+    private static final SysIssueService Instance = new SysIssueService();
     
     static {
-        SuggerDefinitionFormAttachment.addFormName(SysIssueFormDetail.class, DEFAULT.getFormName());
+        SuggerDefinitionFormAttachment.addFormName(SysIssueFormDetail.class, Instance.getFormName());
     }
     
-    public SysIssueService() {
+    private SysIssueService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
@@ -395,6 +397,11 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
     @Override
     public String getFormTable() {
         return "system_internal_issue";
+    }
+    
+    @Override
+    public String getFormDisplay() {
+        return "系统报障";
     }
 
     @Override
@@ -410,14 +417,6 @@ public class SysIssueService extends AbstractStateFormServiceWithBaseDaoV2<SysIs
     @Override
     protected void fillExtraFormFields(Collection<? extends SysIssueFormSimple> forms) throws Exception {
         DefaultStateFormSugger.getInstance().apply(forms);
-    }
-    
-    /**
-     * 重载父类的方法, 往详情表单中添加附件列表
-     */
-    @Override
-    public SysIssueFormDetail getForm(long formId) throws Exception {
-        return this.getForm(SysIssueFormDetail.class, formId);
     }
     
     @Override

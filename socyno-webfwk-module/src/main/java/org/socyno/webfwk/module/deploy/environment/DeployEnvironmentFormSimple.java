@@ -23,7 +23,7 @@ public class DeployEnvironmentFormSimple implements AbstractDeployEnvironmentFor
     public static class FieldOptionsState extends FieldType {
         @Override
         public List<? extends FieldOption> getStaticOptions() {
-            return DeployEnvironmentService.STATES.getStatesAsOption();
+            return DeployEnvironmentService.getInstance().getStates();
         }
         
         @Override

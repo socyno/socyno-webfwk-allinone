@@ -22,26 +22,26 @@ public class FieldSubsystemAccessors extends FieldTableView {
     /**
      * 获取业务系统基本信息
      */
-    public SubsystemBasicForm queryDynamicValue(Long subsystemId) throws Exception {
-        return SubsystemService.DEFAULT.get(SubsystemBasicForm.class, subsystemId);
+    public SubsystemFormSimple queryDynamicValue(Long subsystemId) throws Exception {
+        return SubsystemService.getInstance().get(SubsystemFormSimple.class, subsystemId);
     }
     
     /**
      * 获取业务系统基本信息
      */
     @Override
-    public List<SubsystemBasicForm> queryDynamicValues(Object[] subsystemIds) throws Exception {
+    public List<SubsystemFormSimple> queryDynamicValues(Object[] subsystemIds) throws Exception {
         if (subsystemIds == null || subsystemIds.length <= 0) {
             return Collections.emptyList();
         }
-        return SubsystemService.DEFAULT.list(SubsystemBasicForm.class,
-                new SubsystemListAllQuery(50, 1L).setIdsIn(StringUtils.join(subsystemIds, ','))).getList();
+        return SubsystemService.getInstance().list(SubsystemFormSimple.class,
+                new SubsystemQueryAll(50, 1L).setIdsIn(StringUtils.join(subsystemIds, ','))).getList();
     }
     
     /**
      * 覆盖父类的方法，根据关键字检索业务系统
      */
-    public List<SubsystemBasicForm> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    public List<SubsystemFormSimple> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
         if(filter.getFormName().equals("access_request")){
             JsonElement obj = CommonUtil.fromJson(filter.getFormJson(),JsonElement.class);
             String accessType = CommonUtil.getJstring((JsonObject) obj,"accessType");
@@ -49,21 +49,21 @@ public class FieldSubsystemAccessors extends FieldTableView {
                 return null;
             }
             if(accessType.equals("overallSituation")){
-                SubsystemBasicForm subsystemBasicForm = new SubsystemBasicForm();
+                SubsystemFormSimple subsystemBasicForm = new SubsystemFormSimple();
                 subsystemBasicForm.setName("全局");
                 subsystemBasicForm.setOptionValue("0");
                 subsystemBasicForm.setCode("全局");
-                List<SubsystemBasicForm> subsystemBasicForms = new ArrayList<>();
+                List<SubsystemFormSimple> subsystemBasicForms = new ArrayList<>();
                 subsystemBasicForms.add(subsystemBasicForm);
                 return subsystemBasicForms;
             }else{
-                return SubsystemService.DEFAULT
-                        .list(SubsystemBasicForm.class, new SubsystemListAllQuery(50, 1L).setKeyword(filter.getKeyword()))
+                return SubsystemService.getInstance()
+                        .list(SubsystemFormSimple.class, new SubsystemQueryAll(50, 1L).setKeyword(filter.getKeyword()))
                         .getList();
             }
         }
 
-        return SubsystemService.DEFAULT
-                .list(SubsystemBasicForm.class, new SubsystemListAccessorQuery(filter.getKeyword(), 50, 1L)).getList();
+        return SubsystemService.getInstance()
+                .list(SubsystemFormSimple.class, new SubsystemQueryAccessable(filter.getKeyword(), 50, 1L)).getList();
     }
 }

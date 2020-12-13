@@ -16,8 +16,8 @@ public class SubsystemBasicUtil {
     public static void ensureCodeOrNameNotExists(String code, String name, Long thisId) throws Exception {
         
         String sql = String.format("SELECT COUNT(*) FROM %s s WHERE (s.code LIKE ? OR s.name LIKE ?) %s", 
-                SubsystemService.DEFAULT.getFormTable(), thisId == null ? "" : String.format("AND s.id != %s", thisId));
-        if (SubsystemService.DEFAULT.getFormBaseDao().queryAsObject(Long.class, sql, new Object[] { code, name }) > 0) {
+                SubsystemService.getInstance().getFormTable(), thisId == null ? "" : String.format("AND s.id != %s", thisId));
+        if (SubsystemService.getInstance().getFormBaseDao().queryAsObject(Long.class, sql, new Object[] { code, name }) > 0) {
             throw new NamingConflictedException("业务系统的名称或代码已经被占用");
         }
     }

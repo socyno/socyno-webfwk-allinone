@@ -14,7 +14,7 @@ public class OptionReleaseMobileOnlineAppStore {
     @Attributes(title = "商店名")
     private String storeName;
     
-    @Attributes(title = "状态", type = ReleaseMobileOnlineDetailFrom.FieldOptionsAppStoreStatus.class)
+    @Attributes(title = "状态", type = ReleaseMobileOnlineFormDetail.FieldOptionsAppStoreStatus.class)
     private String status;
     
     @Attributes(title = "备注")

@@ -19,7 +19,7 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemFeatureWithTenant;
@@ -46,7 +46,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 
-public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<SystemRoleBasicForm> {
+public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<SystemRoleFormDetail, SystemRoleFormDefault, SystemRoleFormSimple> {
     
     public static final SystemRoleService DEFAULT = new SystemRoleService();
     
@@ -86,16 +86,16 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         , Delete(EventDelete.class)
         ;
         
-        private final Class<? extends AbstractStateAction<SystemRoleBasicForm, ?, ?>> eventClass;
-        EVENTS(Class<? extends AbstractStateAction<SystemRoleBasicForm, ?, ?>> eventClass) {
+        private final Class<? extends AbstractStateAction<SystemRoleFormSimple, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<SystemRoleFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
     
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        Default(new StateFormNamedQuery<SystemRoleListDefaultForm>("default", 
-                SystemRoleListDefaultForm.class, SystemRoleListDefaultQuery.class))
+        Default(new StateFormNamedQuery<SystemRoleFormDefault>("default", 
+                SystemRoleFormDefault.class, SystemRoleQueryDefault.class))
         ;
         
         private StateFormNamedQuery<?> namedQuery;
@@ -120,7 +120,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemRoleBasicForm, SystemRoleForCreation> {
+    public class EventCreate extends AbstractStateSubmitAction<SystemRoleFormSimple, SystemRoleFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.Enabled.getCode());
@@ -128,12 +128,12 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemRoleBasicForm form, String sourceState) {
+        public void check(String event, SystemRoleFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Long handle(String event, SystemRoleBasicForm originForm, SystemRoleForCreation role, String message)
+        public Long handle(String event, SystemRoleFormSimple originForm, SystemRoleFormCreation role, String message)
                 throws Exception {
             /* 添加角色及其授权信息 */
             ensureRoleSaveFormValid(role);
@@ -162,7 +162,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         }
     }
     
-    public class EventDelete extends AbstractStateDeleteAction<SystemRoleBasicForm> {
+    public class EventDelete extends AbstractStateDeleteAction<SystemRoleFormSimple> {
         
         public EventDelete () {
             super("删除", STATES.Disabled.getCode());
@@ -170,12 +170,12 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemRoleBasicForm form, String sourceState) {
+        public void check(String event, SystemRoleFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemRoleBasicForm originForm, BasicStateForm form, String message)
+        public Void handle(String event, SystemRoleFormSimple originForm, BasicStateForm form, String message)
                         throws Exception {
             if (InternalRoles.contains(originForm.getCode())) {
                 throw new MessageException("系统内建角色，禁止删除");
@@ -189,7 +189,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         }
     }
     
-    public class EventEdit extends AbstractStateAction<SystemRoleBasicForm, SystemRoleForEdition, Void> {
+    public class EventEdit extends AbstractStateAction<SystemRoleFormSimple, SystemRoleFormEdition, Void> {
         
         public EventEdit() {
             super("编辑", getStateCodesEx(), "");
@@ -197,12 +197,12 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemRoleBasicForm form, String sourceState) {
+        public void check(String event, SystemRoleFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemRoleBasicForm originForm, final SystemRoleForEdition role,
+        public Void handle(String event, SystemRoleFormSimple originForm, final SystemRoleFormEdition role,
                 final String message) throws Exception {
             /* 系统角色，不可修改其代码 */
             if (InternalRoles.contains(originForm.getCode())) {
@@ -237,11 +237,16 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     }
     
     @Override
+    public String getFormDisplay() {
+        return "系统角色";
+    }
+    
+    @Override
     protected AbstractDao getFormBaseDao() {
         return SystemTenantDataSource.getMain();
     }
     
-    protected void ensureRoleSaveFormValid(@NonNull SystemRoleForSaved role) throws Exception {
+    protected void ensureRoleSaveFormValid(@NonNull SystemRoleSaved role) throws Exception {
         /**
          * 检查命名规范
          */
@@ -270,30 +275,30 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
      * 检索角色清单（支持模糊检索, 不包括关联功能数据）。
      * @param nameLike 检索的关键字
      */
-    public PagedList<SystemRoleBasicForm> query(String nameLike, long page, int limit) throws Exception {
-        return listForm(SystemRoleBasicForm.class, new SystemRoleListDefaultQuery(nameLike, page, limit));
+    public PagedList<SystemRoleFormSimple> query(String nameLike, long page, int limit) throws Exception {
+        return listForm(SystemRoleFormSimple.class, new SystemRoleQueryDefault(nameLike, page, limit));
     }
     
     /**
      * 获取角色清单（不包括关联功能数据）。
      * @param nameLike 检索的关键字
      */
-    public PagedList<SystemRoleBasicForm> query(long page, int limit) throws Exception {
-        return listForm(SystemRoleBasicForm.class, new SystemRoleListDefaultQuery(page, limit));
+    public PagedList<SystemRoleFormSimple> query(long page, int limit) throws Exception {
+        return listForm(SystemRoleFormSimple.class, new SystemRoleQueryDefault(page, limit));
     }
     
     /**
      * 获取角色详情（包括关联功能数据）。
      */
-    public SystemRoleDetail get(Object idOrCode) throws Exception {
+    public SystemRoleFormDetail get(Object idOrCode) throws Exception {
         if (idOrCode == null || StringUtils.isBlank(idOrCode.toString())) {
             return null;
         }
-        List<SystemRoleDetail> result;
+        List<SystemRoleFormDetail> result;
         if (idOrCode.toString().matches("^\\d+$")) {
-            result = queryByIds(SystemRoleDetail.class, CommonUtil.parseLong(idOrCode));
+            result = queryByIds(SystemRoleFormDetail.class, CommonUtil.parseLong(idOrCode));
         } else {
-            result = queryByCodes(SystemRoleDetail.class, idOrCode.toString());
+            result = queryByCodes(SystemRoleFormDetail.class, idOrCode.toString());
         }
         if (result == null || result.size() != 1) {
             return null;
@@ -316,7 +321,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     /**
      * 通过给定的编号列表，检索角色清单
      */
-    public <T extends SystemRoleBasicForm> List<T> queryByIds(@NonNull Class<T> clazz, final Long... ids)
+    public <T extends SystemRoleFormSimple> List<T> queryByIds(@NonNull Class<T> clazz, final Long... ids)
             throws Exception {
         if (ids == null || ids.length <= 0) {
             return Collections.emptyList();
@@ -351,7 +356,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     /**
      * 检索角色详情（不包括关联功能数据）。
      */
-    public <T extends SystemRoleBasicForm> List<T> queryByCodes(@NonNull Class<T> clazz, final String... roleCodes)
+    public <T extends SystemRoleFormSimple> List<T> queryByCodes(@NonNull Class<T> clazz, final String... roleCodes)
             throws Exception {
         if (roleCodes == null || roleCodes.length <= 0) {
             return Collections.emptyList();
@@ -375,7 +380,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
      * 获取角色详情数据
      */
     @Override
-    public SystemRoleDetail getForm(long id) throws Exception {
+    public SystemRoleFormDetail getForm(long id) throws Exception {
         return get(id);
     }
     
@@ -415,12 +420,12 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     }
     
     @Override
-    protected void fillExtraFormFields(Collection<? extends SystemRoleBasicForm> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends SystemRoleFormSimple> forms) throws Exception {
         if (forms == null || forms.size() <= 0) {
             return;
         }
         Map<Long, SubsystemRoleWithFeatures> withFeatures = new HashMap<>();
-        for (SystemRoleBasicForm role : forms) {
+        for (SystemRoleFormSimple role : forms) {
             if (role == null) {
                 continue;
             }

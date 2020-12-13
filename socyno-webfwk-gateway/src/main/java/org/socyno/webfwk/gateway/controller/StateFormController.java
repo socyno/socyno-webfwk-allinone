@@ -10,8 +10,8 @@ import org.socyno.webfwk.gateway.util.HttpRedirectUtil;
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil.ServiceBackend;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.basic.BasicStateForm;
-import org.socyno.webfwk.state.service.CommonStateFormService;
-import org.socyno.webfwk.state.service.CommonStateFormService.CommonStateFormRegister;
+import org.socyno.webfwk.state.service.StateFormService;
+import org.socyno.webfwk.state.service.StateFormService.CommonStateFormRegister;
 import org.socyno.webfwk.util.remote.R;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -270,7 +270,7 @@ public class StateFormController {
     @Attributes(title = "获取已注册通用流程单列表")
     @RequestMapping(value = "/form/list", method = RequestMethod.GET)
     public R listDefinedForm() throws Exception {
-        return R.ok().setData(CommonStateFormService.listStateFormRegister());
+        return R.ok().setData(StateFormService.listStateFormRegister());
     }
     
     @ResponseBody
@@ -278,7 +278,7 @@ public class StateFormController {
     @Attributes(title = "注册通用流程单")
     @RequestMapping(value = "/form/add", method = RequestMethod.POST)
     public R addDefinedForm(@RequestBody CommonStateFormRegister form) throws Exception {
-        CommonStateFormService.registerForm(form);
+        StateFormService.registerForm(form);
         return R.ok();
     }
     
@@ -287,7 +287,7 @@ public class StateFormController {
     @Attributes(title = "编辑注册的流程单")
     @RequestMapping(value = "/form/update", method = RequestMethod.POST)
     public R updateDefinedForm(@RequestBody CommonStateFormRegister form) throws Exception {
-        CommonStateFormService.updateForm(form);
+        StateFormService.updateForm(form);
         return R.ok();
     }
     
@@ -296,7 +296,7 @@ public class StateFormController {
     @Attributes(title = "删除注册的流程单")
     @RequestMapping(value = "/form/delete/{formName}", method = RequestMethod.POST)
     public R removeDefinedForm(@PathVariable("formName") String formName) throws Exception {
-        CommonStateFormService.removeForm(formName);
+        StateFormService.removeForm(formName);
         return R.ok();
     }
     
@@ -305,7 +305,7 @@ public class StateFormController {
     @Attributes(title = "禁用/启动通用流程单")
     @RequestMapping(value = "/form/toggle/{formName}", method = RequestMethod.POST)
     public R toggleForm(@PathVariable("formName") String formName) throws Exception {
-        CommonStateFormService.toggleForm(formName);
+        StateFormService.toggleForm(formName);
         return R.ok();
     }
 }

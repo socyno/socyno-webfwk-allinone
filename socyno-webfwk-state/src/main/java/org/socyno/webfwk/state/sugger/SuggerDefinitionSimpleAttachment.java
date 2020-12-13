@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.socyno.webfwk.state.model.CommonAttachementItem;
-import org.socyno.webfwk.state.service.CommonAttachmentService;
+import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.Definition;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.OptionClass;
 
@@ -40,7 +40,7 @@ public class SuggerDefinitionSimpleAttachment extends Definition {
             for (CommonAttachementItem v : values) {
                 attachementIds.add(v.getId());
             }
-            return CommonAttachmentService.queryByIds(attachementIds);
+            return AttachmentService.queryByIds(attachementIds);
         }
         
         @Override

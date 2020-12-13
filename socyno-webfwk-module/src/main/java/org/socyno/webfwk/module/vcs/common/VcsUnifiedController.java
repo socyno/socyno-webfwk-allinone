@@ -5,10 +5,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.socyno.webfwk.module.app.form.ApplicationAbstractForm;
 import org.socyno.webfwk.module.app.form.ApplicationService;
-import org.socyno.webfwk.module.app.form.ApplicationVcsRefsCreate;
-import org.socyno.webfwk.module.app.form.ApplicationVcsRefsDelete;
+import org.socyno.webfwk.module.app.form.ApplicationFormVcsRefCreate;
+import org.socyno.webfwk.module.app.form.ApplicationFormVcsRefDelete;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
-import org.socyno.webfwk.state.module.user.SystemUserForLogin;
+import org.socyno.webfwk.state.module.user.SystemUserFormLogin;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.MessageException;
@@ -52,7 +52,7 @@ public class VcsUnifiedController {
     @RequestMapping(value = "/password/reset", method = RequestMethod.POST)
     @ResponseBody
     public R changePassword(@RequestBody VcsResetPasswordForm form) throws Exception {
-        SystemUserForLogin user = new SystemUserForLogin();
+        SystemUserFormLogin user = new SystemUserFormLogin();
         user.setUsername(form.getUsername());
         user.setPassword(form.getPassword());
         SystemUserService.DEFAULT.login(user);
@@ -99,10 +99,10 @@ public class VcsUnifiedController {
         return R.ok().setData(VcsUnifiedService.CommonCloud.listBranches(applicationId, keyword, page, limit));
     }
     
-    private void fillApplicationVcsRefsCreate(Long applicationId, ApplicationVcsRefsCreate refsCreate) throws Exception {
+    private void fillApplicationVcsRefsCreate(Long applicationId, ApplicationFormVcsRefCreate refsCreate) throws Exception {
         if (applicationId != null && refsCreate != null) {
             ApplicationAbstractForm app = null;
-            if ((app = ApplicationService.DEFAULT.getSimple(applicationId)) == null) {
+            if ((app = ApplicationService.getInstance().getSimple(applicationId)) == null) {
                 return;
             }
             refsCreate.setId(app.getId());
@@ -112,11 +112,11 @@ public class VcsUnifiedController {
         }
     }
     
-    private ApplicationAbstractForm fillApplicationVcsRefsDelete(Long applicationId, ApplicationVcsRefsDelete refsDelete)
+    private ApplicationAbstractForm fillApplicationVcsRefsDelete(Long applicationId, ApplicationFormVcsRefDelete refsDelete)
             throws Exception {
         ApplicationAbstractForm app = null;
         if (applicationId != null && refsDelete != null) {
-            if ((app = ApplicationService.DEFAULT.getSimple(applicationId)) != null) {
+            if ((app = ApplicationService.getInstance().getSimple(applicationId)) != null) {
                 refsDelete.setId(app.getId());
                 refsDelete.setState(app.getState());
                 refsDelete.setRevision(app.getRevision());
@@ -129,54 +129,58 @@ public class VcsUnifiedController {
     @RequestMapping(value = "/branch/create/{applicationId}", method = RequestMethod.POST)
     @ResponseBody
     public R createBranch(@PathVariable("applicationId") Long applicationId,
-            @RequestBody ApplicationVcsRefsCreate vcsCreate) throws Exception {
+            @RequestBody ApplicationFormVcsRefCreate vcsCreate) throws Exception {
         fillApplicationVcsRefsCreate(applicationId, vcsCreate);
-        ApplicationService.DEFAULT.triggerAction(ApplicationService.EVENTS.VcsRefBranchCreate.getName(), vcsCreate);
+        ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsBranchCreate.getName(), vcsCreate);
         return R.ok();
     }
     
     @RequestMapping(value = "/patch/list/{applicationId}", method = RequestMethod.GET)
     @ResponseBody
-    public R listPatches(@PathVariable("applicationId") Long applicationId, String keyword, Integer page, Integer limit) throws Exception {
+    public R listPatches(@PathVariable("applicationId") Long applicationId, String keyword, Integer page, Integer limit)
+            throws Exception {
         return R.ok().setData(VcsUnifiedService.CommonCloud.listPatches(applicationId, keyword, page, limit));
     }
     
     @RequestMapping(value = "/patch/create/{applicationId}", method = RequestMethod.POST)
     @ResponseBody
-    public R createPatch(@PathVariable("applicationId") Long applicationId, @RequestBody ApplicationVcsRefsCreate vcsCreate)
-            throws Exception {
+    public R createPatch(@PathVariable("applicationId") Long applicationId,
+            @RequestBody ApplicationFormVcsRefCreate vcsCreate) throws Exception {
         fillApplicationVcsRefsCreate(applicationId, vcsCreate);
-        ApplicationService.DEFAULT.triggerAction(ApplicationService.EVENTS.VcsRefPatchCreate.getName(), vcsCreate);
+        ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsPatchCreate.getName(), vcsCreate);
         return R.ok();
     }
     
     @RequestMapping(value = "/tag/list/{applicationId}", method = RequestMethod.GET)
     @ResponseBody
-    public R listTags(@PathVariable("applicationId") Long applicationId, String keyword, Integer page, Integer limit) throws Exception {
+    public R listTags(@PathVariable("applicationId") Long applicationId, String keyword, Integer page, Integer limit)
+            throws Exception {
         return R.ok().setData(VcsUnifiedService.CommonCloud.listTags(applicationId, keyword, page, limit));
     }
     
     @RequestMapping(value = "/tag/create/{applicationId}", method = RequestMethod.POST)
     @ResponseBody
-    public R createTag(@PathVariable("applicationId") Long applicationId, @RequestBody ApplicationVcsRefsCreate vcsCreate)
-            throws Exception {
+    public R createTag(@PathVariable("applicationId") Long applicationId,
+            @RequestBody ApplicationFormVcsRefCreate vcsCreate) throws Exception {
         fillApplicationVcsRefsCreate(applicationId, vcsCreate);
-        ApplicationService.DEFAULT.triggerAction(ApplicationService.EVENTS.VcsRefTagCreate.getName(), vcsCreate);
+        ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsTagCreate.getName(), vcsCreate);
         return R.ok();
     }
     
     @RequestMapping(value = "/ref/delete/{applicationId}", method = RequestMethod.POST)
     @ResponseBody
     public R deleteRefName(@PathVariable("applicationId") Long applicationId,
-            @RequestBody ApplicationVcsRefsDelete refsDelete) throws Exception {
+            @RequestBody ApplicationFormVcsRefDelete refsDelete) throws Exception {
         ApplicationAbstractForm app = fillApplicationVcsRefsDelete(applicationId, refsDelete);
         VcsRefsType vcsRefsType = app.getVcsTypeEnum().getVcsRefsType(refsDelete.getVcsRefsName());
         if (VcsRefsType.Patch.equals(vcsRefsType)) {
-            ApplicationService.DEFAULT.triggerAction(ApplicationService.EVENTS.VcsRefPatchDelete.getName(), refsDelete);
+            ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsPatchDelete.getName(),
+                    refsDelete);
         } else if (VcsRefsType.Tag.equals(vcsRefsType)) {
-            ApplicationService.DEFAULT.triggerAction(ApplicationService.EVENTS.VcsRefTagDelete.getName(), refsDelete);
+            ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsTagDelete.getName(),
+                    refsDelete);
         } else if (VcsRefsType.Branch.equals(vcsRefsType)) {
-            ApplicationService.DEFAULT.triggerAction(ApplicationService.EVENTS.VcsRefBranchDelete.getName(),
+            ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsBranchDelete.getName(),
                     refsDelete);
         } else if (VcsRefsType.Master.equals(vcsRefsType)) {
             throw new MessageException("禁止删除主干分支");

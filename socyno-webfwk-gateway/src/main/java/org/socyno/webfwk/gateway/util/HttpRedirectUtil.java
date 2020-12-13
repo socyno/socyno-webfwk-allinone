@@ -6,8 +6,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.socyno.webfwk.state.basic.AbstractStateFormService;
-import org.socyno.webfwk.state.service.CommonStateFormService;
-import org.socyno.webfwk.state.service.CommonStateFormService.CommonStateFormRegister;
+import org.socyno.webfwk.state.service.StateFormService;
+import org.socyno.webfwk.state.service.StateFormService.CommonStateFormRegister;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.exception.PageNotFoundException;
@@ -96,7 +96,7 @@ public class HttpRedirectUtil {
                 return null;
             }
             CommonStateFormRegister register;
-            if ((register = CommonStateFormService.getFormRegister(formName)) == null || !register.isEnabled()) {
+            if ((register = StateFormService.getFormRegister(formName)) == null || !register.isEnabled()) {
                 return null;
             }
             for (ServiceBackend backend : ServiceBackend.values()) {

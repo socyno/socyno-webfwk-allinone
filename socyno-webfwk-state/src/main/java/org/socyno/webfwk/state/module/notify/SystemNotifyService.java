@@ -7,7 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.socyno.webfwk.state.module.notify.SystemNotifyRecordSimple.MessageType;
+import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.MessageType;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.util.context.RunableWithSessionContext;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -71,7 +71,7 @@ public class SystemNotifyService {
     public static void sendSync(String template, Map<String, Object> context, int options) throws Exception {
         
         /* 获得模板信息 */
-        SystemNotifyTemplateSimple tmplForm = null;
+        SystemNotifyTemplateFormSimple tmplForm = null;
         if ((tmplForm = SystemNotifyTemplateService.getInstance()
                 .getByCode(StringUtils.trimToEmpty(template))) == null) {
             if ((options & NOEXCEPTION_TMPL_NOTFOUD) != 0) {
@@ -85,9 +85,9 @@ public class SystemNotifyService {
         if (context != null) {
             tmplContext.putAll(context);
         }
-        List<SystemNotifyRecordForCreation> notifies = new ArrayList<>(5);
+        List<SystemNotifyRecordFormCreation> notifies = new ArrayList<>(5);
         if (StringUtils.isNotBlank(tmplForm.getMailContent())) {
-            SystemNotifyRecordForCreation mailNotify= new SystemNotifyRecordForCreation();
+            SystemNotifyRecordFormCreation mailNotify= new SystemNotifyRecordFormCreation();
             mailNotify.setType(MessageType.Email.getValue());
             mailNotify.setMessageTo(tmplForm.getMailTo());
             mailNotify.setMessageCc(tmplForm.getMailCc());
@@ -95,13 +95,13 @@ public class SystemNotifyService {
             notifies.add(mailNotify);
         }
         if (StringUtils.isNotBlank(tmplForm.getMessageContent())) {
-            SystemNotifyRecordForCreation messageNotify = new SystemNotifyRecordForCreation();
+            SystemNotifyRecordFormCreation messageNotify = new SystemNotifyRecordFormCreation();
             messageNotify.setType(MessageType.Message.getValue());
             messageNotify.setMessageTo(tmplForm.getMessageTo());
             messageNotify.setContent(EnjoyUtil.format(tmplForm.getMessageContent(), tmplContext.asMap()));
             notifies.add(messageNotify);
         }
-        for (SystemNotifyRecordForCreation notify : notifies) {
+        for (SystemNotifyRecordFormCreation notify : notifies) {
             SystemNotifyRecordService.getInstance().triggerAction(SystemNotifyRecordService.EVENTS.Create.getName(), notify);
         }
     }

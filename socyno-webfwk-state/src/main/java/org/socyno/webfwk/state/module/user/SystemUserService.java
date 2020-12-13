@@ -11,14 +11,14 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.FieldSystemUserAuth;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUserAuth;
-import org.socyno.webfwk.state.module.role.SystemRoleDetail;
+import org.socyno.webfwk.state.module.role.SystemRoleFormDetail;
 import org.socyno.webfwk.state.module.role.SystemRoleService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantBasicService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
@@ -48,10 +48,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
-public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<SystemUserSimple> {
+public class SystemUserService extends
+        AbstractStateFormServiceWithBaseDao<SystemUserFormDetail, SystemUserFormDefault, SystemUserFormSimple> {
     
     public class CurrentUserIsMeChecker implements AuthoritySpecialChecker {
-
+        
         @Override
         public boolean check(Object originForm) {
             return originForm != null && SessionContext.getUserId() != null 
@@ -92,7 +93,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemUserSimple, SystemUserForCreation> {
+    public class EventCreate extends AbstractStateSubmitAction<SystemUserFormSimple, SystemUserFormCreation> {
         
         public EventCreate() {
             super("添加常规账户", STATES.ENABLED.getCode());
@@ -100,12 +101,12 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemUserSimple form, String sourceState) {
+        public void check(String event, SystemUserFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Long handle(String event, SystemUserSimple originForm, SystemUserForCreation form, String message) throws Exception {
+        public Long handle(String event, SystemUserFormSimple originForm, SystemUserFormCreation form, String message) throws Exception {
             String nameNoTenant = "";
             String nameSuffix = String.format("@%s", SessionContext.getTenant());
             if ((nameNoTenant = StringUtils.removeEnd(form.getUsername(), nameSuffix)).equals(form.getUsername())) {
@@ -145,7 +146,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         }
     }
     
-    public class EventCreateDomain extends AbstractStateSubmitAction<SystemUserSimple, SystemUserForCreationDomain> {
+    public class EventCreateDomain extends AbstractStateSubmitAction<SystemUserFormSimple, SystemUserFormCreationDomain> {
 
         public EventCreateDomain() {
             super("添加域(Windows)用户", STATES.ENABLED.getCode());
@@ -153,12 +154,12 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System, rejecter = CreateDomainUserRejecter.class)
-        public void check(String event, SystemUserSimple form, String sourceState) {
+        public void check(String event, SystemUserFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Long handle(String event, SystemUserSimple originForm, SystemUserForCreationDomain form, String message)
+        public Long handle(String event, SystemUserFormSimple originForm, SystemUserFormCreationDomain form, String message)
                 throws Exception {
             SystemWindowsAdUser windowsAdUser;
             if ((windowsAdUser = WindowsAdService.getAdUser(form.getUsername())) == null) {
@@ -171,7 +172,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         }
     }
     
-    public class EventUpdate extends AbstractStateAction<SystemUserSimple, SystemUserForEdition, Void> {
+    public class EventUpdate extends AbstractStateAction<SystemUserFormSimple, SystemUserFormEdition, Void> {
 
         public EventUpdate() {
             super("编辑", getStateCodesEx(), "");
@@ -184,12 +185,12 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = CurrentUserIsMeChecker.class)
-        public void check(String event, SystemUserSimple form, String sourceState) {
+        public void check(String event, SystemUserFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemUserSimple originForm, final SystemUserForEdition form, final String message) throws Exception {
+        public Void handle(String event, SystemUserFormSimple originForm, final SystemUserFormEdition form, final String message) throws Exception {
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
                 public void process(ResultSet result, Connection conn) throws Exception {
@@ -232,7 +233,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
     }
 
-    public class EventChangePassword extends AbstractStateAction<SystemUserSimple, SystemUserForNewPassword, Void> {
+    public class EventChangePassword extends AbstractStateAction<SystemUserFormSimple, SystemUserFormNewPassword, Void> {
         
         public EventChangePassword() {
             super("修改密码", getStateCodesEx(), "");
@@ -245,23 +246,23 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = CurrentUserIsMeChecker.class, rejecter = ChangePasswordRejecter.class)
-        public void check(String event, SystemUserSimple form, String sourceState) {
+        public void check(String event, SystemUserFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemUserSimple originForm, SystemUserForNewPassword form, String message)
+        public Void handle(String event, SystemUserFormSimple originForm, SystemUserFormNewPassword form, String message)
                             throws Exception {
             /* 确认密码非空，且输入确认正确 */
-            String newPassword = ((SystemUserForNewPassword)form).getNewPassword();
+            String newPassword = ((SystemUserFormNewPassword)form).getNewPassword();
             if (StringUtils.isBlank(newPassword)
-                    || !StringUtils.equals(newPassword, ((SystemUserForNewPassword)form).getConfirmPassword())) {
+                    || !StringUtils.equals(newPassword, ((SystemUserFormNewPassword)form).getConfirmPassword())) {
                 throw new MessageException("两次输入的新密码不一致!");
             }
             
             /* 当修改自己的密码时，需要验证原密码 */
             if (form.getId().equals(SessionContext.getUserId())) {
-                if (!checkLocalPassword(SessionContext.getUserId(), ((SystemUserForNewPassword)form).getPassword())) {
+                if (!checkLocalPassword(SessionContext.getUserId(), ((SystemUserFormNewPassword)form).getPassword())) {
                     throw new MessageException("输入密码不正确，或者非本地用户!");
                 }
             }
@@ -275,7 +276,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
     }
     
-    public class EventMarkDisabled extends AbstractStateAction<SystemUserSimple, BasicStateForm, Void> {
+    public class EventMarkDisabled extends AbstractStateAction<SystemUserFormSimple, BasicStateForm, Void> {
         
         public EventMarkDisabled() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());
@@ -288,13 +289,13 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemUserSimple form, String sourceState) {
+        public void check(String event, SystemUserFormSimple form, String sourceState) {
             
         }
         
     }
     
-    public class EventMarkEnabled extends AbstractStateAction<SystemUserSimple, BasicStateForm, Void> {
+    public class EventMarkEnabled extends AbstractStateAction<SystemUserFormSimple, BasicStateForm, Void> {
         
         public EventMarkEnabled() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -307,7 +308,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemUserSimple form, String sourceState) {
+        public void check(String event, SystemUserFormSimple form, String sourceState) {
             
         }
         
@@ -347,16 +348,16 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         
         ;
         
-        private final Class<? extends AbstractStateAction<SystemUserSimple, ?, ?>> eventClass;
-        EVENTS(Class<? extends AbstractStateAction<SystemUserSimple, ?, ?>> eventClass) {
+        private final Class<? extends AbstractStateAction<SystemUserFormSimple, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<SystemUserFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemUserListDefaultForm>("default", 
-                SystemUserListDefaultForm.class, SystemUserListDefaultQuery.class));
+        DEFAULT(new StateFormNamedQuery<SystemUserFormDefault>("默认查询", 
+                SystemUserFormDefault.class, SystemUserQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
         
         QUERIES(StateFormNamedQuery<?> namedQuery) {
@@ -386,6 +387,11 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     @Override
     public String getFormTable() {
         return "system_user";
+    }
+    
+    @Override
+    public String getFormDisplay() {
+        return "系统用户";
     }
     
     @Override
@@ -444,13 +450,13 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
      * @param nameLike 检索的关键字
      * @param disableIncluded 是否包括已禁用的用户
      */
-    public PagedList<SystemUserSimple> queryByNameLike(String nameLike, boolean disableIncluded, long page, int limit)
+    public PagedList<SystemUserFormSimple> queryByNameLike(String nameLike, boolean disableIncluded, long page, int limit)
             throws Exception {
         if (StringUtils.isBlank(nameLike)) {
             return null;
         }
-        return listForm(SystemUserSimple.class,
-                new SystemUserListDefaultQuery(page, limit).setNameLike(nameLike).setDisableIncluded(disableIncluded));
+        return listForm(SystemUserFormSimple.class,
+                new SystemUserQueryDefault(page, limit).setNameLike(nameLike).setDisableIncluded(disableIncluded));
     }
     
     /**
@@ -468,12 +474,12 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     /**
      * 检索用户详情。
      */
-    public <T extends SystemUserSimple> List<T> queryByUserIds(@NonNull Class<T> clazz, final Long... ids)
+    public <T extends SystemUserFormSimple> List<T> queryByUserIds(@NonNull Class<T> clazz, final Long... ids)
             throws Exception {
         if (ids == null || ids.length <= 0) {
             return Collections.emptyList();
         }
-        return listForm(clazz, new SystemUserListDefaultQuery(1, ids.length)
+        return listForm(clazz, new SystemUserQueryDefault(1, ids.length)
                     .setUserIds(StringUtils.join(ids, ','))
                     .setDisableIncluded(true)).getList();
     }
@@ -493,12 +499,12 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     /**
      * 检索用户详情。
      */
-    public <T extends SystemUserSimple> List<T> queryByUsernames(@NonNull Class<T> clazz, final String... usernames)
+    public <T extends SystemUserFormSimple> List<T> queryByUsernames(@NonNull Class<T> clazz, final String... usernames)
             throws Exception {
         if (usernames == null || usernames.length <= 0) {
             return Collections.emptyList();
         }
-        return listForm(clazz, new SystemUserListDefaultQuery(1, usernames.length)
+        return listForm(clazz, new SystemUserQueryDefault(1, usernames.length)
                 .setUsernames(StringUtils.join(usernames, ','))
                 .setDisableIncluded(true)).getList();
     }
@@ -506,15 +512,15 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     /**
      * 根据用户的编号或者代码检索用户详情。
      */
-    public SystemUserDetail get(Object idOrUsername) throws Exception {
+    public SystemUserFormDetail get(Object idOrUsername) throws Exception {
         if (idOrUsername == null || StringUtils.isBlank(idOrUsername.toString())) {
             return null;
         }
-        List<SystemUserDetail> result;
+        List<SystemUserFormDetail> result;
         if (idOrUsername.toString().matches("^\\d+$")) {
-            result = queryByUserIds(SystemUserDetail.class, CommonUtil.parseLong(idOrUsername));
+            result = queryByUserIds(SystemUserFormDetail.class, CommonUtil.parseLong(idOrUsername));
         } else {
-            result = queryByUsernames(SystemUserDetail.class, idOrUsername.toString());
+            result = queryByUsernames(SystemUserFormDetail.class, idOrUsername.toString());
         }
         if (result == null || result.size() != 1) {
             return null;
@@ -546,7 +552,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     /**
      * 用户认证
      */
-    public SystemUserToken login(SystemUserForLogin form) throws Exception {
+    public SystemUserToken login(SystemUserFormLogin form) throws Exception {
         if (form == null || StringUtils.isBlank(form.getUsername()) || StringUtils.isBlank(form.getPassword())) {
             throw new MessageException("账户或密码信息不完整");
         }
@@ -615,7 +621,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
                     }
                 }
                 
-                SystemRoleDetail basicRole;
+                SystemRoleFormDetail basicRole;
                 if ((basicRole = SystemRoleService.DEFAULT
                         .get(SystemRoleService.InternalRoles.Basic.getCode())) != null) {
                     getFormBaseDao()
@@ -657,7 +663,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
      * 检索用户详情（包括关联的可执行操作）。
      */
     @Override
-    public SystemUserDetail getForm(long id) throws Exception {
+    public SystemUserFormDetail getForm(long id) throws Exception {
         return get(id);
     }
     
@@ -694,15 +700,15 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
                 new Object[] { userId, SystemRoleService.InternalRoles.Admin.getCode()}) > 0;
     }
     
-    public SystemUserSimple getSimple(Object idOrUsername) throws Exception {
+    public SystemUserFormSimple getSimple(Object idOrUsername) throws Exception {
         if (idOrUsername == null || StringUtils.isBlank(idOrUsername.toString())) {
             return null;
         }
-        List<SystemUserSimple> result;
+        List<SystemUserFormSimple> result;
         if (idOrUsername.toString().matches("^\\d+$")) {
-            result = queryByUserIds(SystemUserSimple.class, CommonUtil.parseLong(idOrUsername));
+            result = queryByUserIds(SystemUserFormSimple.class, CommonUtil.parseLong(idOrUsername));
         } else {
-            result = queryByUsernames(SystemUserSimple.class, idOrUsername.toString());
+            result = queryByUsernames(SystemUserFormSimple.class, idOrUsername.toString());
         }
         if (result == null || result.size() != 1) {
             return null;
@@ -710,24 +716,24 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
         return result.get(0);
     }
     
-    public List<SystemUserSecurityOnly> getUsersSecurity(Long... userIds) throws Exception {
+    public List<SystemUserFormWithSecurity> getUsersSecurity(Long... userIds) throws Exception {
         if (userIds == null || userIds.length <= 0
                 || (userIds = ConvertUtil.asNonNullUniqueLongArray((Object[]) userIds)).length <= 0) {
             return Collections.emptyList();
         }
-        return listForm(SystemUserSecurityOnly.class,
-                    new SystemUserListDefaultQuery(1, userIds.length)
+        return listForm(SystemUserFormWithSecurity.class,
+                    new SystemUserQueryDefault(1, userIds.length)
                     .setUserIds(StringUtils.join(userIds, ','))).getList();
     }
 
-    public List<SystemUserSecurityOnly> getUsersSecurity(Object[] userIds) throws Exception {
+    public List<SystemUserFormWithSecurity> getUsersSecurity(Object[] userIds) throws Exception {
         if (userIds == null || userIds.length <= 0) {
             return Collections.emptyList();
         }
         return getUsersSecurity(ConvertUtil.asNonNullUniqueLongArray(userIds));
     }
     
-    public List<SystemUserSecurityOnly> getUsersSecurity(Collection<?> userIds) throws Exception {
+    public List<SystemUserFormWithSecurity> getUsersSecurity(Collection<?> userIds) throws Exception {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -772,14 +778,14 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
     }
     
     @Override
-    protected void fillExtraFormFields(Collection<? extends SystemUserSimple> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends SystemUserFormSimple> forms) throws Exception {
         
         if (forms == null || forms.size() <= 0) {
             return;
         }
         Map<Long, List<SystemUserWithAuths>> withAuths = new HashMap<>();
         Map<Long, List<SystemUserWithManagerEntity>> withManager = new HashMap<>();
-        for (SystemUserSimple user : forms) {
+        for (SystemUserFormSimple user : forms) {
             if (user == null) {
                 continue;
             }
@@ -829,7 +835,7 @@ public class SystemUserService extends AbstractStateFormServiceWithBaseDaoV2<Sys
                 }
                 for (List<SystemUserWithManagerEntity> users : withManager.values()) {
                     for (SystemUserWithManagerEntity with : users) {
-                        with.setManagerEntity(mappedManagers.get(((SystemUserSimple) with).getManager()));
+                        with.setManagerEntity(mappedManagers.get(((SystemUserFormSimple) with).getManager()));
                     }
                 }
             }

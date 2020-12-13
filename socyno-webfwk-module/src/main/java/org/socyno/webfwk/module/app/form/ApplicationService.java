@@ -19,7 +19,7 @@ import org.socyno.webfwk.module.app.form.FieldApplicationNamespace.OptionApplica
 import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment;
 import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment.OptionDeployEnvironment;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
-import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
@@ -36,7 +36,7 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
-import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
+import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -53,12 +53,17 @@ import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
-import com.github.reinert.jjschema.v1.FieldOption;
-import com.github.reinert.jjschema.v1.FieldSimpleOption;
-
-public class ApplicationService extends AbstractStateFormServiceWithBaseDao<ApplicationFormDetail> {
+public class ApplicationService extends
+        AbstractStateFormServiceWithBaseDao<ApplicationFormDetail, ApplicationFormDefault, ApplicationFormSimple> {
     
-    public static final ApplicationService DEFAULT = new ApplicationService();
+    @Getter
+    private static final ApplicationService Instance = new ApplicationService();
+    
+    private ApplicationService() {
+        setStates(STATES.values());
+        setActions(EVENTS.values());
+        setQueries(QUERIES.values());
+    }
     
     static {
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionApplication.getInstance());
@@ -77,22 +82,21 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
     }
     
     @Override
+    public String getFormDisplay() {
+        return "应用清单";
+    }
+    
+    @Override
     protected AbstractDao getFormBaseDao() {
         return SystemTenantDataSource.getMain();
     }
     
-    @Override
-    protected Map<String, AbstractStateAction<ApplicationFormDetail, ?, ?>> getFormActions() {
-        Map<String, AbstractStateAction<ApplicationFormDetail, ?, ?>> actions = new HashMap<>();
-        for (EVENTS event : EVENTS.values()) {
-            actions.put(event.getName(), event.getAction());
-        }
-        return actions;
-    }
-    
     @Getter
     public static enum STATES implements StateFormStateBaseEnum {
-        CREATED("created", "待上线"), ONLINE("online", "在线中"), OFFLINING("offlining", "待下线"), OFFLINED("offlined", "已下线");
+        CREATED("created", "待上线"), 
+        ONLINE("online", "在线中"), 
+        OFFLINING("offlining", "待下线"), 
+        OFFLINED("offlined", "已下线");
         
         private final String code;
         private final String name;
@@ -101,67 +105,27 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
             this.code = code;
             this.name = name;
         }
-        
-        public static String[] stringify(STATES... states) {
-            if (states == null || states.length <= 0) {
-                return new String[0];
-            }
-            String[] result = new String[states.length];
-            for (int i = 0; i < states.length; i++) {
-                result[i] = states[i].getCode();
-            }
-            return result;
-        }
-        
-        public static String[] stringifyEx(STATES... states) {
-            if (states == null) {
-                states = new STATES[0];
-            }
-            List<String> result = new ArrayList<>(states.length);
-            for (STATES s : STATES.values()) {
-                if (!ArrayUtils.contains(states, s)) {
-                    result.add(s.getCode());
-                }
-            }
-            return result.toArray(new String[0]);
-        }
-        
-        public static List<? extends FieldOption> getStatesAsOption() {
-            List<FieldOption> options = new ArrayList<>();
-            for (STATES s : STATES.values()) {
-                options.add(new FieldSimpleOption(s.getCode(), s.getName()));
-            }
-            return options;
-        }
     }
     
     @Getter
-    public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<ApplicationListDefaultForm>("default", ApplicationListDefaultForm.class,
-                ApplicationListDefaultQuery.class)),
+    public enum QUERIES implements StateFormQueryBaseEnum {
+        DEFAULT(new StateFormNamedQuery<ApplicationFormDefault>("default", ApplicationFormDefault.class,
+                ApplicationQueryDefault.class)),
         /**
          * 默认情况下，为确保授权机制的有效性，请尽量使用 DEFAULT 查询，只显示当前的可见的应用清单。
          * 如在部分场景必须跳过该限制时，可使用该查询设置, 请谨慎使用！！！
          * 
          */
-        ALLAPPS(new StateFormNamedQuery<ApplicationListDefaultForm>("allapps", ApplicationListDefaultForm.class,
-                ApplicationListAllQuery.class)),
+        ALLAPPS(new StateFormNamedQuery<ApplicationFormDefault>("allapps", ApplicationFormDefault.class,
+                ApplicationQueryAll.class)),
         
-        ALLSIMPLES(new StateFormNamedQuery<ApplicationFormSimple>("allsimples", ApplicationFormSimple.class,
-                ApplicationListAllQuery.class));
+        ALLSIMPLES(new StateFormNamedQuery<ApplicationFormDefault>("allsimples", ApplicationFormDefault.class,
+                ApplicationQueryAll.class));
         
         private StateFormNamedQuery<?> namedQuery;
-
+        
         QUERIES(StateFormNamedQuery<?> namedQuery) {
             this.namedQuery = namedQuery;
-        }
-        
-        public static List<StateFormNamedQuery<?>> getQueries() {
-            List<StateFormNamedQuery<?>> queries = new ArrayList<>();
-            for (QUERIES item : QUERIES.values()) {
-                queries.add(item.getNamedQuery());
-            }
-            return queries;
         }
     }
     
@@ -170,12 +134,12 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
             return null;
         }
         ApplicationFormWithSubsystem form = get(ApplicationFormWithSubsystem.class, applicatoinId);
-        SubsystemBasicForm subsystem;
+        SubsystemFormSimple subsystem;
         if ((subsystem = form.getSubsystem()) == null) {
             throw new MessageException("应用的业务系统未设置");
         }
         AbstractSystemTenant tenant;
-        if ((tenant = SystemTenantService.getSimple(SessionContext.getTenant())) == null
+        if ((tenant = SystemTenantService.getInstance().getSimple(SessionContext.getTenant())) == null
                 || StringUtils.isBlank(tenant.getCodeNamespace())) {
             throw new MessageException("获取租户代码空间未设置");
         }
@@ -183,401 +147,438 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
                 .setDescription(form.getDescription()).setVcsPath(form.getVcsPath()).setVcsType(form.getVcsType());
     }
     
-    public static enum EVENTS implements StateFormEventBaseEnum {
-        Create(new AbstractStateSubmitAction<ApplicationFormDetail, ApplicationFormForCreation>("添加",
-                STATES.CREATED.getCode()) {
+    public class EventCreate extends AbstractStateSubmitAction<ApplicationFormDetail, ApplicationFormCreation> {
+        
+        public EventCreate() {
+            super("添加", STATES.CREATED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        public void check(String event, ApplicationFormDetail form, String sourceState) {
 
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
-            public void check(String event, ApplicationFormDetail form, String sourceState) {
-
-            }
-
-            @Override
-            public Long handle(String event, ApplicationFormDetail originForm, final ApplicationFormForCreation form,
-                    final String message) throws Exception {
-                ApplicationBasicUtil.ensuerNameFormatValid(form.getName());
-                final AtomicLong id = new AtomicLong(0);
-                DEFAULT.getFormBaseDao().executeTransaction(new ResultSetProcessor() {
-                    @Override
-                    public void process(ResultSet result, Connection conn) throws Exception {
-                        DEFAULT.getFormBaseDao().executeUpdate(
-                                SqlQueryUtil.prepareInsertQuery(
-                                        DEFAULT.getFormTable(),
-                                        new ObjectMap().put("name", form.getName()).put("type", form.getType())
-                                                .put("vcs_type", form.getVcsType()).put("vcs_path", "")
-                                                .put("stateless", form.getStateless())
-                                                .put("description", form.getDescription())
-                                                .put("code_level", form.getCodeLevel())
-                                                .put("subsystem_id", form.getSubsystemId())
-                                                .put("created_user_code", SessionContext.getUsername())
-                                                .put("created_user_name", SessionContext.getDisplay())),
-                                new ResultSetProcessor() {
-                                    @Override
-                                    public void process(ResultSet result, Connection conn) throws Exception {
-                                        result.next();
-                                        id.set(result.getLong(1));
-                                    }
-                                });
-                        VcsUnifiedAppRepoEntity repo = VcsUnifiedService.CommonCloud.createOrResetAppRepo(id.get());
-                        DEFAULT.getFormBaseDao().executeUpdate(
-                                SqlQueryUtil.prepareUpdateQuery(
-                                        DEFAULT.getFormTable(),
-                                        new ObjectMap()
-                                                .put("=id", id.get())
-                                                .put("vcs_path", repo.getPathToRepo())
-                                                .put("release_branch",
-                                                        VcsType.forName(form.getVcsType()).getMasterName())));
-                    }
-                });
-                return id.get();
-            }
-        }),
-        Edit(new AbstractStateAction<ApplicationFormDetail, ApplicationFormForEdit, Void>("编辑",
-                STATES.stringifyEx(), "") {
-
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
-            public void check(String event, ApplicationFormDetail form, String sourceState) {
-
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, final ApplicationFormForEdit form,
-                    final String message) throws Exception {
-                DEFAULT.getFormBaseDao().executeTransaction(new ResultSetProcessor() {
-                    @Override
-                    public void process(ResultSet resultSet, Connection connection) throws Exception {
-                        DEFAULT.getFormBaseDao().executeUpdate(
-                                SqlQueryUtil.prepareUpdateQuery(
-                                        DEFAULT.getFormTable(),
-                                        new ObjectMap().put("=id", form.getId()).put("stateless", form.getStateless())
-                                                .put("description", form.getDescription())
-                                                .put("code_level", form.getCodeLevel())
-                                                .put("build_service", form.getBuildService())));
-                    }
-                });
-                return null;
-            }
-        }),
-        UpgradeVersion(new AbstractStateAction<ApplicationFormDetail, ApplicationFormForUpgradeVersion, Void>(
-                "版本升级", STATES.stringify(STATES.CREATED, STATES.ONLINE), "") {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
-            public void check(String event, ApplicationFormDetail form, String sourceState) {
-            }
-
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormForUpgradeVersion form,
-                    String message) throws Exception {
-                long version = checkVersion(originForm.getBuildMainVersion(), form.getBuildVersion());
-                DEFAULT.getFormBaseDao().executeUpdate(
-                        SqlQueryUtil.prepareUpdateQuery(DEFAULT.getFormTable(), new ObjectMap()
-                                .put("=id", form.getId()).put("build_main_version", version)));
-                return null;
-            }
-        }),
-        ToNormalRelease(new AbstractStateAction<ApplicationFormDetail, ApplicationFormFromNormalRelease, Void>(
-                "切换为常规发布", STATES.stringify(STATES.ONLINE), "") {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, rejecter = ToMasterReleaseRejecter.class, parser = AppSubsystemParser.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormFromNormalRelease form,
-                    String message) throws Exception {
-                DEFAULT.getFormBaseDao().executeUpdate(
-                        SqlQueryUtil.prepareUpdateQuery(
-                                DEFAULT.getFormTable(),
-                                new ObjectMap().put("=id", form.getId()).put("release_branch",
-                                        VcsType.forName(originForm.getVcsType()).getMasterName())));
-                return null;
-            }
-        }),
-
-        ToBranchRelease(new AbstractStateAction<ApplicationFormDetail, ApplicationFormFromBranchRelease, Void>(
-                "切换为分支发布", STATES.stringify(STATES.ONLINE), "") {
-
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, rejecter = ToBranchReleaseRejecter.class, parser = AppSubsystemParser.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormFromBranchRelease form,
-                    String message) throws Exception {
-                if (!StringUtils.startsWith(form.getReleaseBranch(), VcsType.forName(originForm.getVcsType())
-                        .getPatchesPrefix())) {
-                    throw new MessageException("代码分支路径不符合规范，请修改路径后重新提交！");
+        }
+        
+        @Override
+        public Long handle(String event, ApplicationFormDetail originForm, final ApplicationFormCreation form,
+                final String message) throws Exception {
+            ApplicationBasicUtil.ensuerNameFormatValid(form.getName());
+            final AtomicLong id = new AtomicLong(0);
+            getFormBaseDao().executeTransaction(new ResultSetProcessor() {
+                @Override
+                public void process(ResultSet result, Connection conn) throws Exception {
+                    getFormBaseDao().executeUpdate(
+                            SqlQueryUtil.prepareInsertQuery(
+                                    getFormTable(),
+                                    new ObjectMap().put("name", form.getName()).put("type", form.getType())
+                                            .put("vcs_type", form.getVcsType()).put("vcs_path", "")
+                                            .put("stateless", form.getStateless())
+                                            .put("description", form.getDescription())
+                                            .put("code_level", form.getCodeLevel())
+                                            .put("subsystem_id", form.getSubsystemId())
+                                            .put("created_user_code", SessionContext.getUsername())
+                                            .put("created_user_name", SessionContext.getDisplay())),
+                            new ResultSetProcessor() {
+                                @Override
+                                public void process(ResultSet result, Connection conn) throws Exception {
+                                    result.next();
+                                    id.set(result.getLong(1));
+                                }
+                            });
+                    VcsUnifiedAppRepoEntity repo = VcsUnifiedService.CommonCloud.createOrResetAppRepo(id.get());
+                    getFormBaseDao().executeUpdate(
+                            SqlQueryUtil.prepareUpdateQuery(
+                                    getFormTable(),
+                                    new ObjectMap()
+                                            .put("=id", id.get())
+                                            .put("vcs_path", repo.getPathToRepo())
+                                            .put("release_branch",
+                                                    VcsType.forName(form.getVcsType()).getMasterName())));
                 }
-                DEFAULT.getFormBaseDao().executeUpdate(
-                        SqlQueryUtil.prepareUpdateQuery(DEFAULT.getFormTable(), new ObjectMap()
-                                .put("=id", form.getId()).put("release_branch", form.getReleaseBranch())));
-                return null;
-            }
-        }),
+            });
+            return id.get();
+        }
+    }
+    
+    public class EventEdit extends AbstractStateAction<ApplicationFormDetail, ApplicationFormForEdit, Void> {
+        
+        public EventEdit() {
+            super("编辑", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        public void check(String event, ApplicationFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, final ApplicationFormForEdit form,
+                final String message) throws Exception {
+            getFormBaseDao().executeTransaction(new ResultSetProcessor() {
+                @Override
+                public void process(ResultSet resultSet, Connection connection) throws Exception {
+                    getFormBaseDao().executeUpdate(
+                            SqlQueryUtil.prepareUpdateQuery(
+                                    getFormTable(),
+                                    new ObjectMap().put("=id", form.getId()).put("stateless", form.getStateless())
+                                            .put("description", form.getDescription())
+                                            .put("code_level", form.getCodeLevel())
+                                            .put("build_service", form.getBuildService())));
+                }
+            });
+            return null;
+        }
+    }
+    
+    public class EventUpgradeVersion
+            extends AbstractStateAction<ApplicationFormDetail, ApplicationFormUpgradeVersion, Void> {
+        
+        public EventUpgradeVersion() {
+            super("版本升级", getStateCodes(STATES.CREATED, STATES.ONLINE), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        public void check(String event, ApplicationFormDetail form, String sourceState) {
+        }
 
-        ResetRepoPermGroups(new AbstractStateAction<ApplicationFormDetail, BasicStateForm, Void>("重置仓库授权组",
-                STATES.stringify(STATES.CREATED, STATES.ONLINE), "") {
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormUpgradeVersion form,
+                String message) throws Exception {
+            long version = checkVersion(originForm.getBuildMainVersion(), form.getBuildVersion());
+            getFormBaseDao().executeUpdate(
+                    SqlQueryUtil.prepareUpdateQuery(getFormTable(), new ObjectMap()
+                            .put("=id", form.getId()).put("build_main_version", version)));
+            return null;
+        }
+    }
+    
+    public class EventToNormalRelease
+            extends AbstractStateAction<ApplicationFormDetail, ApplicationFormMasterRelease, Void> {
+        
+        public EventToNormalRelease() {
+            super("切换为常规发布", getStateCodes(STATES.ONLINE), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, rejecter = ToMasterReleaseRejecter.class, parser = AppSubsystemParser.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
 
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormMasterRelease form,
+                String message) throws Exception {
+            getFormBaseDao().executeUpdate(
+                    SqlQueryUtil.prepareUpdateQuery(
+                            getFormTable(),
+                            new ObjectMap().put("=id", form.getId()).put("release_branch",
+                                    VcsType.forName(originForm.getVcsType()).getMasterName())));
+            return null;
+        }
+    }
+    
+    public class EventToBranchRelease
+            extends AbstractStateAction<ApplicationFormDetail, ApplicationFormBranchRelease, Void> {
+        
+        public EventToBranchRelease() {
+            super("切换为分支发布", getStateCodes(STATES.ONLINE), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, rejecter = ToBranchReleaseRejecter.class, parser = AppSubsystemParser.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormBranchRelease form,
+                String message) throws Exception {
+            if (!StringUtils.startsWith(form.getReleaseBranch(), VcsType.forName(originForm.getVcsType())
+                    .getPatchesPrefix())) {
+                throw new MessageException("代码分支路径不符合规范，请修改路径后重新提交！");
             }
+            getFormBaseDao().executeUpdate(
+                    SqlQueryUtil.prepareUpdateQuery(getFormTable(), new ObjectMap()
+                            .put("=id", form.getId()).put("release_branch", form.getReleaseBranch())));
+            return null;
+        }
+    }
+    
+    public class EventResetVcsPermission extends AbstractStateAction<ApplicationFormDetail, BasicStateForm, Void> {
+        
+        public EventResetVcsPermission() {
+            super("重置仓库授权组", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
 
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, BasicStateForm form, String message)
-                    throws Exception {
-                VcsUnifiedService.CommonCloud.createOrResetAppRepo(originForm.getId());
-                return null;
-            }
-        }),
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, BasicStateForm form, String message)
+                throws Exception {
+            VcsUnifiedService.CommonCloud.createOrResetAppRepo(originForm.getId());
+            return null;
+        }
+    }
+    
+    public class EventVcsBranchCreate
+            extends AbstractStateAction<ApplicationFormDetail, ApplicationFormVcsRefCreate, Void> {
+        
+        public EventVcsBranchCreate() {
+            super("新增分支", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppBranchCreateRejector.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormVcsRefCreate form,
+                String message) throws Exception {
+            VcsUnifiedService.CommonCloud.createBranch(form.getId(), form.getVcsRefsName(), form.getRefOrCommit(), message);
+            return null;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+    }
+    
+    public class EventVcsPatchCreate
+            extends AbstractStateAction<ApplicationFormDetail, ApplicationFormVcsRefCreate, Void> {
+        
+        public EventVcsPatchCreate() {
+            super("新增补丁", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppPatchCreateRejector.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormVcsRefCreate form,
+                String message) throws Exception {
+            VcsUnifiedService.CommonCloud.createPatch(form.getId(), form.getVcsRefsName(), form.getRefOrCommit(),
+                    message);
+            return null;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+    }
+    
+    public class EventVcsTagCreate
+            extends AbstractStateAction<ApplicationFormDetail, ApplicationFormVcsRefCreate, Void> {
+        
+        public EventVcsTagCreate() {
+            super("新增标签", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppTagCreateRejector.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormVcsRefCreate form,
+                String message) throws Exception {
+            VcsUnifiedService.CommonCloud.createTag(form.getId(), form.getVcsRefsName(), form.getRefOrCommit(),
+                    message);
+            return null;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+    }
+    
+    public class EventVcsBranchDelete extends AbstractStateAction<ApplicationFormDetail, ApplicationFormVcsRefDelete, Void> {
+        
+        public EventVcsBranchDelete() {
+            super("删除分支", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppBranchDeleteRejector.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormVcsRefDelete form,
+                String message) throws Exception {
+            VcsUnifiedService.CommonCloud.deleteBranch(form.getId(), form.getVcsRefsName(), message);
+            return null;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+    }
+    
+    public class EventPatchDelete extends AbstractStateAction<ApplicationFormDetail, ApplicationFormVcsRefDelete, Void> {
+        
+        public EventPatchDelete() {
+            super("删除补丁", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppPatchDeleteRejector.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormVcsRefDelete form,
+                String message) throws Exception {
+            VcsUnifiedService.CommonCloud.deletePatch(form.getId(), form.getVcsRefsName(), message);
+            return null;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+    }
+    
+    public class EventTagDelete extends AbstractStateAction<ApplicationFormDetail, ApplicationFormVcsRefDelete, Void> {
+        
+        public EventTagDelete() {
+            super("删除标签", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppTagDeleteRejector.class)
+        public void check(String event, ApplicationFormDetail originForm, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, ApplicationFormDetail originForm, ApplicationFormVcsRefDelete form,
+                String message) throws Exception {
+            VcsUnifiedService.CommonCloud.deleteTag(form.getId(), form.getVcsRefsName(), message);
+            return null;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+    }
+    
+    public class EventListDeployNamespaces extends AbstractStateAction<ApplicationFormDetail, BasicStateForm, ApplicationDeployNamespacesView> {
+        
+        public EventListDeployNamespaces() {
+            super("部署机组清单", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppNonApplicationRejector.class)
+        public void check(String s, ApplicationFormDetail s1, String s2) {
+            
+        }
+        
+        @Override
+        public ApplicationDeployNamespacesView handle(String event, ApplicationFormDetail originForm,
+                BasicStateForm form, String message) throws Exception {
+            ApplicationDeployNamespacesView view = new ApplicationDeployNamespacesView();
+            view.setDeployNamespaces(get(ApplicationFormDeployNamespaces.class, form.getId()).getDeployNamespaces());
+            return view;
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() {
+            return true;
+        }
+        
+        @Override
+        public Boolean messageRequired() {
+            return null;
+        }
+        
+        @Override
+        public boolean confirmRequired() {
+            return false;
+        }
+    }
+    
+    @Getter
+    public enum EVENTS implements StateFormEventClassEnum {
+        Create(EventCreate.class),
+        Edit(EventEdit.class),
+        UpgradeVersion(EventUpgradeVersion.class),
+        ToNormalRelease(EventToNormalRelease.class),
+
+        ToBranchRelease(EventToBranchRelease.class),
+
+        ResetVcsPermGroups(EventResetVcsPermission.class),
         /**
          * 创建新的分支
          */
-        VcsRefBranchCreate(new AbstractStateAction<ApplicationFormDetail, ApplicationVcsRefsCreate, Void>("新增分支",
-                STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppBranchCreateRejector.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationVcsRefsCreate form,
-                    String message) throws Exception {
-                VcsUnifiedService.CommonCloud.createBranch(form.getId(), form.getVcsRefsName(), form.getRefOrCommit(), message);
-                return null;
-            }
-            
-            @Override
-            public boolean getStateRevisionChangeIgnored() {
-                return true;
-            }
-        }),
+        VcsBranchCreate(EventVcsBranchCreate.class),
         /**
          * 创建新的补丁
          */
-        VcsRefPatchCreate(new AbstractStateAction<ApplicationFormDetail, ApplicationVcsRefsCreate, Void>("新增补丁",
-                STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppPatchCreateRejector.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationVcsRefsCreate form,
-                    String message) throws Exception {
-                VcsUnifiedService.CommonCloud.createPatch(form.getId(), form.getVcsRefsName(), form.getRefOrCommit(), message);
-                return null;
-            }
-            
-            @Override
-            public boolean getStateRevisionChangeIgnored() {
-                return true;
-            }
-            
-        }),
+        VcsPatchCreate(EventVcsPatchCreate.class),
         /**
          * 创建新的标签
          */
-        VcsRefTagCreate(new AbstractStateAction<ApplicationFormDetail, ApplicationVcsRefsCreate, Void>("新增标签",
-                STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppTagCreateRejector.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationVcsRefsCreate form,
-                    String message) throws Exception {
-                VcsUnifiedService.CommonCloud.createTag(form.getId(), form.getVcsRefsName(), form.getRefOrCommit(),
-                        message);
-                return null;
-            }
-            
-            @Override
-            public boolean getStateRevisionChangeIgnored() {
-                return true;
-            }
-        }),
+        VcsTagCreate(EventVcsTagCreate.class),
         /**
          * 删除已有的分支
          */
-        VcsRefBranchDelete(new AbstractStateAction<ApplicationFormDetail, ApplicationVcsRefsDelete, Void>("删除分支",
-                STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppBranchDeleteRejector.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationVcsRefsDelete form,
-                    String message) throws Exception {
-                VcsUnifiedService.CommonCloud.deleteBranch(form.getId(), form.getVcsRefsName(), message);
-                return null;
-            }
-            
-            @Override
-            public boolean getStateRevisionChangeIgnored() {
-                return true;
-            }
-        }),
+        VcsBranchDelete(EventVcsBranchDelete.class),
         /**
          * 删除已有的补丁
          */
-        VcsRefPatchDelete(new AbstractStateAction<ApplicationFormDetail, ApplicationVcsRefsDelete, Void>("删除补丁",
-                STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppPatchDeleteRejector.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationVcsRefsDelete form,
-                    String message) throws Exception {
-                VcsUnifiedService.CommonCloud.deletePatch(form.getId(), form.getVcsRefsName(), message);
-                return null;
-            }
-            
-            @Override
-            public boolean getStateRevisionChangeIgnored() {
-                return true;
-            }
-        }),
+        VcsPatchDelete(EventPatchDelete.class),
         /**
          * 删除已有的标签
          */
-        VcsRefTagDelete(new AbstractStateAction<ApplicationFormDetail, ApplicationVcsRefsDelete, Void>("删除标签",
-                STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppTagDeleteRejector.class)
-            public void check(String event, ApplicationFormDetail originForm, String sourceState) {
-            }
-            
-            @Override
-            public Void handle(String event, ApplicationFormDetail originForm, ApplicationVcsRefsDelete form,
-                    String message) throws Exception {
-                VcsUnifiedService.CommonCloud.deleteTag(form.getId(), form.getVcsRefsName(), message);
-                return null;
-            }
-            
-            @Override
-            public boolean getStateRevisionChangeIgnored() {
-                return true;
-            }
-        }),
-        
-        ViewRuntimeStatus(
-                new AbstractStateAction<ApplicationFormDetail, ApplicationFromForQueryStatus, ApplicationRuntimeStatusView>(
-                        "查看部署信息", STATES.stringifyEx(STATES.OFFLINED), "") {
-                    @Override
-                    @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppNonApplicationRejector.class)
-                    public void check(String s, ApplicationFormDetail s1, String s2) {
-                        
-                    }
-                    
-                    @Override
-                    public ApplicationRuntimeStatusView handle(String event, ApplicationFormDetail originForm,
-                            ApplicationFromForQueryStatus form, String message) throws Exception {
-                        ApplicationRuntimeStatusView view = new ApplicationRuntimeStatusView();
-                        view.setNodeItems(getRuntimeStatus(form.getEnvironment(), originForm.getId(), originForm.getName()));
-                        return view;
-                    }
-                    
-                    @Override
-                    public boolean getStateRevisionChangeIgnored() {
-                        return true;
-                    }
-                    
-                    @Override
-                    public Boolean messageRequired() {
-                        return null;
-                    }
-                    
-                    @Override
-                    public boolean confirmRequired() {
-                        return false;
-                    }
-                }),
-        ViewDeployNamespaces(
-                new AbstractStateAction<ApplicationFormDetail, BasicStateForm, ApplicationDeployNamespacesView>(
-                        "显示部署机组配置", STATES.stringifyEx(STATES.OFFLINED), "") {
-                    
-                    @Override
-                    @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppNonApplicationRejector.class)
-                    public void check(String s, ApplicationFormDetail s1, String s2) {
-                        
-                    }
-                    
-                    @Override
-                    public ApplicationDeployNamespacesView handle(String event, ApplicationFormDetail originForm,
-                            BasicStateForm form, String message) throws Exception {
-                        ApplicationDeployNamespacesView view = new ApplicationDeployNamespacesView();
-                        view.setDeployNamespaces(DEFAULT.get(ApplicationFormDeployNamespaces.class, form.getId()).getDeployNamespaces());
-                        return view;
-                    }
-                    
-                    @Override
-                    public boolean getStateRevisionChangeIgnored() {
-                        return true;
-                    }
-                    
-                    @Override
-                    public Boolean messageRequired() {
-                        return null;
-                    }
-                    
-                    @Override
-                    public boolean confirmRequired() {
-                        return false;
-                    }
-                })
+        VcsTagDelete(EventTagDelete.class),
+        /**
+         * 查看部署机组信息
+         */
+        ListDeployNamespaces(EventListDeployNamespaces.class)
         ;
-        private final AbstractStateAction<ApplicationFormDetail, ?, ?> action;
+        
+        private final Class<? extends AbstractStateAction<ApplicationFormDetail, ?, ?>> eventClass;
 
-        EVENTS(AbstractStateAction<ApplicationFormDetail, ?, ?> action) {
-            this.action = action;
-        }
-
-        public AbstractStateAction<ApplicationFormDetail, ?, ?> getAction() {
-            return action;
+        EVENTS(Class<? extends AbstractStateAction<ApplicationFormDetail, ?, ?>> eventClass) {
+            this.eventClass = eventClass;
         }
     }
     
-    public static ApplicationListDefaultForm getByVcsPath(String vcsPath) throws Exception {
+    public ApplicationFormDefault getByVcsPath(String vcsPath) throws Exception {
         if (StringUtils.isBlank(vcsPath)) {
             return null;
         }
-        ApplicationListDefaultQuery applicationQuery = new ApplicationListDefaultQuery();
+        ApplicationQueryDefault applicationQuery = new ApplicationQueryDefault();
         applicationQuery.setVcsPathEquals(vcsPath);
         applicationQuery.setLimit(1);
-        PagedList<?> apps = DEFAULT.listForm(QUERIES.DEFAULT, applicationQuery);
+        PagedList<?> apps = listForm(QUERIES.DEFAULT, applicationQuery);
         if (apps == null || apps.getList() == null || apps.getList().size() != 1) {
             return null;
         }
-        return (ApplicationListDefaultForm) apps.getList().get(0);
+        return (ApplicationFormDefault) apps.getList().get(0);
     }
     
-    private static List<ApplicationRuntimeStatusNodeItem> getRuntimeStatus(String environment, final Long appId,
+    private List<ApplicationRuntimeStatusNodeItem> getRuntimeStatus(String environment, final Long appId,
             final String appName) throws Exception {
         List<ApplicationRuntimeStatusNodeItem> result = new ArrayList<>();
         
         return result;
     }
-
-    @Override
-    public List<StateFormNamedQuery<?>> getFormNamedQueries() {
-        return QUERIES.getQueries();
-    }
-
-    public static class AppSubsystemParser implements AuthorityScopeIdParser {
+    
+    public class AppSubsystemParser implements AuthorityScopeIdParser {
         @Override
         public Long getAuthorityScopeId(Object originForm) {
             ApplicationAbstractForm manageForm = (ApplicationAbstractForm) originForm;
@@ -588,7 +589,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         }
     }
     
-    public static class AppBranchCreateRejector implements AuthoritySpecialRejecter {
+    public class AppBranchCreateRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -598,7 +599,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         
     }
     
-    public static class AppBranchDeleteRejector implements AuthoritySpecialRejecter {
+    public class AppBranchDeleteRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -607,7 +608,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         }
     }
     
-    public static class AppPatchCreateRejector implements AuthoritySpecialRejecter {
+    public class AppPatchCreateRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -617,7 +618,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         
     }
     
-    public static class AppPatchDeleteRejector implements AuthoritySpecialRejecter {
+    public class AppPatchDeleteRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -626,7 +627,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         }
     }
     
-    public static class AppTagCreateRejector implements AuthoritySpecialRejecter {
+    public class AppTagCreateRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -636,7 +637,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         
     }
     
-    public static class AppTagDeleteRejector implements AuthoritySpecialRejecter {
+    public class AppTagDeleteRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -645,7 +646,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         }
     }
     
-    public static class AppNonApplicationRejector implements AuthoritySpecialRejecter {
+    public class AppNonApplicationRejector implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) throws Exception {
@@ -658,7 +659,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
      * 当正好为主干发布模式时，不再允许执行切换主干模式的操作
      *
      */
-    public static class ToMasterReleaseRejecter implements AuthoritySpecialRejecter {
+    public class ToMasterReleaseRejecter implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) {
@@ -671,7 +672,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
      * 当正好为分支发布模式时，不再允许执行切换分支模式的操作
      *
      */
-    public static class ToBranchReleaseRejecter implements AuthoritySpecialRejecter {
+    public class ToBranchReleaseRejecter implements AuthoritySpecialRejecter {
         
         @Override
         public boolean check(Object originForm) {
@@ -680,7 +681,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         
     }
 
-    private static long checkVersion(String oldBuildVersion, String newBuildVersoin) throws Exception {
+    private long checkVersion(String oldBuildVersion, String newBuildVersoin) throws Exception {
         Pattern reg = Pattern.compile("^([1-9][0-9]*)\\.([0-9]+)\\.([0-9]+)$");
         Matcher matched;
         if (StringUtils.isBlank(newBuildVersoin) || (matched = reg.matcher(newBuildVersoin)) == null || !matched.find()
@@ -744,7 +745,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
         
     }
     
-    private static String[] getCachedUnExpiredAppStatusEnvs(List<AppEnvStatusLastUpdated> items) {
+    private String[] getCachedUnExpiredAppStatusEnvs(List<AppEnvStatusLastUpdated> items) {
         if (items == null || items.size() <= 0) {
             return new String[0];
         }
@@ -763,9 +764,9 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
     /**
      * 获取应用的环境版本信息，为提升效率，该数据做了一定时间的本地缓存
      */
-    public static List<ApplicationRuntimeEvnVersions> getCachedApplicationVersion(long applicationId) throws Exception {
+    public List<ApplicationRuntimeEvnVersions> getCachedApplicationVersion(long applicationId) throws Exception {
         
-        List<AppEnvStatusLastUpdated> envsLastUpdated = DEFAULT.getFormBaseDao().queryAsList(
+        List<AppEnvStatusLastUpdated> envsLastUpdated = getFormBaseDao().queryAsList(
                 AppEnvStatusLastUpdated.class, SQL_QUERY_APP_LAST_UPDATED_ENVSTATUS, new Object[] { applicationId });
         String[] unexpired = getCachedUnExpiredAppStatusEnvs(envsLastUpdated);
         
@@ -785,34 +786,29 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
                     CommonUtil.join("?", cleanArgs.size(), ","));
         }
         cleanArgs.add(0, applicationId);
-        DEFAULT.getFormBaseDao().executeUpdate(cleanSql, cleanArgs.toArray());
+        getFormBaseDao().executeUpdate(cleanSql, cleanArgs.toArray());
         
-        return DEFAULT.getFormBaseDao().queryAsList(ApplicationRuntimeEvnVersions.class, SQL_QUERY_APP_RUNTIME_VERSIONS,
+        return getFormBaseDao().queryAsList(ApplicationRuntimeEvnVersions.class, SQL_QUERY_APP_RUNTIME_VERSIONS,
                 new Object[] { applicationId });
     }
     
-    @Override
-    public List<? extends FieldOption> getStates() {
-        return STATES.getStatesAsOption();
+    public <T extends ApplicationFormSimple> PagedList<T> list(@NonNull Class<T> clazz,
+            @NonNull ApplicationQueryDefault query) throws Exception {
+        return listForm(clazz, query);
     }
     
-    public <T extends ApplicationAbstractForm> PagedList<T> list(@NonNull Class<T> clazz,
-            @NonNull ApplicationListDefaultQuery query) throws Exception {
-        return listFormX(clazz, query);
-    }
-    
-    public <T extends ApplicationAbstractForm> T get(Class<T> clazz, long id) throws Exception {
+    public <T extends ApplicationFormSimple> T get(Class<T> clazz, long id) throws Exception {
         List<T> list;
-        if ((list = list(clazz, new ApplicationListAllQuery(2, 1L).setAppIdsIn(id + "")).getList()) == null
+        if ((list = list(clazz, new ApplicationQueryAll(2, 1L).setAppIdsIn(id + "")).getList()) == null
                 || list.size() != 1) {
             throw new PageNotFoundException();
         }
         return list.get(0);
     }
 
-    public <T extends ApplicationAbstractForm> T get(Class<T> clazz, String appName) throws Exception {
+    public <T extends ApplicationFormSimple> T get(Class<T> clazz, String appName) throws Exception {
         List<T> list;
-        if ((list = list(clazz, new ApplicationListAllQuery().setAppNamesIn(appName + "")).getList()) == null
+        if ((list = list(clazz, new ApplicationQueryAll().setAppNamesIn(appName + "")).getList()) == null
                 || list.size() != 1) {
             throw new PageNotFoundException();
         }
@@ -857,7 +853,7 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
          * 补全业务系统实体
          */
         if (ApplicationWithSubsystemEntity.class.isAssignableFrom(itemClazz) && subApps.size() > 0) {
-            for (SubsystemBasicForm subsystem : ClassUtil.getSingltonInstance(FieldSubsystemAccessors.class)
+            for (SubsystemFormSimple subsystem : ClassUtil.getSingltonInstance(FieldSubsystemAccessors.class)
                     .queryDynamicValues(subApps.keySet().toArray(new Long[0]))) {
                 for (ApplicationAbstractForm app : subApps.get(subsystem.getId())) {
                     ((ApplicationWithSubsystemEntity) app).setSubsystem(subsystem);
@@ -998,5 +994,11 @@ public class ApplicationService extends AbstractStateFormServiceWithBaseDao<Appl
             }
         }
         return deployNamespaceSummary;
+    }
+
+    @Override
+    protected void fillExtraFormFields(Collection<? extends ApplicationFormSimple> forms) throws Exception {
+        // TODO Auto-generated method stub
+        
     }
 }

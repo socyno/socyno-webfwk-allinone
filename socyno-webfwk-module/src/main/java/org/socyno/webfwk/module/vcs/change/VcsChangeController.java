@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class VcsChangeController {
     
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
-    public R submit(@RequestBody VcsChangeInfoForCreation info) throws Exception {
-        VcsChangeInfoService.submit(info);
+    public R submit(@RequestBody VcsChangeInfoFormCreation info) throws Exception {
+        VcsChangeInfoService.getInstance().submit(info);
         return R.ok();
     }
     
@@ -21,17 +21,17 @@ public class VcsChangeController {
         cond.setVcsRevision(vcsRevision);
         cond.setVcsRefsName(vcsRefsName);
         cond.setApplicationId(applicationId);
-        return R.ok().setData(VcsChangeInfoService.queryByContextUser(cond, limit, page));
+        return R.ok().setData(VcsChangeInfoService.getInstance().queryByContextUser(cond, limit, page));
     }
     
     @RequestMapping(value = "/query/application/{applicationId}", method = RequestMethod.GET)
-    public R queryByApplicationId(@PathVariable long applicationId, String vcsRefsName, String vcsRevision, Long createdBy,
-            Integer limit, Integer page) throws Exception {
+    public R queryByApplicationId(@PathVariable long applicationId, String vcsRefsName, String vcsRevision,
+            Long createdBy, Integer limit, Integer page) throws Exception {
         VcsChangeListApplicationCond cond = new VcsChangeListApplicationCond();
         cond.setCreatedBy(createdBy);
         cond.setVcsRevision(vcsRevision);
         cond.setVcsRefsName(vcsRefsName);
-        return R.ok().setData(VcsChangeInfoService.queryByApplication(applicationId, cond, limit, page));
+        return R.ok().setData(VcsChangeInfoService.getInstance().queryByApplication(applicationId, cond, limit, page));
     }
     
 }

@@ -40,7 +40,7 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
         JsonElement obj = CommonUtil.fromJson(filter.getFormJson(), JsonElement.class);
         String applicationName = CommonUtil.getJstring((JsonObject) obj, "applicationName");
         if (StringUtils.isNotBlank(applicationName)) {
-            OptionReleaseMobileOnlineApplication app = ReleaseMobileOnlineService.DEFAULT
+            OptionReleaseMobileOnlineApplication app = ReleaseMobileOnlineService.getInstance()
                     .queryConfigurationInformation(applicationName);
             if (app != null && "ios".equals(app.getStoreType())) {
                 List<OptionStore> list = new ArrayList<>();
@@ -50,7 +50,7 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
                 return list;
             }
         } else if (!filter.getFormId().equals(-1L)) {
-            ReleaseMobileOnlineSimpleForm simple = ReleaseMobileOnlineService.DEFAULT.getForm(filter.getFormId());
+            ReleaseMobileOnlineFormSimple simple = ReleaseMobileOnlineService.getInstance().getForm(filter.getFormId());
             if ("ios".equals(simple.getStoreType())) {
                 List<OptionStore> list = new ArrayList<>();
                 OptionStore option = new OptionStore();
@@ -63,10 +63,12 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
         List<OptionStore> optionStoreList = new ArrayList<>();
         List<ReleaseOptionStoreEntity> itemStore;
         if (StringUtils.isBlank(filter.getKeyword())) {
-            itemStore = ReleaseMobileOnlineService.DEFAULT.getFormBaseDao().queryAsList(ReleaseOptionStoreEntity.class,
+            itemStore = ReleaseMobileOnlineService.getInstance().getFormBaseDao().queryAsList(
+                    ReleaseOptionStoreEntity.class,
                     " SELECT * FROM `release_app_store` WHERE state_form_status = 'enabled' ");
         } else {
-            itemStore = ReleaseMobileOnlineService.DEFAULT.getFormBaseDao().queryAsList(ReleaseOptionStoreEntity.class,
+            itemStore = ReleaseMobileOnlineService.getInstance().getFormBaseDao().queryAsList(
+                    ReleaseOptionStoreEntity.class,
                     " SELECT * FROM `release_app_store` WHERE state_form_status = 'enabled' AND store_name like CONCAT('%', ?, '%') ",
                     new Object[] { filter.getKeyword() });
         }

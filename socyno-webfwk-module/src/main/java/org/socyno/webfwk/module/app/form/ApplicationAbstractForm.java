@@ -25,7 +25,7 @@ public interface ApplicationAbstractForm extends AbstractStateForm {
     @SchemaIgnore
     public default String getCodeRepoNamedId() throws Exception {
         AbstractSystemTenant tenant;
-        if ((tenant = SystemTenantService.getSimple(SessionContext.getTenant())) == null
+        if ((tenant = SystemTenantService.getInstance().getSimple(SessionContext.getTenant())) == null
                 || StringUtils.isBlank(tenant.getCodeNamespace())) {
             throw new MessageException("获取租户代码空间未设置");
         }

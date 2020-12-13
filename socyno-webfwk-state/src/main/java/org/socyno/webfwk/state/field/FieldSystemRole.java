@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.socyno.webfwk.state.module.role.SystemRoleBasicForm;
+import org.socyno.webfwk.state.module.role.SystemRoleFormSimple;
 import org.socyno.webfwk.state.module.role.SystemRoleService;
 import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.state.field.FieldTableView;
@@ -26,12 +26,12 @@ public class FieldSystemRole extends FieldTableView {
      * @throws Exception
      */
     public static List<OptionSystemRole> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        PagedList<SystemRoleBasicForm> list;
+        PagedList<SystemRoleFormSimple> list;
         if ((list = SystemRoleService.DEFAULT.query(filter.getKeyword(), 1, 100)) == null || list.getList() == null) {
             return null;
         }
         List<OptionSystemRole> options = new ArrayList<>();
-        for (SystemRoleBasicForm l : list.getList()) {
+        for (SystemRoleFormSimple l : list.getList()) {
             if (l == null) {
                 continue;
             }
@@ -54,14 +54,14 @@ public class FieldSystemRole extends FieldTableView {
     @Override
     public List<OptionSystemRole> queryDynamicValues(Object[] values) throws Exception {
         Long[] ids;
-        List<SystemRoleBasicForm> list = null;
+        List<SystemRoleFormSimple> list = null;
         if (values == null || values.length <= 0
                 || (ids = ConvertUtil.asNonNullUniqueLongArray(values)).length <= 0
-                || (list = SystemRoleService.DEFAULT.queryByIds(SystemRoleBasicForm.class, ids)) == null || list.isEmpty()) {
+                || (list = SystemRoleService.DEFAULT.queryByIds(SystemRoleFormSimple.class, ids)) == null || list.isEmpty()) {
             return Collections.emptyList();
         }
         List<OptionSystemRole> options = new ArrayList<>();
-        for (SystemRoleBasicForm l : list) {
+        for (SystemRoleFormSimple l : list) {
             options.add(new OptionSystemRole().setId(l.getId())
                             .setName(l.getName()).setCode(l.getCode()));
         }

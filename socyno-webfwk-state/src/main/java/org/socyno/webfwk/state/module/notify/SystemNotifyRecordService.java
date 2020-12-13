@@ -18,11 +18,11 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateEnterAction;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.BasicStateForm;
-import org.socyno.webfwk.state.module.notify.SystemNotifyRecordSimple.MessageType;
-import org.socyno.webfwk.state.module.notify.SystemNotifyRecordSimple.SendResult;
+import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.MessageType;
+import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.SendResult;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.util.*;
 import org.socyno.webfwk.util.context.ContextUtil;
@@ -40,7 +40,8 @@ import org.socyno.webfwk.util.tool.ConvertUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 @Slf4j
-public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseDaoV2<SystemNotifyRecordSimple> {
+public class SystemNotifyRecordService extends
+        AbstractStateFormServiceWithBaseDao<SystemNotifyRecordFormDefault, SystemNotifyRecordFormDefault, SystemNotifyRecordFormSimple> {
     
     @Getter
     private final static SystemNotifyRecordService instance = new SystemNotifyRecordService();
@@ -90,7 +91,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemNotifyRecordSimple, SystemNotifyRecordForCreation> {
+    public class EventCreate extends AbstractStateSubmitAction<SystemNotifyRecordFormSimple, SystemNotifyRecordFormCreation> {
         
         public EventCreate() {
             super("创建", STATES.CREATED.getCode());
@@ -98,7 +99,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyRecordSimple form, String sourceState) {
+        public void check(String event, SystemNotifyRecordFormSimple form, String sourceState) {
             
         }
         
@@ -110,7 +111,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         }
         
         @Override
-        public Long handle(String event, SystemNotifyRecordSimple originForm, SystemNotifyRecordForCreation form, String message) throws Exception {
+        public Long handle(String event, SystemNotifyRecordFormSimple originForm, SystemNotifyRecordFormCreation form, String message) throws Exception {
             final AtomicLong id = new AtomicLong(-1);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
                     getFormTable(), new ObjectMap()
@@ -134,19 +135,19 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         }
     }
     
-    public class EventEnterCreated extends AbstractStateEnterAction<SystemNotifyRecordSimple> {
+    public class EventEnterCreated extends AbstractStateEnterAction<SystemNotifyRecordFormSimple> {
         
         public EventEnterCreated() {
             super("创建自动触发", STATES.CREATED.getCode());
         }
         
         @Override
-        public void check(String event, SystemNotifyRecordSimple originForm, String sourceState) {
+        public void check(String event, SystemNotifyRecordFormSimple originForm, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemNotifyRecordSimple originForm, AbstractStateForm form, String message) throws Exception {
+        public Void handle(String event, SystemNotifyRecordFormSimple originForm, AbstractStateForm form, String message) throws Exception {
             if (form == null || form.getId() == null) {
                 return null;
             }
@@ -155,7 +156,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
                 public void exec() {
                     try {
                         Thread.sleep(5000);
-                        SystemNotifyRecordSimple originForm = getForm(form.getId());
+                        SystemNotifyRecordFormSimple originForm = getForm(form.getId());
                         BasicStateForm triggerForm = new BasicStateForm();
                         triggerForm.setId(originForm.getId());
                         triggerForm.setRevision(originForm.getRevision());
@@ -170,7 +171,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
     }
     
-    public class EventEdit extends AbstractStateAction<SystemNotifyRecordSimple, SystemNotifyRecordForEdition, Void> {
+    public class EventEdit extends AbstractStateAction<SystemNotifyRecordFormSimple, SystemNotifyRecordFormEdition, Void> {
         
         public EventEdit() {
             super("编辑", getStateCodesEx(), "");
@@ -183,12 +184,12 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyRecordSimple form, String sourceState) {
+        public void check(String event, SystemNotifyRecordFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemNotifyRecordSimple originForm, final SystemNotifyRecordForEdition form, final String message) throws Exception {
+        public Void handle(String event, SystemNotifyRecordFormSimple originForm, final SystemNotifyRecordFormEdition form, final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                 getFormTable(), new ObjectMap()
                         .put("=id",             form.getId())
@@ -201,7 +202,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         }
     }
     
-    public class EventCancel extends AbstractStateAction<SystemNotifyRecordSimple, BasicStateForm, Void> {
+    public class EventCancel extends AbstractStateAction<SystemNotifyRecordFormSimple, BasicStateForm, Void> {
         
         public EventCancel() {
             super("取消", STATES.CREATED.getCode(), STATES.CANCELLED.getCode());
@@ -214,12 +215,12 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyRecordSimple form, String sourceState) {
+        public void check(String event, SystemNotifyRecordFormSimple form, String sourceState) {
             
         }
     }
     
-    public class EventResend extends AbstractStateAction<SystemNotifyRecordSimple, BasicStateForm, Void> {
+    public class EventResend extends AbstractStateAction<SystemNotifyRecordFormSimple, BasicStateForm, Void> {
 
         public EventResend() {
             super("重发", getStateCodesEx(STATES.CREATED), STATES.CREATED.getCode());
@@ -232,7 +233,7 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyRecordSimple form, String sourceState) {
+        public void check(String event, SystemNotifyRecordFormSimple form, String sourceState) {
         
         }
     }
@@ -241,11 +242,11 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         @Override
         public boolean check(Object form) throws Exception {
-            return ((SystemNotifyRecordSimple) form).getCreatedBy().equals(SessionContext.getTokenUserId());
+            return ((SystemNotifyRecordFormSimple) form).getCreatedBy().equals(SessionContext.getTokenUserId());
         }
     }
     
-    public class EventSendNow extends AbstractStateAction<SystemNotifyRecordSimple, BasicStateForm, StateFormEventResultMessageView> {
+    public class EventSendNow extends AbstractStateAction<SystemNotifyRecordFormSimple, BasicStateForm, StateFormEventResultMessageView> {
 
         public EventSendNow() {
             super("立即发送", STATES.CREATED.getCode(), STATES.FINISHED.getCode());
@@ -253,12 +254,12 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = IsOwnerChecker.class)
-        public void check(String event, SystemNotifyRecordSimple form, String sourceState) {
+        public void check(String event, SystemNotifyRecordFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public StateFormEventResultMessageView handle(String event, SystemNotifyRecordSimple originForm, BasicStateForm form, String message) {
+        public StateFormEventResultMessageView handle(String event, SystemNotifyRecordFormSimple originForm, BasicStateForm form, String message) {
             try {
                 if (MessageType.Email.getValue().equalsIgnoreCase(originForm.getType())) {
                     String fromAddress;
@@ -364,16 +365,16 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
         
         ;
         
-        private final Class<? extends AbstractStateAction<SystemNotifyRecordSimple, ?, ?>> eventClass;
-        EVENTS(Class<? extends AbstractStateAction<SystemNotifyRecordSimple, ?, ?>> eventClass) {
+        private final Class<? extends AbstractStateAction<SystemNotifyRecordFormSimple, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<SystemNotifyRecordFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemNotifyRecordSimple>("默认查询", 
-                SystemNotifyRecordSimple.class, SystemNotifyRecordDefaultQuery.class));
+        DEFAULT(new StateFormNamedQuery<SystemNotifyRecordFormDefault>("默认查询", 
+                SystemNotifyRecordFormDefault.class, SystemNotifyRecordQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
         
         QUERIES(StateFormNamedQuery<?> namedQuery) {
@@ -392,12 +393,17 @@ public class SystemNotifyRecordService extends AbstractStateFormServiceWithBaseD
     }
     
     @Override
+    public String getFormDisplay() {
+        return "系统通知记录";
+    }
+    
+    @Override
     protected AbstractDao getFormBaseDao() {
         return SystemTenantDataSource.getMain();
     }
     
     @Override
-    protected void fillExtraFormFields(Collection<? extends SystemNotifyRecordSimple> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends SystemNotifyRecordFormSimple> forms) throws Exception {
         
     }
     

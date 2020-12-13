@@ -10,11 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.http.NameValuePair;
 import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
-import org.socyno.webfwk.module.release.change.ChangeRequestSimple.Category;
-import org.socyno.webfwk.module.release.change.ChangeRequestSimple.ChangeType;
-import org.socyno.webfwk.module.release.change.ChangeRequestSimple.ScopeType;
+import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.Category;
+import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.ChangeType;
+import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.ScopeType;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestReleaseId.OptionReleaseId;
-import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
 import org.socyno.webfwk.state.authority.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdMultipleParser;
@@ -24,7 +24,7 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateChoice;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStatePrepare;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.AbstractStateTodoCloseAction;
@@ -34,7 +34,7 @@ import org.socyno.webfwk.state.field.OptionDynamicStandard;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.model.CommonFormAttachement;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
-import org.socyno.webfwk.state.service.CommonAttachmentService;
+import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
 import org.socyno.webfwk.state.sugger.SuggerDefinitionFormAttachment;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
@@ -56,28 +56,30 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<ChangeRequestSimple> {
-
-    public final static ChangeRequestService DEFAULT = new ChangeRequestService();
+public class ChangeRequestService extends
+        AbstractStateFormServiceWithBaseDao<ChangeRequestFormDetail, ChangeRequestFormSimple, ChangeRequestFormSimple> {
     
     private final static long MilliSecondsOf8Hours = 8 * 60 * 60000L;
+    
+    private ChangeRequestService() {
+        setStates(STATES.values());
+        setActions(EVENTS.values());
+        setQueries(QUERIES.values());
+    }
+    
+    @Getter
+    private final static ChangeRequestService Instance = new ChangeRequestService();
     
     static {
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionChangeCategory.getInstance());
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionChangeReleaseId.getInstance());
         DefaultStateFormSugger.addFieldDefinitions(SuggerDefinitionChangeApplication.getInstance());
         // 注册附件表单名称
-        SuggerDefinitionFormAttachment.addFormName(ChangeRequestSimple.class, DEFAULT.getFormName());
-    }
-    
-    public ChangeRequestService(){
-        setStates(STATES.values());
-        setActions(EVENTS.values());
-        setQueries(QUERIES.values());
+        SuggerDefinitionFormAttachment.addFormName(ChangeRequestFormSimple.class, Instance.getFormName());
     }
     
     @Override
-    protected void fillExtraFormFields(Collection<? extends ChangeRequestSimple> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends ChangeRequestFormSimple> forms) throws Exception {
         DefaultStateFormSugger.getInstance().apply(forms);
 //
 //        Map<Long, AbsChangeDetail> changeDetail = new HashMap<>();
@@ -117,6 +119,11 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         return "change_request";
     }
     
+    @Override
+    public String getFormDisplay() {
+        return "综合变更";
+    }
+    
     @Getter
     public enum STATES implements StateFormStateBaseEnum {
         SubmitReady("submit_ready",          "待提交"),
@@ -146,9 +153,9 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
     
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<ChangeRequestSimple>(
-                "默认查询", ChangeRequestSimple.class,
-                ChangeRequestListDefaultQuery.class));
+        DEFAULT(new StateFormNamedQuery<ChangeRequestFormSimple>(
+                "默认查询", ChangeRequestFormSimple.class,
+                ChangeRequestQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
         
         QUERIES(StateFormNamedQuery<?> namedQuery) {
@@ -169,8 +176,8 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         TechReadyCreate(EventTechReadyCreate.class),
         TechReadyClose(EventTechReadyClose.class);
         
-        private final Class<? extends AbstractStateAction<ChangeRequestSimple, ?, ?>> eventClass;
-        EVENTS(Class<? extends AbstractStateAction<ChangeRequestSimple, ?, ?>> eventClass) {
+        private final Class<? extends AbstractStateAction<ChangeRequestFormSimple, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<ChangeRequestFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
@@ -207,7 +214,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         @Override
         public boolean check(Object form) throws Exception {
             OptionSystemUser applier;
-            return form != null && (applier = ((ChangeRequestSimple) form).getCreatedBy()) != null
+            return form != null && (applier = ((ChangeRequestFormSimple) form).getCreatedBy()) != null
                     && SessionContext.getUserId().equals(applier.getId());
         }
     }
@@ -217,7 +224,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         @Override
         public boolean check(Object form) throws Exception {
             return !(form != null
-                    && ChangeType.CheckListOther.getCode().equals(((ChangeRequestSimple) form).getChangeType()));
+                    && ChangeType.CheckListOther.getCode().equals(((ChangeRequestFormSimple) form).getChangeType()));
         }
     }
     
@@ -241,7 +248,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         @Override
         public boolean check(Object form) throws Exception {
             String[] devCategories;
-            ChangeRequestSimple originForm = (ChangeRequestSimple)form;
+            ChangeRequestFormSimple originForm = (ChangeRequestFormSimple)form;
             return originForm != null && (devCategories = getItemCategoriesDevOnly()) != null
                     && ArrayUtils.contains(devCategories, originForm.getCategory())
                     && SessionContext.getUserId() != null 
@@ -257,13 +264,13 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         public long[] getAuthorityScopeIds(Object form) {
             String category;
             OptionReleaseId releaseId;
-            if (form == null || !(form instanceof ChangeRequestSimple)
-                    || (releaseId = ((ChangeRequestSimple) form).getReleaseId()) == null
+            if (form == null || !(form instanceof ChangeRequestFormSimple)
+                    || (releaseId = ((ChangeRequestFormSimple) form).getReleaseId()) == null
                     || StringUtils.isBlank(category = releaseId.getCategory())) {
                 return null;
             }
             try {
-                List<SubsystemBasicForm> abstractForm = SubsystemService.DEFAULT.list(SubsystemBasicForm.class, false, category);
+                List<SubsystemFormSimple> abstractForm = SubsystemService.getInstance().list(SubsystemFormSimple.class, false, category);
                 if (abstractForm == null) {
                     return new long[0];
                 }
@@ -310,14 +317,14 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         return options.get(0);
     }
     
-    public class EventCkOtherCreate extends AbstractStateSubmitAction<ChangeRequestSimple, ChangeRequestForCkOtherCreation> {
+    public class EventCkOtherCreate extends AbstractStateSubmitAction<ChangeRequestFormSimple, ChangeRequestFormOtherCreation> {
         
         public EventCkOtherCreate() {
             super(ChangeType.CheckListOther.getDisplay(), STATES.SubmitReady.getCode());
         }
 
         @Override
-        public boolean flowMatched(ChangeRequestSimple originForm) {
+        public boolean flowMatched(ChangeRequestFormSimple originForm) {
             return ChangeType.CheckListOther.getCode().equals(originForm.getChangeType());
         }
         
@@ -327,7 +334,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         }
         
         @Override
-        public ReleaseChangeCreationPrepare prepare(String event, ChangeRequestSimple originForm) throws Exception {
+        public ReleaseChangeCreationPrepare prepare(String event, ChangeRequestFormSimple originForm) throws Exception {
             ReleaseChangeCreationPrepare newChange = new ReleaseChangeCreationPrepare(ChangeType.CheckListOther);
             for (NameValuePair nameValuePair : getContextFormEventParams()) {
                 if ("releaseId".equals(nameValuePair.getName())) {
@@ -340,12 +347,12 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Long handle(String event, ChangeRequestSimple originForm, final ChangeRequestForCkOtherCreation form,
+        public Long handle(String event, ChangeRequestFormSimple originForm, final ChangeRequestFormOtherCreation form,
                 String message) throws Exception {
             final ChangeType changeType = ChangeType.CheckListOther;
             ensureChangeTypeCategoryExisted(changeType, form.getCategory().getOptionValue());
@@ -379,25 +386,25 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         }
     }
     
-    public class EventCkOtherEdit extends AbstractStateAction<ChangeRequestSimple, ChangeRequestForCkOtherCreation, Void> {
+    public class EventCkOtherEdit extends AbstractStateAction<ChangeRequestFormSimple, ChangeRequestFormOtherCreation, Void> {
         
         public EventCkOtherEdit() {
             super("编辑", getStateCodes(STATES.SubmitReady , STATES.TechRejected, STATES.Cancelled), "");
         }
 
         @Override
-        public boolean flowMatched(ChangeRequestSimple originForm) {
+        public boolean flowMatched(ChangeRequestFormSimple originForm) {
             return ChangeType.CheckListOther.getCode().equals(originForm.getChangeType());
         }
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = ChangeRequestOwnerChecker.class, rejecter = ChangeTypeCKOtherRejecter.class)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
 
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, ChangeRequestForCkOtherCreation form,
+        public Void handle(String event, ChangeRequestFormSimple originForm, ChangeRequestFormOtherCreation form,
                 String message) throws Exception {
             final ChangeType changeType = ChangeType.CheckListOther;
             ensureChangeTypeCategoryExisted(changeType, form.getCategory().getOptionValue());
@@ -426,7 +433,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
     }
     
     private void genChangeDeployItemName(long id) throws Exception {
-        ChangeRequestDetail form;
+        ChangeRequestFormDetail form;
         if ((form = getForm(id)) != null) {
             getFormBaseDao().executeUpdate(
                 SqlQueryUtil.prepareUpdateQuery(getFormTable(), new ObjectMap()
@@ -436,7 +443,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         }
     }
     
-    public class EventChangeSubmit extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
+    public class EventChangeSubmit extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
         
         public EventChangeSubmit() {
             super("提交", getStateCodes(STATES.SubmitReady, STATES.TechRejected, STATES.Cancelled),
@@ -445,12 +452,12 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = ChangeRequestOwnerChecker.class)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             genChangeDeployItemName(form.getId());
             return null;
@@ -463,7 +470,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
             STATES.Stage02Success.getCode()) {
         @Override
         protected boolean select(AbstractStateForm form) {
-            return ((ChangeRequestSimple)getContextFormOrigin()).productionNeedToDeploy();
+            return ((ChangeRequestFormSimple)getContextFormOrigin()).productionNeedToDeploy();
         }
         
         @Override
@@ -477,7 +484,7 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
      * 不同类型可能需要做一些变更回滚的操作，或者是权限控制
      * 此时，就必须通过类型自行实现检查以及授权的定义
      */
-    public class EventChangeCanceled extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
+    public class EventChangeCanceled extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
         
         public EventChangeCanceled() {
             super("撤销", getStateCodes(
@@ -492,18 +499,18 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = ChangeRequestOwnerChecker.class )
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventMarkDeploySuccess extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
+    public class EventMarkDeploySuccess extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
         
         public EventMarkDeploySuccess() {
             super("标记部署成功", getStateCodes(STATES.Stage02Failure, STATES.Stage02Ready), choiceDeployProduction);
@@ -511,18 +518,18 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = ChangeRequestOwnerDeployChecker.class)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventMarkDeployFailure extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
+    public class EventMarkDeployFailure extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
         
         public EventMarkDeployFailure() {
             super("标记部署失败", getStateCodes(STATES.Stage02Ready, STATES.ReleaseReady), STATES.Stage02Failure.getCode());
@@ -530,12 +537,12 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = ChangeRequestOwnerDeployChecker.class)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             return null;
         }
@@ -545,12 +552,12 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         "是否部署集成？", STATES.Stage02Ready.getCode(), STATES.ReleaseReady.getCode()) {
         @Override
         protected boolean select(AbstractStateForm form) {
-            return ((ChangeRequestSimple)getContextFormOrigin()).stage02NeedToDeploy();
+            return ((ChangeRequestFormSimple)getContextFormOrigin()).stage02NeedToDeploy();
         }
         
         @Override
         public boolean flowMatched(AbstractStateForm originForm, boolean yesOrNo) {
-           if (ScopeType.get(((ChangeRequestSimple)originForm).getScopeType()).isNeedDeployIntegration()) {
+           if (ScopeType.get(((ChangeRequestFormSimple)originForm).getScopeType()).isNeedDeployIntegration()) {
                return yesOrNo;
            }
            return !yesOrNo;
@@ -566,14 +573,14 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         public boolean flowMatched(AbstractStateForm originForm, boolean yesOrNo) {
-            if (ChangeType.get(((ChangeRequestSimple)originForm).getChangeType()).isNeedDbaApproval()) {
+            if (ChangeType.get(((ChangeRequestFormSimple)originForm).getChangeType()).isNeedDbaApproval()) {
                 return yesOrNo;
             }
             return !yesOrNo;
         }
     };
     
-    public class EventTechApprove extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
+    public class EventTechApprove extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
         
         public EventTechApprove() {
             super("技术审批通过", STATES.TechReady.getCode(), choiceApprovalNeedDBA);
@@ -581,18 +588,18 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.Subsystem, multipleParser = ChangeReleaseSubsystemsParser.class)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventTechReject extends AbstractStateAction<ChangeRequestSimple, BasicStateForm, Void> {
+    public class EventTechReject extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
         
         public EventTechReject() {
             super("技术审批拒绝", STATES.TechReady.getCode(), STATES.TechRejected.getCode());
@@ -600,46 +607,46 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
         
         @Override
         @Authority(value = AuthorityScopeType.Subsystem, multipleParser = ChangeReleaseSubsystemsParser.class)
-        public void check(String event, ChangeRequestSimple originForm, String message) {
+        public void check(String event, ChangeRequestFormSimple originForm, String message) {
             
         }
         
         @Override
-        public Void handle(String event, ChangeRequestSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventTechReadyCreate extends AbstractStateTodoCreateAction<ChangeRequestSimple> {
+    public class EventTechReadyCreate extends AbstractStateTodoCreateAction<ChangeRequestFormSimple> {
         
         public EventTechReadyCreate() {
             super("创建待技术经理审批待办事项", STATES.TechReady.getCode());
         }
         
         @Override
-        protected String getTodoTitle(String event, ChangeRequestSimple originForm, AbstractStateForm form)
+        protected String getTodoTitle(String event, ChangeRequestFormSimple originForm, AbstractStateForm form)
                 throws Exception {
             return String.format("变更申请：%s - %s - %s", originForm.getReleaseId().getReleaseId(), "技术经理审批",
                     originForm.getTitle());
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, ChangeRequestSimple originForm, AbstractStateForm form)
+        protected long[] getTodoAssignees(String event, ChangeRequestFormSimple originForm, AbstractStateForm form)
                 throws Exception {
             return ConvertUtil
                     .asNonNullUniquePrimitiveLongArray(getActionUserIds(EVENTS.TechApprove.getName(), originForm));
         }
     }
     
-    public class EventTechReadyClose extends AbstractStateTodoCloseAction<ChangeRequestSimple> {
+    public class EventTechReadyClose extends AbstractStateTodoCloseAction<ChangeRequestFormSimple> {
         
         public EventTechReadyClose() {
             super("关闭待技术经理审批待办事项", STATES.TechReady.getCode());
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, ChangeRequestSimple originForm, AbstractStateForm form)
+        protected String getClosedTodoEvent(String event, ChangeRequestFormSimple originForm, AbstractStateForm form)
                 throws Exception {
             return EVENTS.TechReadyCreate.getName();
         }
@@ -676,15 +683,15 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
             }
             attachementIds.add(item.getId());
         }
-        CommonAttachmentService.cleanByTargetFormField(getFormName(), id, "attachments");
-        CommonAttachmentService.bindWithForm(getFormName(), id, attachementIds.toArray(new Long[0]));
+        AttachmentService.cleanByTargetFormField(getFormName(), id, "attachments");
+        AttachmentService.bindWithForm(getFormName(), id, attachementIds.toArray(new Long[0]));
     }
     
     @Override
-    public <T extends ChangeRequestSimple> T getForm(Class<T> clazz, long id) throws Exception {
+    public <T extends ChangeRequestFormSimple> T getForm(Class<T> clazz, long id) throws Exception {
         PagedList<T> paged = listForm(
                 clazz,
-                new ChangeRequestListDefaultQuery(1, 1)
+                new ChangeRequestQueryDefault(1, 1)
                         .setId(id)
         );
         List<T> changes;
@@ -692,10 +699,5 @@ public class ChangeRequestService extends AbstractStateFormServiceWithBaseDaoV2<
             return null;
         }
         return changes.get(0);
-    }
-    
-    @Override
-    public ChangeRequestDetail getForm(long id) throws Exception {
-        return getForm(ChangeRequestDetail.class, id);
     }
 }

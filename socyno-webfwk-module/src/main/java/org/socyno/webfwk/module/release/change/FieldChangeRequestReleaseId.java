@@ -113,7 +113,7 @@ public class FieldChangeRequestReleaseId extends FieldTableView {
                     "EXISTS (SELECT u.release_id FROM release_change_requirement_user u WHERE u.username = ? AND u.release_id = r.release_id)");
         }
         
-        return ChangeRequestService.DEFAULT.getFormBaseDao().queryAsList(OptionReleaseId.class,
+        return ChangeRequestService.getInstance().getFormBaseDao().queryAsList(OptionReleaseId.class,
                 String.format(SQL_QUERY_OPTION_RELEASES, StringUtils.prependIfNotEmpty(whereSql, "WHERE ")),
                 whereArgs.toArray());
     }
@@ -150,7 +150,7 @@ public class FieldChangeRequestReleaseId extends FieldTableView {
             whereSql.append(
                     " AND EXISTS (SELECT u.release_id FROM release_change_requirement_user u WHERE u.username = ? AND u.release_id = r.release_id)");
         }
-        return ChangeRequestService.DEFAULT.getFormBaseDao().queryAsList(OptionReleaseId.class,
+        return ChangeRequestService.getInstance().getFormBaseDao().queryAsList(OptionReleaseId.class,
                 String.format(SQL_QUERY_VALUE_RELEASES, CommonUtil.join("?", values.length, ","), whereSql.toString()),
                 ArrayUtils.addAll(values, whereArgs.toArray()));
     }

@@ -34,15 +34,16 @@ public class FieldDeployEnvironment extends FieldType {
     }
     
     public static String getOptionDisplay(String name) throws Exception {
-        List<OptionDeployEnvironment> environments = DeployEnvironmentService.DEFAULT.allEnabled(OptionDeployEnvironment.class);
+        List<OptionDeployEnvironment> environments = DeployEnvironmentService.getInstance()
+                .allEnabled(OptionDeployEnvironment.class);
         String display = "";
         for (OptionDeployEnvironment environment : environments) {
-            if(environment.getName().equals(name)){
+            if (environment.getName().equals(name)) {
                 display = environment.getDisplay();
                 break;
             }
         }
-        return display ;
+        return display;
     }
     
     @Data
@@ -96,7 +97,7 @@ public class FieldDeployEnvironment extends FieldType {
     private static final String SQL_QUERY_ENVIRONMENT_BY_NAMESPACES = "X";
     
     public List<OptionDeployEnvironment> queryDynamicOptions(FilterBasicKeyword keyword) throws Exception {
-        if (keyword != null && ApplicationService.DEFAULT.getFormName().equals(keyword.getFormName())
+        if (keyword != null && ApplicationService.getInstance().getFormName().equals(keyword.getFormName())
                 && keyword.getFormId() != null) {
             List<Long> namespaceIds = getBaseDao().queryAsList(Long.class, SQL_QUERY_NAMESPACE_BY_KEYWORD,
                     new Object[] { keyword.getFormId() });
@@ -109,20 +110,20 @@ public class FieldDeployEnvironment extends FieldType {
             if (environments == null || environments.size() <= 0) {
                 return Collections.emptyList();
             }
-            return DeployEnvironmentService.DEFAULT.queryByNamesEnabled(OptionDeployEnvironment.class,
+            return DeployEnvironmentService.getInstance().queryByNamesEnabled(OptionDeployEnvironment.class,
                     environments.toArray(new String[0]));
         }
-        return DeployEnvironmentService.DEFAULT.allEnabled(OptionDeployEnvironment.class);
+        return DeployEnvironmentService.getInstance().allEnabled(OptionDeployEnvironment.class);
     }
     
     public List<OptionDeployEnvironment> queryDynamicOptionsByAppId(long applicationId) throws Exception {
         return queryDynamicOptions(
-                new FilterBasicKeyword(null, ApplicationService.DEFAULT.getFormName(), applicationId));
+                new FilterBasicKeyword(null, ApplicationService.getInstance().getFormName(), applicationId));
     }
     
     public OptionDeployEnvironment queryDynamicValue(Object value) throws Exception {
         List<? extends FieldOption> envs;
-        if ((envs = queryDynamicValues(new Object[] {value})).size() != 1) {
+        if ((envs = queryDynamicValues(new Object[] { value })).size() != 1) {
             return null;
         }
         return (OptionDeployEnvironment) envs.get(0);
@@ -133,7 +134,7 @@ public class FieldDeployEnvironment extends FieldType {
         if ((values = ConvertUtil.asNonBlankUniqueTrimedStringArray(optionValues)).length <= 0) {
             return Collections.emptyList();
         }
-        return DeployEnvironmentService.DEFAULT.queryByNames(OptionDeployEnvironment.class, true, values);
+        return DeployEnvironmentService.getInstance().queryByNames(OptionDeployEnvironment.class, true, values);
     }
-
+    
 }

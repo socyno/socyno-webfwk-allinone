@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.model.CommonFormAttachement;
-import org.socyno.webfwk.state.service.CommonAttachmentService;
+import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.Definition;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.OptionClass;
 import org.socyno.webfwk.util.state.field.FieldFormAttachements;
@@ -82,7 +82,7 @@ public class SuggerDefinitionFormAttachment extends Definition {
             List<CommonFormAttachement> fieldsAtts;
             List<CommonFormAttachement> formsAtts = new LinkedList<>();
             for (List<Object> queryArgs : formsArgs.values()) {
-                if ((fieldsAtts = CommonAttachmentService.queryByTargetFormFeild(CommonFormAttachement.class,
+                if ((fieldsAtts = AttachmentService.queryByTargetFormFeild(CommonFormAttachement.class,
                         (String) queryArgs.remove(0), (String) queryArgs.remove(0), queryArgs.toArray())) != null) {
                     formsAtts.addAll(fieldsAtts);
                 }

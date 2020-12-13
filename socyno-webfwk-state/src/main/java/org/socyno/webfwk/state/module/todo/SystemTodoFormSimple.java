@@ -22,7 +22,7 @@ public class SystemTodoFormSimple implements AbstractStateForm {
     public static class FieldOptionsState extends FieldType {
         @Override
         public List<? extends FieldOption> getStaticOptions() {
-            return SystemTodoService.DEFAULT.getStates();
+            return SystemTodoService.getInstance().getStates();
         }
         
         @Override

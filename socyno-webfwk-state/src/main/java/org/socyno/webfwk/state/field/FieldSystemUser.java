@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.socyno.webfwk.state.module.user.SystemUserService;
-import org.socyno.webfwk.state.module.user.SystemUserSimple;
+import org.socyno.webfwk.state.module.user.SystemUserFormSimple;
 import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ConvertUtil;
@@ -23,12 +23,12 @@ public class FieldSystemUser extends FieldTableView {
     
     public <T extends OptionSystemUser> List<T> queryDynamicOptions(@NonNull Class<T> clazz, FilterBasicKeyword filter)
             throws Exception {
-        PagedList<SystemUserSimple> users;
+        PagedList<SystemUserFormSimple> users;
         if ((users = SystemUserService.DEFAULT.queryByNameLike(filter.getKeyword(), false, 1L, 100)) == null || users.getList() == null) {
             return null;
         }
         List<T> simpleUsers = new ArrayList<>();
-        for (SystemUserSimple user : users.getList()) {
+        for (SystemUserFormSimple user : users.getList()) {
             T option = (T)clazz.newInstance();
             option.setId(user.getId());
             option.setDisplay(user.getDisplay());
@@ -44,25 +44,25 @@ public class FieldSystemUser extends FieldTableView {
         if (values == null || values.length <= 0) {
             return Collections.emptyList();
         }
-        List<SystemUserSimple> users = null;
+        List<SystemUserFormSimple> users = null;
         if (asCode) {
             String[] names;
             if ((names = ConvertUtil.asNonBlankUniqueTrimedStringArray((Object[])values)).length <= 0) {
                 return Collections.emptyList();
             }
-            users = SystemUserService.DEFAULT.queryByUsernames(SystemUserSimple.class, names);
+            users = SystemUserService.DEFAULT.queryByUsernames(SystemUserFormSimple.class, names);
         } else {
             Long[] userIds;
             if ((userIds = ConvertUtil.asNonNullUniqueLongArray((Object[])values)).length <= 0) {
                 return Collections.emptyList();
             }
-            users = SystemUserService.DEFAULT.queryByUserIds(SystemUserSimple.class, userIds);
+            users = SystemUserService.DEFAULT.queryByUserIds(SystemUserFormSimple.class, userIds);
         }
         if (users == null || users.isEmpty()) {
             return Collections.emptyList();
         }
         List<T> simpleUsers = new ArrayList<>();
-        for (SystemUserSimple user : users) {
+        for (SystemUserFormSimple user : users) {
             T option = (T)clazz.newInstance();
             option.setId(user.getId());
             option.setDisplay(user.getDisplay());

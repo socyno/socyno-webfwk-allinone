@@ -76,7 +76,8 @@ public class PermissionService {
         if (tenantFeatures == null || tenantFeatures.size() <= 0) {
             return Collections.emptyList();
         }
-        return SystemFeatureService.getTenantAuths(SessionContext.getTenant(), tenantFeatures.toArray(new Long[0]));
+        return SystemFeatureService.getInstance().getTenantAuths(SessionContext.getTenant(),
+                tenantFeatures.toArray(new Long[0]));
     }
     
     /**
@@ -114,8 +115,8 @@ public class PermissionService {
             return Collections.emptyMap();
         }
         List<Long> featureIds;
-        if ((featureIds = SystemFeatureService.getAuthTenantFeatures(SessionContext.getTenant(), authKey)) == null
-                || featureIds.isEmpty()) {
+        if ((featureIds = SystemFeatureService.getInstance().getAuthTenantFeatures(SessionContext.getTenant(),
+                authKey)) == null || featureIds.isEmpty()) {
             return Collections.emptyMap();
         }
         
@@ -175,7 +176,7 @@ public class PermissionService {
     public static Long[] queryMyScopeTargetIdsByAuthKey(@NonNull AuthorityScopeType scopeType, String authKey) throws Exception {
         /* 确认用户信息是否存在，以及当前租户是否被授予该授权码 */
         if (!SessionContext.hasUserSession() || StringUtils.isBlank(authKey)
-                || !SystemFeatureService.checkTenantAuth(SessionContext.getTenant(), authKey)) {
+                || !SystemFeatureService.getInstance().checkTenantAuth(SessionContext.getTenant(), authKey)) {
             return new Long[0];
         }
         /* 针对管理员(无论租户管理员，还是超级管理员) */
@@ -325,13 +326,13 @@ public class PermissionService {
             return true;
         }
         boolean result = false;
-        if (SystemFeatureService.checkTenantAuth(SessionContext.getTenant(), authKey)) {
+        if (SystemFeatureService.getInstance().checkTenantAuth(SessionContext.getTenant(), authKey)) {
             /* 管理员给予所有授权 */
             if (SessionContext.isAdmin()) {
                 result = true;
             } else {
                 List<Long> featureIds;
-                if ((featureIds = SystemFeatureService.getAuthTenantFeatures(SessionContext.getTenant(),
+                if ((featureIds = SystemFeatureService.getInstance().getAuthTenantFeatures(SessionContext.getTenant(),
                         authKey)) != null && !featureIds.isEmpty()) {
                     if (AuthorityScopeType.System.equals(scopeType)) {
                         result = getDao().queryAsMap(
@@ -582,8 +583,8 @@ public class PermissionService {
             return Collections.emptyList();
         }
         List<Long> featureIds;
-        if ((featureIds = SystemFeatureService.getAuthTenantFeatures(SessionContext.getTenant(), authKeys)) == null
-                || featureIds.isEmpty()) {
+        if ((featureIds = SystemFeatureService.getInstance().getAuthTenantFeatures(SessionContext.getTenant(),
+                authKeys)) == null || featureIds.isEmpty()) {
             return Collections.emptyList();
         }
         String subsystemsSql = String.format("s.scope_type = 'Subsystem' AND s.scope_id = ?", subsystemId);
@@ -608,8 +609,8 @@ public class PermissionService {
             return Collections.emptyList();
         }
         List<Long> featureIds;
-        if ((featureIds = SystemFeatureService.getAuthTenantFeatures(SessionContext.getTenant(), authKey)) == null
-                || featureIds.isEmpty()) {
+        if ((featureIds = SystemFeatureService.getInstance().getAuthTenantFeatures(SessionContext.getTenant(),
+                authKey)) == null || featureIds.isEmpty()) {
             return Collections.emptyList();
         }
         String subsystemsSql = matchAll ? CommonUtil.join(
@@ -631,7 +632,7 @@ public class PermissionService {
      */
     private static List<Long> querySystemUsersByAuthKey(String... authKeys) throws Exception {
         List<Long> featureIds;
-        if (authKeys == null || authKeys.length <= 0 || (featureIds = SystemFeatureService
+        if (authKeys == null || authKeys.length <= 0 || (featureIds = SystemFeatureService.getInstance()
                 .getAuthTenantFeatures(SessionContext.getTenant(), authKeys)) == null || featureIds.isEmpty()) {
             return Collections.emptyList();
         }

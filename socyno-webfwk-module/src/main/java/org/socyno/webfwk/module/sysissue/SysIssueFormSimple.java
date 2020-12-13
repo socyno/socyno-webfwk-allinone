@@ -29,7 +29,7 @@ public class SysIssueFormSimple implements AbstractStateForm {
         
         @Override
         public List<? extends FieldOption> getStaticOptions() {
-            return SysIssueService.DEFAULT.getStates();
+            return SysIssueService.getInstance().getStates();
         }
     }
     

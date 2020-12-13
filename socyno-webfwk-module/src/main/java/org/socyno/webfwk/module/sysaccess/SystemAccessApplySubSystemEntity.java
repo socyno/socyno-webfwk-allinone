@@ -1,7 +1,7 @@
 package org.socyno.webfwk.module.sysaccess;
 
 import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
-import org.socyno.webfwk.module.subsystem.SubsystemBasicForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.state.field.FieldSystemRole;
 import org.socyno.webfwk.state.field.OptionSystemRole;
 
@@ -14,11 +14,11 @@ public class SystemAccessApplySubSystemEntity {
     @Attributes(title = "权限申请主表ID")
     private Long accessRequestId;
     
-    @Attributes(title = "权限类型", type = SystemAccessApplyDetail.FieldOptionsAccessType.class, required = true, position = 1010)
+    @Attributes(title = "权限类型", type = SystemAccessApplyFormDetail.FieldOptionsAccessType.class, required = true, position = 1010)
     private String accessType;
     
     @Attributes(title = "业务系统", type = FieldSubsystemAccessors.class, required = false, position = 1020)
-    private SubsystemBasicForm subsystem;
+    private SubsystemFormSimple subsystem;
     
     private Long subsystemId;
     

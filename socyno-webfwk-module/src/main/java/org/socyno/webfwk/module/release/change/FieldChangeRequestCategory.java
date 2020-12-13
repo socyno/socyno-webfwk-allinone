@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.socyno.webfwk.module.release.change.ChangeRequestSimple.Category;
-import org.socyno.webfwk.module.release.change.ChangeRequestSimple.ChangeType;
+import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.Category;
+import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.ChangeType;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
 import org.socyno.webfwk.util.context.HttpMessageConverter;
 import org.socyno.webfwk.util.state.field.FieldTableView;
@@ -53,7 +53,7 @@ public class FieldChangeRequestCategory extends FieldTableView {
     protected List<? extends FieldOption> queryDynamicOptions(FilterBasicKeyword filter, boolean allAllowed) throws Exception {
         List<Category> categories = null;
         if (filter != null && StringUtils.isNotBlank(filter.getFormJson())) {
-            ChangeRequestSimple form = HttpMessageConverter.toInstance(ChangeRequestSimple.class, filter.getFormJson());
+            ChangeRequestFormSimple form = HttpMessageConverter.toInstance(ChangeRequestFormSimple.class, filter.getFormJson());
             ChangeType changeType;
             if (StringUtils.isNotBlank(form.getChangeType())
                     && (changeType = ChangeType.get(form.getChangeType())) != null) {

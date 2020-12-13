@@ -3,7 +3,6 @@ package org.socyno.webfwk.module.vcs.change;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,7 +16,7 @@ import java.util.regex.Pattern;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.ArrayUtils;
 import org.socyno.webfwk.module.app.form.ApplicationAbstractForm;
-import org.socyno.webfwk.module.app.form.ApplicationListDefaultForm;
+import org.socyno.webfwk.module.app.form.ApplicationFormDefault;
 import org.socyno.webfwk.module.app.form.ApplicationService;
 import org.socyno.webfwk.module.app.form.FieldApplication;
 import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
@@ -37,7 +36,7 @@ import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.module.user.WindowsAdService;
-import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
+import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -66,8 +65,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import com.github.reinert.jjschema.Attributes;
-import com.github.reinert.jjschema.v1.FieldOption;
-import com.github.reinert.jjschema.v1.FieldSimpleOption;
 
 import lombok.Data;
 import lombok.Getter;
@@ -76,37 +73,37 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Attributes(title = "应用的变更集的管理")
-public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<VcsChangeInfoFormDetail> {
+public class VcsChangeInfoService extends
+        AbstractStateFormServiceWithBaseDao<VcsChangeInfoFormDetail, VcsChangeInfoFormDefault, VcsChangeInfoFormSimple> {
     
-    public static final VcsChangeInfoService DEFAULT = new VcsChangeInfoService();
+    @Getter
+    private static final VcsChangeInfoService Instance = new VcsChangeInfoService();
     
-    public static AbstractDao getDao() {
-        return SystemTenantDataSource.getMain();
+    private VcsChangeInfoService() {
+        setStates(STATES.values());
+        setActions(EVENTS.values());
+        setQueries(QUERIES.values());
     }
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<VcsChangeInfoFormDetail>("default", VcsChangeInfoFormDetail.class,
-                VcsChangeListDefaultQuery.class));
+        DEFAULT(new StateFormNamedQuery<VcsChangeInfoFormDefault>(
+            "默认查询",
+            VcsChangeInfoFormDefault.class,
+            VcsChangeListDefaultQuery.class
+        ));
+        
         private StateFormNamedQuery<?> namedQuery;
         
         QUERIES(StateFormNamedQuery<?> namedQuery) {
             this.namedQuery = namedQuery;
         }
-        
-        public static List<StateFormNamedQuery<?>> getQueries() {
-            List<StateFormNamedQuery<?>> queries = new ArrayList<>();
-            for (QUERIES q : QUERIES.values()) {
-                queries.add(q.getNamedQuery());
-            }
-            return queries;
-        }
     }
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum {
-        DRAFT ("draft",       "待确认")
-        , CREATED  ("created",  "已确认")
+          DRAFT     ("draft",       "待确认")
+        , CREATED   ("created",  "已确认")
         ;
         
         private final String code;
@@ -116,38 +113,6 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
             this.code = code;
             this.name = name;
         }
-        
-        public static String[] stringify(STATES... states) {
-            if (states == null || states.length <=0 ) {
-                return new String[0];
-            }
-            String[] result = new String[states.length];
-            for (int i = 0; i < states.length; i++) {
-                result[i] = states[i].getCode();
-            }
-            return result;
-        }
-        
-        public static String[] stringifyEx(STATES... states) {
-            if (states == null) {
-                states = new STATES[0];
-            }
-            List<String> result = new ArrayList<>(states.length);
-            for (STATES s : STATES.values()) {
-                if (!ArrayUtils.contains(states, s)) {
-                    result.add(s.getCode());
-                }
-            }
-            return result.toArray(new String[0]);
-        }
-
-        public static List<? extends FieldOption> getStatesAsOption() {
-            List<FieldOption> options = new ArrayList<>();
-            for (STATES s : STATES.values()) {
-                options.add(new FieldSimpleOption(s.getCode(), s.getName()));
-            }
-            return options;
-        }
     }
     
     public static class VcsChangeInfoSubsystemParser implements AuthorityScopeIdParser {
@@ -155,7 +120,7 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
         @Override
         public Long getAuthorityScopeId(Object form) {
             return new AuthoriyScopeIdParserFromApplication()
-                    .getAuthorityScopeId(((VcsChangeInfoFormDetail) form).getApplicationId());
+                    .getAuthorityScopeId(((VcsChangeInfoFormSimple) form).getApplicationId());
         }
     }
     
@@ -163,103 +128,112 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
         
         @Override
         public boolean check(Object form) throws Exception {
-            return SessionContext.getUserId().equals(((VcsChangeInfoFormDetail) form).getCreatedBy());
+            return SessionContext.getUserId().equals(((VcsChangeInfoFormSimple) form).getCreatedBy());
         }
     }
     
-    public static enum EVENTS implements StateFormEventBaseEnum {
-        Create(new AbstractStateSubmitAction<VcsChangeInfoFormDetail, VcsChangeInfoForCreation>("创建", STATES.DRAFT.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.Guest)
-            public void check(String event, VcsChangeInfoFormDetail form, String sourceState) {
-                
-            }
+    public class EventCreate extends AbstractStateSubmitAction<VcsChangeInfoFormDetail, VcsChangeInfoFormCreation> {
+        
+        public EventCreate() {
+            super("创建", STATES.DRAFT.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Guest)
+        public void check(String event, VcsChangeInfoFormDetail form, String sourceState) {
             
-            @Override
-            public boolean getStateRevisionChangeIgnored() throws Exception {
-                return true;
-            }
+        }
+        
+        @Override
+        public boolean getStateRevisionChangeIgnored() throws Exception {
+            return true;
+        }
+        
+        @Override
+        public boolean allowHandleReturnNull() {
+            return true;
+        }
+        
+        @Override
+        public Long handle(String event, VcsChangeInfoFormDetail originForm, VcsChangeInfoFormCreation form,
+                String message) throws Exception {
+            create(form);
+            return null;
+        }
+    }
+    
+    public class EventFixRevision extends AbstractStateAction<VcsChangeInfoFormDetail, BasicStateForm, Void> {
+        
+        public EventFixRevision() {
+            super("确认", STATES.DRAFT.getCode(), STATES.CREATED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.Subsystem, parser = VcsChangeInfoSubsystemParser.class, checker = VcsChangeInfoSubsystemChecker.class)
+        public void check(String event, VcsChangeInfoFormDetail form, String sourceState) {
             
-            @Override
-            public boolean allowHandleReturnNull() {
-                return true;
-            }
-            
-            @Override
-            public Long handle(String event, VcsChangeInfoFormDetail originForm, VcsChangeInfoForCreation form, String message) throws Exception {
-                DEFAULT.create(form);
+        }
+        
+        @Override
+        public Void handle(String event, VcsChangeInfoFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            if (!VcsType.Subversion.equals(VcsType.forName(originForm.getVcsType()))) {
                 return null;
             }
-        }),
-        
-        FixRevision(new AbstractStateAction<VcsChangeInfoFormDetail, BasicStateForm, Void>("确认", STATES.DRAFT.getCode(),
-                STATES.CREATED.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.Subsystem, parser = VcsChangeInfoSubsystemParser.class, checker = VcsChangeInfoSubsystemChecker.class)
-            public void check(String event, VcsChangeInfoFormDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, VcsChangeInfoFormDetail originForm, final BasicStateForm form, final String message) throws Exception {
-                if (!VcsType.Subversion.equals(VcsType.forName(originForm.getVcsType()))) {
-                    return null;
-                }
-                final AbstractSystemTenant tenantInfo = SystemTenantService.getSimple(SessionContext.getTenant());
-                VcsUnifiedService.CommonCloud.getSubversionApiService().batchProcess(new SubversionProcessor() {
-                    @Override
-                    public void run(SVNRepository repo) throws Exception {
-                        long endRevision = -1L;
-                        int logsInterval = 20;
-                        List<SVNLogEntry> logEntreis;
-                        int maxLogsSearch = CommonUtil.parseInteger(
-                                ContextUtil.getConfigTrimed("system.subversion.fix.revision.maxlogs"), 0);
-                        maxLogsSearch = CommonUtil.ifNull(maxLogsSearch <= 0 ? null : maxLogsSearch, logsInterval);
-                        while (maxLogsSearch > 0) {
-                            maxLogsSearch -= logsInterval;
-                            if ((logEntreis = SubversionUtil.getLogs(repo, "/", endRevision, logsInterval)) == null
-                                    || logEntreis.isEmpty()) {
+            final AbstractSystemTenant tenantInfo = SystemTenantService.getInstance().getSimple(SessionContext.getTenant());
+            VcsUnifiedService.CommonCloud.getSubversionApiService().batchProcess(new SubversionProcessor() {
+                @Override
+                public void run(SVNRepository repo) throws Exception {
+                    long endRevision = -1L;
+                    int logsInterval = 20;
+                    List<SVNLogEntry> logEntreis;
+                    int maxLogsSearch = CommonUtil.parseInteger(
+                            ContextUtil.getConfigTrimed("system.subversion.fix.revision.maxlogs"), 0);
+                    maxLogsSearch = CommonUtil.ifNull(maxLogsSearch <= 0 ? null : maxLogsSearch, logsInterval);
+                    while (maxLogsSearch > 0) {
+                        maxLogsSearch -= logsInterval;
+                        if ((logEntreis = SubversionUtil.getLogs(repo, "/", endRevision, logsInterval)) == null
+                                || logEntreis.isEmpty()) {
+                            break;
+                        }
+                        for (SVNLogEntry logEntry : logEntreis) {
+                            if (StringUtils.equals(originForm.getVcsRevision(), logEntry.getRevision() + "")
+                                    || StringUtils.equals(originForm.getVcsRevision(),
+                                            getSubversionPropertyAsString(logEntry.getRevisionProperties(),
+                                                    "socyno-change:txn"))) {
+                                String vcsMessage = StringUtils.trimToEmpty(logEntry.getMessage());
+                                getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
+                                        new ObjectMap().put("=id", originForm.getId())
+                                                .put("vcs_revision", logEntry.getRevision())
+                                                .put("=vcs_summary", parseVcsCommitSummary(tenantInfo, VcsType.Subversion, vcsMessage))
+                                                .put("=vcs_message", StringUtils.truncate(vcsMessage, 500))
+                                                .put("=created_at", logEntry.getDate())));
+                                return;
+                            }
+                            if ((endRevision = logEntry.getRevision()) <= 1) {
                                 break;
                             }
-                            for (SVNLogEntry logEntry : logEntreis) {
-                                if (StringUtils.equals(originForm.getVcsRevision(), logEntry.getRevision() + "")
-                                        || StringUtils.equals(originForm.getVcsRevision(),
-                                                getSubversionPropertyAsString(logEntry.getRevisionProperties(),
-                                                        "socyno-change:txn"))) {
-                                    String vcsMessage = StringUtils.trimToEmpty(logEntry.getMessage());
-                                    getDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(DEFAULT.getFormTable(),
-                                            new ObjectMap().put("=id", originForm.getId())
-                                                    .put("vcs_revision", logEntry.getRevision())
-                                                    .put("=vcs_summary", parseVcsCommitSummary(tenantInfo, VcsType.Subversion, vcsMessage))
-                                                    .put("=vcs_message", StringUtils.truncate(vcsMessage, 500))
-                                                    .put("=created_at", logEntry.getDate())));
-                                    return;
-                                }
-                                if ((endRevision = logEntry.getRevision()) <= 1) {
-                                    break;
-                                }
-                            }
                         }
-                        throw new MessageException(
-                                String.format("未检索到对应的 Subversion 版本（%s）记录", originForm.getVcsRevision()));
                     }
-                });
-                
-                return null;
-            }
-        });
+                    throw new MessageException(
+                            String.format("未检索到对应的 Subversion 版本（%s）记录", originForm.getVcsRevision()));
+                }
+            });
+            
+            return null;
+        }
+    }
+    
+    @Getter
+    public enum EVENTS implements StateFormEventClassEnum {
+        Create(EventCreate.class),
+        
+        FixRevision(EventFixRevision.class);
         ;
-        private final AbstractStateAction<VcsChangeInfoFormDetail, ?, ?> action;
-        EVENTS(AbstractStateAction<VcsChangeInfoFormDetail, ?, ?> action) {
-            this.action = action;
-        }
-        
-        public AbstractStateAction<VcsChangeInfoFormDetail, ?, ?> getAction() {
-            return action;
-        }
-        
-        public String getName() {
-            return name().replaceAll("([^A-Z])([A-Z])", "$1_$2").toLowerCase();
+        private final Class<? extends AbstractStateAction<VcsChangeInfoFormDetail, ?, ?>> eventClass;
+
+        EVENTS(Class<? extends AbstractStateAction<VcsChangeInfoFormDetail, ?, ?>> eventClass) {
+            this.eventClass = eventClass;
         }
     }
     
@@ -378,7 +352,7 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
      * 名称， 第三级 必须为 trunk（主干）、branches（分支）、 patches（紧急补丁，仅当前
      * 应用设置紧急 发布状态时允许）以及 tags（标签，仅支持创建和删除，禁止变更）。
      */
-    private void parseSubversinRefsCommitAppsInfo(final VcsChangeInfoForCreation info,
+    private void parseSubversinRefsCommitAppsInfo(final VcsChangeInfoFormCreation info,
             final AbstractSystemTenant tenantInfo, final RefsCommitAppsInfo refsCommitAppsInfo) throws Exception {
         SubversionApiService svnService = VcsUnifiedService.CommonCloud.getSubversionApiService();
         
@@ -559,13 +533,13 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
         }
     }
     
-    private void parseGitlabRefsCommitAppsInfo(final VcsChangeInfoForCreation info, final AbstractSystemTenant tenantInfo,
+    private void parseGitlabRefsCommitAppsInfo(final VcsChangeInfoFormCreation info, final AbstractSystemTenant tenantInfo,
             final RefsCommitAppsInfo refsCommitAppsInfo) throws Exception {
         if (StringUtils.isBlank(info.getVcsRefsName())) {
             throw new MessageException("Gitlab 仓库创建变更集，仓库变更分支必须提供");
         }
-        ApplicationListDefaultForm application;
-        if ((application = ApplicationService.getByVcsPath(info.getVcsPath())) == null) {
+        ApplicationFormDefault application;
+        if ((application = ApplicationService.getInstance().getByVcsPath(info.getVcsPath())) == null) {
             throw new MessageException("应用仓库未在DevOps系统中注册，拒绝接收变更");
         }
         /**
@@ -634,18 +608,18 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
         return vcsCommiter;
     }
     
-    static void submit(@NonNull VcsChangeInfoForCreation info) throws Exception {
+    void submit(@NonNull VcsChangeInfoFormCreation info) throws Exception {
         
         final String systemUserCode = formatToSystemUsername(info.getVcsCommiter());
         SystemUserService.DEFAULT.forceSuToUser(systemUserCode);
         info.setVcsCommiter(systemUserCode);
-        DEFAULT.triggerAction(EVENTS.Create.getName(), info);
+        triggerAction(EVENTS.Create.getName(), info);
     }
     
-    private void create(VcsChangeInfoForCreation info) throws Exception {
+    private void create(VcsChangeInfoFormCreation info) throws Exception {
         
         AbstractSystemTenant tenantInfo;
-        if ((tenantInfo = SystemTenantService.getSimple(SessionContext.getTenant())) == null
+        if ((tenantInfo = SystemTenantService.getInstance().getSimple(SessionContext.getTenant())) == null
                 || tenantInfo.isDisabled() || StringUtils.isBlank(tenantInfo.getCodeNamespace())) {
             log.info("租户（{}）不存在、或代码空间未配置、或者已被禁用", SessionContext.getTenant());
             throw new MessageException("Invalid vcs account, no such user or disabled.");
@@ -673,7 +647,7 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
         for (VcsRefsNameOperation refsop : refsCommitAppsInfo.getRefsNameOperations()) {
             ApplicationAbstractForm application;
             if ((application = refsop.getApplicationForm()) == null) {
-                if ((application = ApplicationService.getByVcsPath(refsop.getVcsPath())) == null) {
+                if ((application = ApplicationService.getInstance().getByVcsPath(refsop.getVcsPath())) == null) {
                     throw new MessageException(
                             String.format("Application not found for vcs path : %s", refsop.getVcsPath()));
                 }
@@ -693,11 +667,11 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
             }
         }
         
-        getDao().executeTransaction(new ResultSetProcessor() {
+        getFormBaseDao().executeTransaction(new ResultSetProcessor() {
             @Override
             public void process(ResultSet result, Connection conn) throws Exception {
                 for (VcsRefsNameOperation refsop : refsCommitAppsInfo.getRefsNameOperations()) {
-                    getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(getFormTable(), new ObjectMap()
+                    getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(getFormTable(), new ObjectMap()
                         .put("application_id", refsop.getApplicationForm().getId())
                         .put("vcs_revision", info.getVcsRevision())
                         .put("vcs_refs_name", refsop.getVcsRefsName())
@@ -749,13 +723,13 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
                     return;
                 }
                 for (Object entry : changeInfos.getList()) {
-                    if (!StringUtils.equals(((VcsChangeInfoFormDetail)entry).getVcsRevision(), vcsRevision)
-                            || !StringUtils.equals(((VcsChangeInfoFormDetail)entry).getVcsRefsName(), vcsRefsName)) {
+                    if (!StringUtils.equals(((VcsChangeInfoFormSimple)entry).getVcsRevision(), vcsRevision)
+                            || !StringUtils.equals(((VcsChangeInfoFormSimple)entry).getVcsRefsName(), vcsRefsName)) {
                         continue;
                     }
                     BasicStateForm eventForm = new BasicStateForm();
-                    eventForm.setId(((VcsChangeInfoFormDetail)entry).getId());
-                    eventForm.setRevision(((VcsChangeInfoFormDetail)entry).getRevision());
+                    eventForm.setId(((VcsChangeInfoFormSimple)entry).getId());
+                    eventForm.setRevision(((VcsChangeInfoFormSimple)entry).getRevision());
                     triggerAction(EVENTS.FixRevision.getName(), eventForm);
                 }
             } catch (Exception e) {
@@ -768,13 +742,13 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
         }
     }
     
-    public static PagedListWithTotal<VcsChangeInfoFormDetail> queryByContextUser(Integer limit, Integer page)
+    public PagedListWithTotal<VcsChangeInfoFormSimple> queryByContextUser(Integer limit, Integer page)
             throws Exception {
         return queryByContextUser(null, limit, page);
     }
     
     @SuppressWarnings("unchecked")
-    public static PagedListWithTotal<VcsChangeInfoFormDetail> queryByContextUser(VcsChangeListContextCond cond, Integer limit,
+    public PagedListWithTotal<VcsChangeInfoFormSimple> queryByContextUser(VcsChangeListContextCond cond, Integer limit,
             Integer page) throws Exception {
         if (!SessionContext.hasUserSession()) {
             return null;
@@ -786,16 +760,16 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
             query.setApplicationId(cond.getApplicationId());
             query.setVcsRevision(cond.getVcsRevision());
         }
-        return (PagedListWithTotal<VcsChangeInfoFormDetail>) DEFAULT.listFormWithTotal(QUERIES.DEFAULT, query);
+        return (PagedListWithTotal<VcsChangeInfoFormSimple>) listFormWithTotal(QUERIES.DEFAULT, query);
     }
     
-    public static PagedListWithTotal<VcsChangeInfoFormDetail> queryByApplication(long applicationId, Integer limit,
+    public PagedListWithTotal<VcsChangeInfoFormSimple> queryByApplication(long applicationId, Integer limit,
             Integer page) throws Exception {
         return queryByApplication(applicationId, null, limit, page);
     }
     
     @SuppressWarnings("unchecked")
-    public static PagedListWithTotal<VcsChangeInfoFormDetail> queryByApplication(long applicationId,
+    public PagedListWithTotal<VcsChangeInfoFormSimple> queryByApplication(long applicationId,
             VcsChangeListApplicationCond cond, Integer limit, Integer page) throws Exception {
         VcsChangeListDefaultQuery query = new VcsChangeListDefaultQuery(limit, page);
         query.setApplicationId(applicationId);
@@ -804,7 +778,7 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
             query.setVcsRefsName(cond.getVcsRefsName());
             query.setVcsRevision(cond.getVcsRevision());
         }
-        return (PagedListWithTotal<VcsChangeInfoFormDetail>) DEFAULT.listFormWithTotal(QUERIES.DEFAULT, query);
+        return (PagedListWithTotal<VcsChangeInfoFormSimple>) listFormWithTotal(QUERIES.DEFAULT, query);
     }
     
     @Override
@@ -847,12 +821,7 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
     
     @Override
     protected AbstractDao getFormBaseDao() {
-        return getDao();
-    }
-    
-    @Override
-    public List<StateFormNamedQuery<?>> getFormNamedQueries() {
-        return QUERIES.getQueries();
+        return SystemTenantDataSource.getMain();
     }
     
     @Override
@@ -866,16 +835,13 @@ public class VcsChangeInfoService extends AbstractStateFormServiceWithBaseDao<Vc
     }
     
     @Override
-    public List<? extends FieldOption> getStates() {
-        return STATES.getStatesAsOption();
+    public String getFormDisplay() {
+        return "代码变更";
     }
-    
+
     @Override
-    protected Map<String, AbstractStateAction<VcsChangeInfoFormDetail, ?, ?>> getFormActions() {
-        Map<String, AbstractStateAction<VcsChangeInfoFormDetail, ?, ?>> actions = new HashMap<>();
-        for (EVENTS event : EVENTS.values()) {
-            actions.put(event.getName(), event.getAction());
-        }
-        return actions;
+    protected void fillExtraFormFields(Collection<? extends VcsChangeInfoFormSimple> forms) throws Exception {
+        // TODO Auto-generated method stub
+        
     }
 }

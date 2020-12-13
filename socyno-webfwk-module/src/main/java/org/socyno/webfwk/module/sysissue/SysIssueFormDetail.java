@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Attributes(title = "系统故障或需求申请单详情")
-public class SysIssueFormDetail extends SysIssueFormSimple {
+public class SysIssueFormDetail extends SysIssueFormDefault {
     
     @Attributes(title = "附件", type = FieldFormAttachements.class,
             visibleTags= {"event_create", "event_edit"},

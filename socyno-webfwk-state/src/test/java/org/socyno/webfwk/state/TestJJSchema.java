@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.socyno.webfwk.state.module.role.SystemRoleDetail;
+import org.socyno.webfwk.state.module.role.SystemRoleFormDetail;
 import org.socyno.webfwk.util.exception.FormValidationException;
 import org.socyno.webfwk.util.tool.ClassUtil;
 
@@ -22,7 +22,7 @@ public class TestJJSchema {
     
     @Test
     public void testClassToJsonSchema() {
-        log.info("{}", ClassUtil.classToJson(SystemRoleDetail.class));
+        log.info("{}", ClassUtil.classToJson(SystemRoleFormDetail.class));
     }
     
     @Data

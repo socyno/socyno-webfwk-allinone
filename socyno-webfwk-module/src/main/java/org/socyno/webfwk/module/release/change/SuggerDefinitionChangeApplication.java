@@ -65,7 +65,7 @@ public class SuggerDefinitionChangeApplication extends Definition {
             if (queryArgs.size() <= 0 ) {
                 return Collections.emptyList();
             }
-            List<ChangeApplication> changeApps = ChangeRequestService.DEFAULT.getFormBaseDao()
+            List<ChangeApplication> changeApps = ChangeRequestService.getInstance().getFormBaseDao()
                     .queryAsList(ChangeApplication.class, String.format(
                             "SELECT * FROM release_change_application WHERE change_request_id IN (%s)",
                             CommonUtil.join("?", queryArgs.size(), ",")), queryArgs.toArray());

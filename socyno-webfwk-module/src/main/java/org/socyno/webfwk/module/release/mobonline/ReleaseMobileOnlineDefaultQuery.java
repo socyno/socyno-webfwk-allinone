@@ -18,7 +18,7 @@ import java.util.List;
 @Attributes(title = "上架应用商店列表查询")
 public class ReleaseMobileOnlineDefaultQuery extends AbstractStateFormQuery {
     
-    @Attributes(title = "状态", type = ReleaseMobileOnlineDetailFrom.FieldOptionsState.class, position = 1001)
+    @Attributes(title = "状态", type = ReleaseMobileOnlineFormDetail.FieldOptionsState.class, position = 1001)
     private String state;
     
     @Attributes(title = "应用", type = FieldReleaseMobileOnlineApplication.class, position = 1002)
@@ -49,7 +49,8 @@ public class ReleaseMobileOnlineDefaultQuery extends AbstractStateFormQuery {
         
         if (StringUtils.isNotBlank(getState())) {
             sqlargs.add(getState());
-            sqlstmt.append(String.format(" and a.%s = ?", ReleaseMobileOnlineService.DEFAULT.getFormStateField()));
+            sqlstmt.append(
+                    String.format(" and a.%s = ?", ReleaseMobileOnlineService.getInstance().getFormStateField()));
         }
         
         if (StringUtils.isNotBlank(getApplicationName())) {
@@ -63,15 +64,16 @@ public class ReleaseMobileOnlineDefaultQuery extends AbstractStateFormQuery {
     @Override
     public AbstractSqlStatement prepareSqlTotal() throws Exception {
         AbstractSqlStatement query = buildWhereSql();
-        return new BasicSqlStatement().setValues(query.getValues()).setSql(
-                String.format(SQL_SELECT_COUNT + " %s", ReleaseMobileOnlineService.DEFAULT.getFormTable(), query.getSql()));
+        return new BasicSqlStatement().setValues(query.getValues()).setSql(String.format(SQL_SELECT_COUNT.concat(" %s"),
+                ReleaseMobileOnlineService.getInstance().getFormTable(), query.getSql()));
     }
     
     @Override
     public AbstractSqlStatement prepareSqlQuery() throws Exception {
         AbstractSqlStatement query = buildWhereSql();
         return new BasicSqlStatement().setValues(query.getValues())
-                .setSql(String.format(SQL_SELECT_FORM + " %s ORDER BY a.id DESC LIMIT %s, %s",
-                        ReleaseMobileOnlineService.DEFAULT.getFormTable(), query.getSql(), getOffset(), getLimit()));
+                .setSql(String.format(SQL_SELECT_FORM.concat(" %s ORDER BY a.id DESC LIMIT %s, %s"),
+                        ReleaseMobileOnlineService.getInstance().getFormTable(), query.getSql(), getOffset(),
+                        getLimit()));
     }
 }

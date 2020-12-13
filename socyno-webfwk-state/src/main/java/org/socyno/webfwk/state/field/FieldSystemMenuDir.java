@@ -3,7 +3,7 @@ package org.socyno.webfwk.state.field;
 import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.state.module.menu.SystemMenuService;
+import org.socyno.webfwk.state.module.menu.SystemMenuItemService;
 
 import com.github.reinert.jjschema.v1.FieldType;
 
@@ -31,14 +31,14 @@ public class FieldSystemMenuDir extends FieldType {
     
     @Override
     public List<OptionSystemMenuDir> getStaticOptions() throws Exception {
-        return SystemMenuService.DEFAULT.getFormBaseDao().queryAsList(OptionSystemMenuDir.class,
+        return SystemMenuItemService.getInstance().getFormBaseDao().queryAsList(OptionSystemMenuDir.class,
                 String.format(SQL_QUERY_MENU_DIR_OPTIONS, ""));
     }
     
     public static OptionSystemMenuDir getOption(Long dirId) throws Exception {
         List<OptionSystemMenuDir> list;
         if (dirId == null
-                || (list = SystemMenuService.DEFAULT.getFormBaseDao().queryAsList(OptionSystemMenuDir.class,
+                || (list = SystemMenuItemService.getInstance().getFormBaseDao().queryAsList(OptionSystemMenuDir.class,
                         String.format(SQL_QUERY_MENU_DIR_OPTIONS, String.format(" AND d.id = %s ", dirId)))) == null
                 || list.size() <= 0) {
             return null;

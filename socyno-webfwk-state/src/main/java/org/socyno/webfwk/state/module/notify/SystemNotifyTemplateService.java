@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.socyno.webfwk.state.authority.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
@@ -24,7 +24,8 @@ import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
 
-public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBaseDaoV2<SystemNotifyTemplateSimple> {
+public class SystemNotifyTemplateService extends
+        AbstractStateFormServiceWithBaseDao<SystemNotifyTemplateFormDefault, SystemNotifyTemplateFormDefault, SystemNotifyTemplateFormSimple> {
     
     @Getter
     private final static SystemNotifyTemplateService instance = new SystemNotifyTemplateService();
@@ -49,7 +50,7 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         }
     }
     
-    private void checkNotifyTemplateFormChange(SystemNotifyTemplateForCreation changed) throws Exception {
+    private void checkNotifyTemplateFormChange(SystemNotifyTemplateFormCreation changed) throws Exception {
         if (StringUtils.isBlank(changed.getCode()) || changed.getCode().matches("^\\s*\\d+\\s*$")) {
             throw new MessageException("通知模板的代码，不允许为纯数字！");
         }
@@ -64,7 +65,7 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemNotifyTemplateSimple, SystemNotifyTemplateForCreation> {
+    public class EventCreate extends AbstractStateSubmitAction<SystemNotifyTemplateFormSimple, SystemNotifyTemplateFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -72,12 +73,12 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyTemplateSimple form, String sourceState) {
+        public void check(String event, SystemNotifyTemplateFormSimple form, String sourceState) {
             
         }
             
         @Override
-        public Long handle(String event, SystemNotifyTemplateSimple originForm, SystemNotifyTemplateForCreation form, String message) throws Exception {
+        public Long handle(String event, SystemNotifyTemplateFormSimple originForm, SystemNotifyTemplateFormCreation form, String message) throws Exception {
             checkNotifyTemplateFormChange(form);
             final AtomicLong id = new AtomicLong(-1);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
@@ -104,7 +105,7 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         }
     }
     
-    public class EventEdit extends AbstractStateAction<SystemNotifyTemplateSimple, SystemNotifyTemplateForEdition, Void> {
+    public class EventEdit extends AbstractStateAction<SystemNotifyTemplateFormSimple, SystemNotifyTemplateFormEdition, Void> {
        
         public EventEdit() {
             super("编辑", getStateCodesEx(), "");
@@ -112,12 +113,12 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyTemplateSimple form, String sourceState) {
+        public void check(String event, SystemNotifyTemplateFormSimple form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, SystemNotifyTemplateSimple originForm, final SystemNotifyTemplateForEdition form, final String message) throws Exception {
+        public Void handle(String event, SystemNotifyTemplateFormSimple originForm, final SystemNotifyTemplateFormEdition form, final String message) throws Exception {
             checkNotifyTemplateFormChange(form);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                 getFormTable(), new ObjectMap()
@@ -134,7 +135,7 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         }
     }
     
-    public class EventDisabled extends AbstractStateAction<SystemNotifyTemplateSimple, BasicStateForm, Void> {
+    public class EventDisabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, BasicStateForm, Void> {
         
         public EventDisabled() {
             super("禁用", getStateCodesEx(), STATES.DISABLED.getCode());
@@ -147,12 +148,12 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyTemplateSimple form, String sourceState) {
+        public void check(String event, SystemNotifyTemplateFormSimple form, String sourceState) {
             
         }
     }
     
-    public class EventEnabled extends AbstractStateAction<SystemNotifyTemplateSimple, BasicStateForm, Void> {
+    public class EventEnabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, BasicStateForm, Void> {
         
         public EventEnabled() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -165,7 +166,7 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, SystemNotifyTemplateSimple form, String sourceState) {
+        public void check(String event, SystemNotifyTemplateFormSimple form, String sourceState) {
             
         }
     }
@@ -193,16 +194,16 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         
         ;
         
-        private final Class<? extends AbstractStateAction<SystemNotifyTemplateSimple, ?, ?>> eventClass;
-        EVENTS(Class<? extends AbstractStateAction<SystemNotifyTemplateSimple, ?, ?>> eventClass) {
+        private final Class<? extends AbstractStateAction<SystemNotifyTemplateFormSimple, ?, ?>> eventClass;
+        EVENTS(Class<? extends AbstractStateAction<SystemNotifyTemplateFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemNotifyTemplateDefaultRow>("默认查询", 
-                SystemNotifyTemplateDefaultRow.class, SystemNotifyTemplateDefaultQuery.class));
+        DEFAULT(new StateFormNamedQuery<SystemNotifyTemplateFormDefault>("默认查询", 
+                SystemNotifyTemplateFormDefault.class, SystemNotifyTemplateQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
         
         QUERIES(StateFormNamedQuery<?> namedQuery) {
@@ -210,14 +211,14 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
         }
     }
     
-    public SystemNotifyTemplateSimple getByCode(String tmplCode) throws Exception {
+    public SystemNotifyTemplateFormSimple getByCode(String tmplCode) throws Exception {
         if (StringUtils.isBlank(tmplCode)) {
             return null;
         }
-        List <SystemNotifyTemplateSimple> list;
-        PagedList<SystemNotifyTemplateSimple> paged;
-        if ((paged = listForm(SystemNotifyTemplateSimple.class,
-                new SystemNotifyTemplateDefaultQuery(1, 1).setCodeEquals(tmplCode)))
+        List <SystemNotifyTemplateFormSimple> list;
+        PagedList<SystemNotifyTemplateFormSimple> paged;
+        if ((paged = listForm(SystemNotifyTemplateFormSimple.class,
+                new SystemNotifyTemplateQueryDefault(1, 1).setCodeEquals(tmplCode)))
                 == null || (list = paged.getList()) == null || list.size() <= 0 ) {
             return null;
         }
@@ -235,12 +236,17 @@ public class SystemNotifyTemplateService extends AbstractStateFormServiceWithBas
     }
     
     @Override
+    public String getFormDisplay() {
+        return "系统通知模板";
+    }
+    
+    @Override
     protected AbstractDao getFormBaseDao() {
         return SystemTenantDataSource.getMain();
     }
 
     @Override
-    protected void fillExtraFormFields(Collection<? extends SystemNotifyTemplateSimple> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends SystemNotifyTemplateFormSimple> forms) throws Exception {
         // TODO Auto-generated method stub
         
     }

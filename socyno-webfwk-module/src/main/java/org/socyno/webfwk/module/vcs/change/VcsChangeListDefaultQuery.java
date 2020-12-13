@@ -95,7 +95,7 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
     public AbstractSqlStatement prepareSqlTotal() {
         AbstractSqlStatement whereQuery = buildWhereSql();
         return new BasicSqlStatement().setValues(whereQuery.getValues()).setSql(String.format("%s %s",
-                       String.format(SQL_QUERY_COUNT, VcsChangeInfoService.DEFAULT.getFormTable()),
+                       String.format(SQL_QUERY_COUNT, VcsChangeInfoService.getInstance().getFormTable()),
                        whereQuery.getSql()));
     }
     
@@ -104,12 +104,12 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
         AbstractSqlStatement whereQuery = buildWhereSql();
         return new BasicSqlStatement().setValues(whereQuery.getValues())
                .setSql(String.format("%s %s ORDER BY f.id DESC LIMIT %s, %s",
-                       String.format(SQL_QUERY_ALL, VcsChangeInfoService.DEFAULT.getFormTable()),
+                       String.format(SQL_QUERY_ALL, VcsChangeInfoService.getInstance().getFormTable()),
                        whereQuery.getSql(), getOffset(), getLimit()));
     }
     
     public <T extends AbstractStateForm> List<T> processResultSet(Class<T> itemClazz, List<T> resultSet) throws Exception {
-        VcsChangeInfoService.DEFAULT.fillFormDetails(itemClazz, resultSet);
+        VcsChangeInfoService.getInstance().fillFormDetails(itemClazz, resultSet);
         return resultSet;
     }
     

@@ -77,13 +77,13 @@ public class FieldSystemTenant extends FieldTableView {
     public List<OptionSystemTenant> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
         
         if (filter == null || StringUtils.isBlank(filter.getKeyword())) {
-            return SystemTenantService.DEFAULT.queryFormWithStateRevision(OptionSystemTenant.class,
+            return SystemTenantService.getInstance().queryFormWithStateRevision(OptionSystemTenant.class,
                     String.format("%s WHERE t.%s = 'enabled' %s LIMIT 50", SQL_QUERY_TENANT_OPTIONS,
-                            SystemTenantService.DEFAULT.getFormStateField(), SQL_ORDER_TENANT_OPTIONS));
+                            SystemTenantService.getInstance().getFormStateField(), SQL_ORDER_TENANT_OPTIONS));
         }
-        return SystemTenantService.DEFAULT.queryFormWithStateRevision(OptionSystemTenant.class, String.format(
+        return SystemTenantService.getInstance().queryFormWithStateRevision(OptionSystemTenant.class, String.format(
                 "%s WHERE t.%s = 'enabled' AND (t.code LIKE CONCAT('%%', ?, '%%') OR t.name LIKE CONCAT('%%', ?, '%%')) %s LIMIT 50",
-                SQL_QUERY_TENANT_OPTIONS, SystemTenantService.DEFAULT.getFormStateField(), SQL_ORDER_TENANT_OPTIONS),
+                SQL_QUERY_TENANT_OPTIONS, SystemTenantService.getInstance().getFormStateField(), SQL_ORDER_TENANT_OPTIONS),
                 new Object[] { filter.getKeyword(), filter.getKeyword() });
     }
     
@@ -97,7 +97,7 @@ public class FieldSystemTenant extends FieldTableView {
                 || (ids = ConvertUtil.asNonNullUniqueLongArray((Object[]) values)).length <= 0) {
             return Collections.emptyList();
         }
-        return SystemTenantService.DEFAULT.queryFormWithStateRevision(OptionSystemTenant.class,
+        return SystemTenantService.getInstance().queryFormWithStateRevision(OptionSystemTenant.class,
                 String.format("%s WHERE t.id IN (%s) %s", SQL_QUERY_TENANT_OPTIONS,
                         CommonUtil.join("?", ids.length, ","), SQL_ORDER_TENANT_OPTIONS),
                 ids);

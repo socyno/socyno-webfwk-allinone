@@ -67,12 +67,12 @@ public class FieldDepartmentCode extends FieldTableView {
         if ((productlineCodes = ConvertUtil.asNonBlankUniqueTrimedStringArray(productlineCodes)).length <= 0) {
             return Collections.emptyList();
         }
-        List<DepartmentBasicForm> list;
-        if ((list = DepartmentService.DEFAULT.list(DepartmentBasicForm.class, (String[]) productlineCodes)) == null) {
+        List<DepartmentFormSimple> list;
+        if ((list = DepartmentService.getInstance().list(DepartmentFormSimple.class, (String[]) productlineCodes)) == null) {
             return Collections.emptyList();
         }
         List<OptionProductlineCode> options = new ArrayList<>();
-        for (DepartmentBasicForm form : list) {
+        for (DepartmentFormSimple form : list) {
             options.add(new OptionProductlineCode(form.getId(), form.getCode(), form.getName()));
         }
         return options;
@@ -83,15 +83,15 @@ public class FieldDepartmentCode extends FieldTableView {
      */
     @SuppressWarnings("unchecked")
     public List<OptionProductlineCode> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        List<DepartmentBasicForm> list = (List<DepartmentBasicForm>) DepartmentService.DEFAULT
+        List<DepartmentFormSimple> list = (List<DepartmentFormSimple>) DepartmentService.getInstance()
                 .listForm(DepartmentService.QUERIES.OPTIONS,
-                        new DepartmentListDefaultQueryForOptions(filter.getKeyword()))
+                        new DepartmentQueryOptions(filter.getKeyword()))
                 .getList();
         if (list == null) {
             return Collections.emptyList();
         }
         List<OptionProductlineCode> options = new ArrayList<>();
-        for (DepartmentBasicForm form : list) {
+        for (DepartmentFormSimple form : list) {
             options.add(new OptionProductlineCode(form.getId(), form.getCode(), form.getName()));
         }
         return options;

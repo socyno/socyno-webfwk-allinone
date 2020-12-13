@@ -2,7 +2,7 @@ package org.socyno.webfwk.state.basic;
 
 import org.socyno.webfwk.state.exec.StateFormNoTodoAssigneeFoundException;
 import org.socyno.webfwk.state.model.CommonSimpleLog;
-import org.socyno.webfwk.state.service.CommonTodoService;
+import org.socyno.webfwk.state.service.SimpleTodoService;
 import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.AbstractMethodUnimplimentedException;
@@ -46,7 +46,7 @@ public abstract class AbstractStateTodoCreateAction<S extends AbstractStateForm>
         }
         
         CommonSimpleLog firstLog;
-        if ((firstLog = ((AbstractStateFormServiceWithBaseDao<?>) formService)
+        if ((firstLog = ((AbstractStateFormServiceWithBaseDao<?, ?, ?>) formService)
                 .queryFirstLog(form.getId())) == null) {
             return SessionContext.getTokenUserId();
         }
@@ -73,7 +73,7 @@ public abstract class AbstractStateTodoCreateAction<S extends AbstractStateForm>
         String todoTargetKey = getTodoTargetKey(event, originForm, form);
         String todoTargetPage = EnjoyUtil.format(ContextUtil.getConfigTrimed("system.todo.target.page.form"),
                 new ObjectMap().put("formName", fromName).put("formId", form.getId()).asMap());
-        CommonTodoService.createTodo(todoTargetKey, form.getId(), todoApplier, todoTargetPage, todoTitle, todoCategory,
+        SimpleTodoService.createTodo(todoTargetKey, form.getId(), todoApplier, todoTargetPage, todoTitle, todoCategory,
                 todoAssignees);
         return null;
     }

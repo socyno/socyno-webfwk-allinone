@@ -1,7 +1,7 @@
 package org.socyno.webfwk.state.basic;
 
 import org.socyno.webfwk.state.exec.StateFormNoTodoClosedEventFoundException;
-import org.socyno.webfwk.state.service.CommonTodoService;
+import org.socyno.webfwk.state.service.SimpleTodoService;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 /**
@@ -49,7 +49,7 @@ public abstract class AbstractStateTodoCloseAction<S extends AbstractStateForm>
             return null;
         }
         String closeTodoTargetKey = getClosedTodoTargetKey(event, originForm, form);
-        CommonTodoService.closeTodo(closeTodoTargetKey, form.getId(), closeTodoReason);
+        SimpleTodoService.closeTodo(closeTodoTargetKey, form.getId(), closeTodoReason);
         return null;
     }
 }

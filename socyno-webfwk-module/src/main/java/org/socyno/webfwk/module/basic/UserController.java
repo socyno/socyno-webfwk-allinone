@@ -4,9 +4,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.socyno.webfwk.state.module.menu.SystemMenuService;
+import org.socyno.webfwk.state.module.menu.SystemMenuItemService;
 import org.socyno.webfwk.state.module.token.UserTokenService;
-import org.socyno.webfwk.state.module.user.SystemUserForLogin;
+import org.socyno.webfwk.state.module.user.SystemUserFormLogin;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.module.user.SystemUserToken;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class UserController {
     
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public R login(@RequestBody SystemUserForLogin loginInfo, HttpServletResponse resp) throws Exception {
+    public R login(@RequestBody SystemUserFormLogin loginInfo, HttpServletResponse resp) throws Exception {
         SystemUserToken userToken;
         if ((userToken = SystemUserService.DEFAULT.login(loginInfo)) == null) {
             throw new MessageException("用户或密码错误");
@@ -45,6 +45,6 @@ public class UserController {
         if (!SessionContext.hasUserSession()) {
             return R.ok();
         }
-        return R.ok().setData(SystemMenuService.getMyMenuTree());
+        return R.ok().setData(SystemMenuItemService.getInstance().getMyMenuTree());
     }
 }

@@ -2,7 +2,7 @@ package org.socyno.webfwk.state.authority;
 
 import lombok.Getter;
 
-import org.socyno.webfwk.state.service.CommonStateFormService;
+import org.socyno.webfwk.state.service.StateFormService;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
@@ -23,7 +23,7 @@ public class CommonStateFormParser implements ApplicationListener<ContextRefresh
         // 判断SPRING容器是否加载完成
         if (event.getApplicationContext().getParent() == null) {
             try {
-                CommonStateFormService.parseStateFormRegister(loadBackend);
+                StateFormService.parseStateFormRegister(loadBackend);
             } catch (Exception e) {
                 throw new Error("加载或解析通用流程表单数据失败", e);
             }

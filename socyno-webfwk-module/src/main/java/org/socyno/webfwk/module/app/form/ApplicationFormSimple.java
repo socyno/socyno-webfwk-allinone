@@ -5,7 +5,7 @@ import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsCodeL
 import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsState;
 import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsVcsType;
 import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsYesOrNo;
-import org.socyno.webfwk.module.release.build.FieldSysBuildService;
+import org.socyno.webfwk.module.release.build.FieldBuildService;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -59,7 +59,7 @@ public class ApplicationFormSimple implements ApplicationAbstractForm {
     @Attributes(title = "是否收藏")
     private Boolean bookmarked;
     
-    @Attributes(title = "构建服务", type = FieldSysBuildService.class)
+    @Attributes(title = "构建服务", type = FieldBuildService.class)
     private String buildService;
     
     @Attributes(title = "代码分级", type = FieldOptionsCodeLevel.class)

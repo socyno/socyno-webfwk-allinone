@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.socyno.webfwk.state.module.feature.SystemFeatureService;
-import org.socyno.webfwk.state.module.feature.SystemFeatureSimple;
+import org.socyno.webfwk.state.module.feature.SystemFeatureFormSimple;
 import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ConvertUtil;
@@ -26,18 +26,20 @@ public class FieldSystemFeature extends FieldTableView {
      * @throws Exception
      */
     public List<OptionSystemFeature> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        PagedList<SystemFeatureSimple> list;
-        if ((list = SystemFeatureService.query(filter.getKeyword(), 1, 1000)) == null || list.getList() == null) {
+        PagedList<SystemFeatureFormSimple> list;
+        if ((list = SystemFeatureService.getInstance().query(filter.getKeyword(), 1, 1000)) == null
+                || list.getList() == null) {
             return Collections.emptyList();
         }
         List<OptionSystemFeature> options = new ArrayList<>();
-        for (SystemFeatureSimple f : list.getList()) {
+        for (SystemFeatureFormSimple f : list.getList()) {
             if (f == null) {
                 continue;
             }
             options.add(new OptionSystemFeature().setId(f.getId()).setCode(f.getCode()).setName(f.getName()));
         }
-        return options.stream().sorted(Comparator.comparing(OptionSystemFeature::getOptionDisplay)).collect(Collectors.toList());
+        return options.stream().sorted(Comparator.comparing(OptionSystemFeature::getOptionDisplay))
+                .collect(Collectors.toList());
     }
     
     /**
@@ -49,14 +51,16 @@ public class FieldSystemFeature extends FieldTableView {
     @Override
     public List<OptionSystemFeature> queryDynamicValues(Object[] values) throws Exception {
         Long[] ids;
-        List<SystemFeatureSimple> features = null;
+        List<SystemFeatureFormSimple> features = null;
         if (values == null || values.length <= 0
-                || (ids = ConvertUtil.asNonNullUniqueLongArray((Object[])values)).length <= 0
-                || (features = SystemFeatureService.queryByIds(SystemFeatureSimple.class, ids)) == null || features.isEmpty()) {
+                || (ids = ConvertUtil.asNonNullUniqueLongArray((Object[]) values)).length <= 0
+                || (features = SystemFeatureService.getInstance().queryByIds(SystemFeatureFormSimple.class,
+                        ids)) == null
+                || features.isEmpty()) {
             return Collections.emptyList();
         }
         List<OptionSystemFeature> options = new ArrayList<>();
-        for (SystemFeatureSimple feature : features) {
+        for (SystemFeatureFormSimple feature : features) {
             options.add(new OptionSystemFeature().setId(feature.getId())
                             .setName(feature.getName()).setCode(feature.getCode()));
         }

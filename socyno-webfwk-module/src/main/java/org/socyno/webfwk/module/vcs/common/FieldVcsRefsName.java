@@ -29,10 +29,11 @@ public class FieldVcsRefsName extends FieldType {
      * 
      */
     public List<OptionVcsRefsName> queryDynamicOptions(FilterVcsRefsName filter) throws Exception {
-        if (filter.getFormId() == null || StringUtils.isBlank(filter.getVcsRefsType())
-                || !StringUtils.equalsIgnoreCase(ApplicationService.DEFAULT.getFormName(), filter.getFormName())) {
+        if (filter.getFormId() == null || StringUtils.isBlank(filter.getVcsRefsType()) || !StringUtils
+                .equalsIgnoreCase(ApplicationService.getInstance().getFormName(), filter.getFormName())) {
             return Collections.emptyList();
         }
+        
         if (VcsRefsType.Branch.name().equalsIgnoreCase(filter.getVcsRefsType())) {
             return VcsUnifiedService.CommonCloud.listBranches(filter.getFormId(), filter.getKeyword(), 1, 100);
         }

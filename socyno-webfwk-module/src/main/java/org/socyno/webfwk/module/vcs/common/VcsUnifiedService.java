@@ -129,17 +129,19 @@ public abstract class VcsUnifiedService {
                 @Override
                 public SVNRepository getRepository() throws SVNException {
                     try {
-                        return SubversionUtil.getRepository(
-                                HttpUtil.concatUrlPath(getSubversionApiUrl(),
-                                        SystemTenantService.getSimple(SessionContext.getTenant()).getCodeNamespace()),
-                                getSubversionApiUser(), getSubversionApiToken());
+                        return SubversionUtil
+                                .getRepository(
+                                        HttpUtil.concatUrlPath(getSubversionApiUrl(),
+                                                SystemTenantService.getInstance().getSimple(SessionContext.getTenant())
+                                                        .getCodeNamespace()),
+                                        getSubversionApiUser(), getSubversionApiToken());
                     } catch (SVNException e) {
                         throw (SVNException) e;
                     } catch (Exception e) {
                         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ""), e);
                     }
                 }
-
+                
             };
         }
         
@@ -270,7 +272,7 @@ public abstract class VcsUnifiedService {
             throws VcsFailToRestAppRepoException {
         VcsUnifiedAppInitInfo appInfo;
         try {
-            if ((appInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicationId)) == null) {
+            if ((appInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
                 throw new MessageException("给定的应用不存在");
             }
             String name = appInfo.getName();
@@ -434,7 +436,7 @@ public abstract class VcsUnifiedService {
     public VcsRevisionEntry getRevisionInfo(long applicatoinId, String revision) throws Exception {
 
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicatoinId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicatoinId)) == null) {
             throw new MessageException("检索应用源码仓库注册信息异常");
         }
         if (VcsType.Gitlab.equals(appVcsInfo.getVcsTypeEnum())) {
@@ -461,7 +463,7 @@ public abstract class VcsUnifiedService {
      */
     public List<VcsFileEntry> listDir(long applicationId, String path, String revision) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -536,7 +538,7 @@ public abstract class VcsUnifiedService {
      */
     public byte[] getFileContent(long applicationId, String path, String revision) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -647,7 +649,7 @@ public abstract class VcsUnifiedService {
     private void createVcsRefsName(@NonNull VcsRefsType vcsRefsType, long applicationId, String refsName,
             String baseRevision, String message) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -724,7 +726,7 @@ public abstract class VcsUnifiedService {
             return;
         }
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         VcsRefsType vcsRefsType;
@@ -766,7 +768,7 @@ public abstract class VcsUnifiedService {
     private List<OptionVcsRefsName> listRefsNames(@NonNull VcsRefsType vcsRefsType, long applicationId, String keyword,
             Integer page, Integer limit) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.DEFAULT.getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -953,9 +955,9 @@ public abstract class VcsUnifiedService {
         List<? extends AbstractUser> members;
         VcsUnifiedSubsystemInfo vcsSubsystemInfo;
         try {
-            members = CommonUtil.ifNull(SubsystemService.DEFAULT.collectAllCodePermGroupMembers(subsystemId),
+            members = CommonUtil.ifNull(SubsystemService.getInstance().collectAllCodePermGroupMembers(subsystemId),
                     Collections.emptyList());
-            vcsSubsystemInfo = SubsystemService.DEFAULT.getCodePermGroupNameWithNamespace(subsystemId);
+            vcsSubsystemInfo = SubsystemService.getInstance().getCodePermGroupNameWithNamespace(subsystemId);
         } catch (Exception ex) {
             throw new VcsFailToRestGroupMembersException("获取权限组或授权人员信息失败", ex);
         }

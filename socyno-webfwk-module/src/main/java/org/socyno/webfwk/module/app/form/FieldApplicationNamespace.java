@@ -101,7 +101,7 @@ public class FieldApplicationNamespace extends FieldTableView {
         if (applicationIds == null || applicationIds.length <= 0) {
             return Collections.emptyList();
         }
-        List<OptionApplicationNamespace> list = ApplicationService.DEFAULT.getFormBaseDao().queryAsList(
+        List<OptionApplicationNamespace> list = ApplicationService.getInstance().getFormBaseDao().queryAsList(
                 OptionApplicationNamespace.class,
                 String.format(SQL_QUERY_QUERY_APPLICATION_NAMESPACE, CommonUtil.join("?", applicationIds.length, ",")),
                 applicationIds);
@@ -154,7 +154,7 @@ public class FieldApplicationNamespace extends FieldTableView {
         if (applicationIds == null || applicationIds.length <= 0) {
             return Collections.emptyList();
         }
-        return ApplicationService.DEFAULT.getFormBaseDao().queryAsList(
+        return ApplicationService.getInstance().getFormBaseDao().queryAsList(
                 SimpleApplicationNamespace.class,
                 String.format("%s WHERE %s",SQL_QUERY_SIMPLE_APPLICATION_NAMESPACE,CommonUtil.join("application_id = ?", applicationIds.length, " OR ")),
                 applicationIds);
@@ -177,7 +177,7 @@ public class FieldApplicationNamespace extends FieldTableView {
      * 确认应用是否部署在指定的命名空间中
      */
     public static boolean check(long applicationId, long namespaceId) throws Exception {
-        return ApplicationService.DEFAULT.getFormBaseDao().queryAsObject(Long.class,
+        return ApplicationService.getInstance().getFormBaseDao().queryAsObject(Long.class,
                 SQL_QUERY_CHECK_APPLICATION_NAMESPACE, new Object[]{applicationId, namespaceId}) != null;
     }
 
@@ -195,7 +195,7 @@ public class FieldApplicationNamespace extends FieldTableView {
     private final static String SQL_QUERY_REPLICAS_APPLICATION_NAMESPACE = "X";
 
     public static Long getReplicas(long applicationId, long namespaceId) throws Exception {
-        return ApplicationService.DEFAULT.getFormBaseDao().queryAsObject(Long.class,
+        return ApplicationService.getInstance().getFormBaseDao().queryAsObject(Long.class,
                 SQL_QUERY_REPLICAS_APPLICATION_NAMESPACE, new Object[]{applicationId, namespaceId});
     }
 

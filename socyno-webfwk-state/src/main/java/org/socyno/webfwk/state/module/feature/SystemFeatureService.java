@@ -2,11 +2,9 @@ package org.socyno.webfwk.state.module.feature;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
@@ -22,7 +20,7 @@ import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.state.field.FieldSystemRole;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
-import org.socyno.webfwk.state.util.StateFormEventBaseEnum;
+import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -36,15 +34,23 @@ import org.socyno.webfwk.util.sql.SqlQueryUtil;
 import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
 
-import com.github.reinert.jjschema.v1.FieldOption;
-import com.github.reinert.jjschema.v1.FieldSimpleOption;
-
 import lombok.Getter;
 import lombok.NonNull;
-public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<SystemFeatureDetail> {
+
+public class SystemFeatureService extends
+        AbstractStateFormServiceWithBaseDao<SystemFeatureFormDetail, SystemFeatureFormDefault, SystemFeatureFormSimple> {
     
     @Getter
-    public static enum STATES implements StateFormStateBaseEnum {
+    private static final SystemFeatureService Instance = new SystemFeatureService();
+    
+    private SystemFeatureService () {
+        setStates(STATES.values());
+        setActions(EVENTS.values());
+        setQueries(QUERIES.values());
+    }
+    
+    @Getter
+    public enum STATES implements StateFormStateBaseEnum {
         ENABLED("enabled", "有效")
         ;
         
@@ -55,44 +61,12 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
             this.code = code;
             this.name = name;
         }
-        
-        public static String[] stringify(STATES... states) {
-            if (states == null || states.length <= 0) {
-                return new String[0];
-            }
-            String[] result = new String[states.length];
-            for (int i = 0; i < states.length; i++) {
-                result[i] = states[i].getCode();
-            }
-            return result;
-        }
-        
-        public static String[] stringifyEx(STATES... states) {
-            if (states == null) {
-                states = new STATES[0];
-            }
-            List<String> result = new ArrayList<>(states.length);
-            for (STATES s : STATES.values()) {
-                if (!ArrayUtils.contains(states, s)) {
-                    result.add(s.getCode());
-                }
-            }
-            return result.toArray(new String[0]);
-        }
-
-        public static List<? extends FieldOption> getStatesAsOption() {
-            List<FieldOption> options = new ArrayList<>();
-            for (STATES s : STATES.values()) {
-                options.add(new FieldSimpleOption(s.getCode(), s.getName()));
-            }
-            return options;
-        }
     }
     
     @Getter
-    public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemFeatureListDefaultForm>("default", 
-                SystemFeatureListDefaultForm.class, SystemFeatureListDefaultQuery.class))
+    public enum QUERIES implements StateFormQueryBaseEnum {
+        DEFAULT(new StateFormNamedQuery<SystemFeatureFormDefault>("默认查询", 
+                SystemFeatureFormDefault.class, SystemFeatureQueryDefault.class))
         ;
         
         private StateFormNamedQuery<?> namedQuery;
@@ -100,147 +74,139 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
         QUERIES(StateFormNamedQuery<?> namedQuery) {
             this.namedQuery = namedQuery;
         }
-        
-        public static List<StateFormNamedQuery<?>> getQueries() {
-            List<StateFormNamedQuery<?>> queries = new ArrayList<>();
-            for (QUERIES item : QUERIES.values()) {
-                queries.add(item.getNamedQuery());
-            }
-            return queries;
-        }
     }
     
-    public static enum EVENTS implements StateFormEventBaseEnum {
-        Submit(new AbstractStateSubmitAction<SystemFeatureDetail, SystemFeatureForCreation>("创建", STATES.ENABLED.getCode()) {
-            @Override
-            @Authority(value = AuthorityScopeType.System)
-            public void check(String event, SystemFeatureDetail form, String sourceState) {
-                
-            }
+    public class EventCreate extends AbstractStateSubmitAction<SystemFeatureFormDetail, SystemFeatureFormCreation> {
+        
+        public EventCreate() {
+            super("创建", STATES.ENABLED.getCode());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.System)
+        public void check(String event, SystemFeatureFormDetail form, String sourceState) {
             
-            @Override
-            public Long handle(String event, SystemFeatureDetail originForm, SystemFeatureForCreation form, String message)
-                    throws Exception {
-                final AtomicLong id = new AtomicLong(-1);
-                DEFAULT.getFormBaseDao().executeTransaction(new ResultSetProcessor() {
-                    @Override
-                    public void process(ResultSet r, Connection c) throws Exception {
-                        DEFAULT.getFormBaseDao().executeUpdate(
-                                SqlQueryUtil.prepareInsertQuery(DEFAULT.getFormTable(),
-                                        new ObjectMap()
-                                                .put("code", form.getCode())
-                                                .put("name", form.getName())
-                                                .put("description", CommonUtil.ifNull(form.getDescription(), ""))
-                                                .put("created_by", SessionContext.getDisplay())
-                            ), new ResultSetProcessor() {
-                                @Override
-                                public void process(ResultSet r, Connection c) throws Exception {
-                                    r.next();
-                                    id.set(r.getLong(1));
-                                    List<OptionSystemAuth> auths;
-                                    if ((auths = form.getAuths()) != null) {
-                                        setFeatureAuths(id.get(), auths);
-                                    }
+        }
+        
+        @Override
+        public Long handle(String event, SystemFeatureFormDetail originForm, SystemFeatureFormCreation form, String message)
+                throws Exception {
+            final AtomicLong id = new AtomicLong(-1);
+            getFormBaseDao().executeTransaction(new ResultSetProcessor() {
+                @Override
+                public void process(ResultSet r, Connection c) throws Exception {
+                    getFormBaseDao().executeUpdate(
+                            SqlQueryUtil.prepareInsertQuery(getFormTable(),
+                                    new ObjectMap()
+                                            .put("code", form.getCode())
+                                            .put("name", form.getName())
+                                            .put("description", CommonUtil.ifNull(form.getDescription(), ""))
+                                            .put("created_by", SessionContext.getDisplay())
+                        ), new ResultSetProcessor() {
+                            @Override
+                            public void process(ResultSet r, Connection c) throws Exception {
+                                r.next();
+                                id.set(r.getLong(1));
+                                List<OptionSystemAuth> auths;
+                                if ((auths = form.getAuths()) != null) {
+                                    setFeatureAuths(id.get(), auths);
                                 }
-                            });
-                    }
-                });
-                return id.get();
-            }
-        }),
-        Update(new AbstractStateAction<SystemFeatureDetail, SystemFeatureForEdition, Void>("编辑", STATES.stringifyEx(), "") {
-            
-            @Override
-            @Authority(value = AuthorityScopeType.System)
-            public void check(String event, SystemFeatureDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, final SystemFeatureDetail originForm, final SystemFeatureForEdition form,
-                    final String message) throws Exception {
-                getDao().executeTransaction(new ResultSetProcessor() {
-                    @Override
-                    public void process(ResultSet result, Connection conn) throws Exception {
-                        List<OptionSystemAuth> auths;
-                        DEFAULT.getFormBaseDao()
-                                .executeUpdate(SqlQueryUtil.prepareUpdateQuery(DEFAULT.getFormTable(),
-                                        new ObjectMap()
-                                                .put("=id", form.getId())
-                                                .put("name", form.getName())
-                                                .put("description", CommonUtil.ifNull(form.getDescription(), ""))));
-                        
-                        if ((auths = form.getAuths()) != null) {
-                            setFeatureAuths(form.getId(), auths);
-                        }
-                    }
-                });
-                return null;
-            }
-        }),
-        Delete(new AbstractStateDeleteAction<SystemFeatureDetail>("删除", STATES.stringifyEx()) {
-            @Override
-            @Authority(value = AuthorityScopeType.System)
-            public void check(String event, SystemFeatureDetail form, String sourceState) {
-                
-            }
-            
-            @Override
-            public Void handle(String event, final SystemFeatureDetail originForm, final BasicStateForm form,
-                    final String message) throws Exception {
-                DEFAULT.getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(DEFAULT.getFormTable(),
-                        new ObjectMap().put("=id", originForm.getId())));
-                setFeatureAuths(originForm.getId(), Collections.emptyList());
-                return null;
-            }
-        });
-        
-        private final AbstractStateAction<SystemFeatureDetail, ?, ?> action;
-        
-        EVENTS(AbstractStateAction<SystemFeatureDetail, ?, ?> action) {
-            this.action = action;
-        }
-        
-        public AbstractStateAction<SystemFeatureDetail, ?, ?> getAction() {
-            return action;
+                            }
+                        });
+                }
+            });
+            return id.get();
         }
     }
     
-    public static final SystemFeatureService DEFAULT = new SystemFeatureService();
+    public class EventUpdate extends AbstractStateAction<SystemFeatureFormDetail, SystemFeatureFormEdition, Void> {
+        
+        public EventUpdate() {
+            super("编辑", getStateCodesEx(), "");
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.System)
+        public void check(String event, SystemFeatureFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, final SystemFeatureFormDetail originForm, final SystemFeatureFormEdition form,
+                final String message) throws Exception {
+            getFormBaseDao().executeTransaction(new ResultSetProcessor() {
+                @Override
+                public void process(ResultSet result, Connection conn) throws Exception {
+                    List<OptionSystemAuth> auths;
+                    getFormBaseDao()
+                            .executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
+                                    new ObjectMap()
+                                            .put("=id", form.getId())
+                                            .put("name", form.getName())
+                                            .put("description", CommonUtil.ifNull(form.getDescription(), ""))));
+                    
+                    if ((auths = form.getAuths()) != null) {
+                        setFeatureAuths(form.getId(), auths);
+                    }
+                }
+            });
+            return null;
+        }
+    }
+    
+    public class EventDelete extends AbstractStateDeleteAction<SystemFeatureFormDetail> {
+        
+        public EventDelete() {
+            super("删除", getStateCodesEx());
+        }
+        
+        @Override
+        @Authority(value = AuthorityScopeType.System)
+        public void check(String event, SystemFeatureFormDetail form, String sourceState) {
+            
+        }
+        
+        @Override
+        public Void handle(String event, final SystemFeatureFormDetail originForm, final BasicStateForm form,
+                final String message) throws Exception {
+            getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(getFormTable(),
+                    new ObjectMap().put("=id", originForm.getId())));
+            setFeatureAuths(originForm.getId(), Collections.emptyList());
+            return null;
+        }
+    }
+    
+    @Getter
+    public enum EVENTS implements StateFormEventClassEnum {
+        Create(EventCreate.class),
+        Update(EventUpdate.class),
+        Delete(EventDelete.class);
+        
+        private final Class<? extends AbstractStateAction<SystemFeatureFormDetail, ?, ?>> eventClass;
+        
+        EVENTS(Class<? extends AbstractStateAction<SystemFeatureFormDetail, ?, ?>> eventClass) {
+            this.eventClass = eventClass;
+        }
+    }
+     
     
     @Override
     public String getFormName() {
-        return getName();
+        return "system_feature";
     }
     
     @Override
     protected String getFormTable() {
-        return getTable();
-    }
-    
-    protected static String getTable() {
         return "system_feature";
     }
     
-    protected static String getName() {
-        return "system_feature";
+    @Override
+    public String getFormDisplay() {
+        return "业务系统";
     }
     
     @Override
     protected AbstractDao getFormBaseDao() {
-        return getDao();
-    }
-    
-    @Override
-    protected Map<String, AbstractStateAction<SystemFeatureDetail, ?, ?>> getFormActions() {
-        Map<String, AbstractStateAction<SystemFeatureDetail, ?, ?>> actions = new HashMap<>();
-        for (EVENTS event : EVENTS.values()) {
-            actions.put(event.getName(), event.getAction());
-        }
-        return actions;
-    }
-    
-    private static AbstractDao getDao() {
         return ContextUtil.getBaseDataSource();
     }
     
@@ -249,12 +215,12 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
      * 
      * @param nameLike 检索的关键字
      */
-    public static PagedList<SystemFeatureSimple> query(String nameLike, long page, int limit) throws Exception {
-        SystemFeatureListDefaultQuery query = new SystemFeatureListDefaultQuery();
+    public PagedList<SystemFeatureFormSimple> query(String nameLike, long page, int limit) throws Exception {
+        SystemFeatureQueryDefault query = new SystemFeatureQueryDefault();
         query.setPage(page);
         query.setLimit(limit);
         query.setNameLike(nameLike);
-        return DEFAULT.listFormX(SystemFeatureSimple.class, query);
+        return listForm(SystemFeatureFormSimple.class, query);
     }
     
     /**
@@ -262,7 +228,7 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
      * 
      * @param nameLike 检索的关键字
      */
-    public static PagedList<SystemFeatureSimple> queryWithTenant(String tenant, String nameLike, long page, int limit) throws Exception {
+    public PagedList<SystemFeatureFormSimple> queryWithTenant(String tenant, String nameLike, long page, int limit) throws Exception {
         if (StringUtils.isBlank(tenant)) {
             return null;
         }
@@ -271,42 +237,33 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
         query.setLimit(limit);
         query.setNameLike(nameLike);
         query.setTenantCode(tenant);
-        return DEFAULT.listFormX(SystemFeatureSimple.class, query);
+        return listForm(SystemFeatureFormSimple.class, query);
     }
     
     /**
      * 获取全部的功能清单。
      */
-    public static PagedList<SystemFeatureSimple> query(int page, int limit) throws Exception {
+    public PagedList<SystemFeatureFormSimple> query(int page, int limit) throws Exception {
         return query(null, page, limit);
     }
     
     /**
      * 获取功能详情数据，包括授权信息。
      */
-    public static SystemFeatureDetail get(Object idOrCode) throws Exception {
+    public SystemFeatureFormDetail get(Object idOrCode) throws Exception {
         if (idOrCode == null || StringUtils.isBlank(idOrCode.toString())) {
             return null;
         }
-        List<SystemFeatureDetail> result;
+        List<SystemFeatureFormDetail> result;
         if (idOrCode.toString().matches("^\\d+$")) {
-            result = queryByIds(SystemFeatureDetail.class, CommonUtil.parseLong(idOrCode));
+            result = queryByIds(SystemFeatureFormDetail.class, CommonUtil.parseLong(idOrCode));
         } else {
-            result = queryByCodes(SystemFeatureDetail.class, idOrCode.toString());
+            result = queryByCodes(SystemFeatureFormDetail.class, idOrCode.toString());
         }
         if (result == null || result.size() != 1) {
             return null;
         }
         return withAuths(result.get(0));
-    }
-    
-    /**
-     * 重写获取表单详情的方法, 载如关联的授权清单
-     * 
-     */
-    @Override
-    public SystemFeatureDetail getForm(long formId) throws Exception {
-        return get(formId);
     }
     
     /**
@@ -331,11 +288,11 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 包含指定接口或操作的功能列表
      */
-    public static List<Long> getAuthTenantFeatures(String tenant, String ...authKeys) throws Exception {
+    public List<Long> getAuthTenantFeatures(String tenant, String ...authKeys) throws Exception {
         if (authKeys == null || authKeys.length <= 0 || StringUtils.isBlank(tenant)) {
             return Collections.emptyList();
         }
-        return DEFAULT.getFormBaseDao().queryAsList(Long.class,
+        return getFormBaseDao().queryAsList(Long.class,
                 String.format(SQL_QUERY_AUTH_FEATURES, CommonUtil.join("?", authKeys.length, ",")),
                 ArrayUtils.addAll(new Object[] { tenant }, (Object[])authKeys));
     }
@@ -360,11 +317,11 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 获取租户的功能清单
      */
-    public static List<Long> getTenantFeatures(String tenant) throws Exception {
+    public List<Long> getTenantFeatures(String tenant) throws Exception {
         if (StringUtils.isBlank(tenant)) {
             return Collections.emptyList();
         }
-        return DEFAULT.getFormBaseDao().queryAsList(Long.class, SQL_QUERY_TENANT_FEATURES, new Object[] { tenant });
+        return getFormBaseDao().queryAsList(Long.class, SQL_QUERY_TENANT_FEATURES, new Object[] { tenant });
     }
     
     /**
@@ -390,11 +347,11 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 获取租户的在给定功能中的所有接口清单 
      */
-    public static List<String> getTenantAuths(String tenant, Long... features) throws Exception {
+    public List<String> getTenantAuths(String tenant, Long... features) throws Exception {
         if (StringUtils.isBlank(tenant) || features == null || features.length <= 0) {
             return Collections.emptyList();
         }
-        return DEFAULT.getFormBaseDao().queryAsList(String.class,
+        return getFormBaseDao().queryAsList(String.class,
                 String.format("%s AND tf.feature_id IN (%s)", SQL_QUERY_TENANT_AUTHS,
                         CommonUtil.join("?", features.length, ",")),
                 ArrayUtils.addAll(new Object[] { tenant }, (Object[])features));
@@ -403,21 +360,21 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 获取租户的所有授权操作清单 
      */
-    public static List<String> getTenantAllAuths(String tenant) throws Exception {
+    public List<String> getTenantAllAuths(String tenant) throws Exception {
         if (StringUtils.isBlank(tenant)) {
             return Collections.emptyList();
         }
-        return DEFAULT.getFormBaseDao().queryAsList(String.class, SQL_QUERY_TENANT_AUTHS, new Object[] { tenant });
+        return getFormBaseDao().queryAsList(String.class, SQL_QUERY_TENANT_AUTHS, new Object[] { tenant });
     }
     
     /**
      * 获取租户下是否拥有指定的授权操作
      */
-    public static boolean checkTenantAuth(String tenant, String authKey) throws Exception {
+    public boolean checkTenantAuth(String tenant, String authKey) throws Exception {
         if (StringUtils.isBlank(tenant) || StringUtils.isBlank(authKey)) {
             return false;
         }
-        return DEFAULT.getFormBaseDao().queryAsList(String.class,
+        return getFormBaseDao().queryAsList(String.class,
                 String.format("%s AND a.auth_key = ?", SQL_QUERY_TENANT_AUTHS),
                 new Object[] { tenant, authKey }).size() > 0;
     }
@@ -431,12 +388,12 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 通过给定的编号列表，检索系统功能清单（不包括关联授权信息）。
      */
-    public static <T extends SystemFeatureSimple> List<T> queryByIds(@NonNull Class<T> clazz, final Long... ids) throws Exception {
+    public <T extends SystemFeatureFormSimple> List<T> queryByIds(@NonNull Class<T> clazz, final Long... ids) throws Exception {
         if (ids == null || ids.length <= 0) {
             return Collections.emptyList();
         }
-        return DEFAULT.queryFormWithStateRevision(clazz, String.format(SQL_QUERY_ID_FEATURES, 
-                         DEFAULT.getFormTable(), CommonUtil.join("?", ids.length, ",")), ids);
+        return queryFormWithStateRevision(clazz, String.format(SQL_QUERY_ID_FEATURES, 
+                         getFormTable(), CommonUtil.join("?", ids.length, ",")), ids);
     }
     
     /**
@@ -463,14 +420,13 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 通过给定的编号列表，检索租户功能清单（不包括关联授权信息）。
      */
-    public static <T extends SystemFeatureSimple> List<T> queryByIdsWithTenant(@NonNull Class<T> clazz, String tenant,
+    public <T extends SystemFeatureFormSimple> List<T> queryByIdsWithTenant(@NonNull Class<T> clazz, String tenant,
             final Long... ids) throws Exception {
         if (StringUtils.isBlank(tenant) || ids == null || ids.length <= 0) {
             return Collections.emptyList();
         }
-        return DEFAULT
-                .queryFormWithStateRevision(clazz,
-                        String.format(SQL_QUERY_TENANT_FEATURES_BYID, DEFAULT.getFormTable(),
+        return queryFormWithStateRevision(clazz,
+                        String.format(SQL_QUERY_TENANT_FEATURES_BYID, getFormTable(),
                                 CommonUtil.join("?", ids.length, ",")),
                         ArrayUtils.addAll(new Object[] { tenant }, (Object[])ids));
     }
@@ -484,12 +440,12 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     /**
      * 通过给定的编号列表，检索系统功能清单（不包括关联授权信息）。
      */
-    public static <T extends SystemFeatureSimple> List<T> queryByCodes(@NonNull Class<T> clazz, final String... roleCodes) throws Exception {
+    public <T extends SystemFeatureFormSimple> List<T> queryByCodes(@NonNull Class<T> clazz, final String... roleCodes) throws Exception {
         if (roleCodes == null || roleCodes.length <= 0) {
             return Collections.emptyList();
         }
-        return DEFAULT.queryFormWithStateRevision(clazz, String.format(SQL_QUERY_CODE_FEATURES, 
-                DEFAULT.getFormTable(), CommonUtil.join("?", roleCodes.length, ",")), roleCodes);
+        return queryFormWithStateRevision(clazz, String.format(SQL_QUERY_CODE_FEATURES, 
+                getFormTable(), CommonUtil.join("?", roleCodes.length, ",")), roleCodes);
     }
     
     /**
@@ -526,19 +482,19 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
      * @param auths
      * @throws Exception
      */
-    private static SystemFeatureDetail withAuths(SystemFeatureDetail form) throws Exception {
+    private SystemFeatureFormDetail withAuths(SystemFeatureFormDetail form) throws Exception {
         if (form == null) {
             return null;
         }
         if (form.getId() != null) {
             form.setAuths(Collections.emptyList());
-            List<String> auths = getDao().queryAsList(String.class, SQL_QUERY_FEATURE_AUTHS,
+            List<String> auths = getFormBaseDao().queryAsList(String.class, SQL_QUERY_FEATURE_AUTHS,
                     new Object[] { form.getId() });
             if (auths != null && !auths.isEmpty()) {
                 form.setAuths(ClassUtil.getSingltonInstance(FieldSystemAuths.class)
                         .queryDynamicValues(auths.toArray(new String[0])));
             }
-            List<Long> roles = getDao().queryAsList(Long.class, SQL_QUERY_FEATURE_ROLES, new Object[] { form.getId() });
+            List<Long> roles = getFormBaseDao().queryAsList(Long.class, SQL_QUERY_FEATURE_ROLES, new Object[] { form.getId() });
             if (roles != null && !roles.isEmpty()) {
                 form.setRoles(ClassUtil.getSingltonInstance(FieldSystemRole.class).queryDynamicValues(roles.toArray()));
             }
@@ -552,21 +508,21 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
      * @param auths
      * @throws Exception
      */
-    private static void setFeatureAuths(long formId, List<OptionSystemAuth> auths) throws Exception {
+    private void setFeatureAuths(long formId, List<OptionSystemAuth> auths) throws Exception {
         if (auths == null) {
             return;
         }
-        DEFAULT.getFormBaseDao().executeTransaction(new ResultSetProcessor() {
+        getFormBaseDao().executeTransaction(new ResultSetProcessor() {
             @Override
             public void process(ResultSet arg0, Connection arg1) throws Exception {
-                DEFAULT.getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
+                getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
                         "system_feature_auth",
                         new ObjectMap().put("=feature_id", formId)));
                 for (OptionSystemAuth auth : auths) {
                     if (auth == null || StringUtils.isBlank(auth.getOptionValue())) {
                         continue;
                     }
-                    DEFAULT.getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
+                    getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
                             "system_feature_auth",
                             new ObjectMap().put("feature_id", formId).put("=auth_key", auth.getOptionValue())));
                 }
@@ -575,12 +531,8 @@ public class SystemFeatureService extends AbstractStateFormServiceWithBaseDao<Sy
     }
     
     @Override
-    public List<StateFormNamedQuery<?>> getFormNamedQueries() {
-        return QUERIES.getQueries();
-    }
-
-    @Override
-    public List<? extends FieldOption> getStates() {
-        return STATES.getStatesAsOption();
+    protected void fillExtraFormFields(Collection<? extends SystemFeatureFormSimple> forms) throws Exception {
+        // TODO Auto-generated method stub
+        
     }
 }

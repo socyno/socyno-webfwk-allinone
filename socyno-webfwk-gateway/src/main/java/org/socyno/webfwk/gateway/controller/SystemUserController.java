@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil;
 import org.socyno.webfwk.state.authority.*;
-import org.socyno.webfwk.state.module.user.SystemUserForLogin;
+import org.socyno.webfwk.state.module.user.SystemUserFormLogin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +20,7 @@ public class SystemUserController {
     @Attributes(title = "用户登录")
     @Authority(AuthorityScopeType.Guest)
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public void login(@RequestBody SystemUserForLogin form, HttpServletRequest req, HttpServletResponse res)
+    public void login(@RequestBody SystemUserFormLogin form, HttpServletRequest req, HttpServletResponse res)
             throws Exception {
         HttpRedirectUtil.redirectToBackend("/api/user/login", req, res);
     }

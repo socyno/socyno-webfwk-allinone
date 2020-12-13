@@ -7,11 +7,11 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDaoV2;
+import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.module.notify.SystemNotifyTemplateService;
-import org.socyno.webfwk.state.module.notify.SystemNotifyTemplateSimple;
+import org.socyno.webfwk.state.module.notify.SystemNotifyTemplateFormSimple;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
@@ -33,26 +33,28 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<DataChartSimpleForm> {
-
-    public static final DataChartService DEFAULT = new DataChartService();
+public class DataChartService
+        extends AbstractStateFormServiceWithBaseDao<DataChartFormDetail, DataChartFormDefault, DataChartFormSimple> {
 
     private static final String LINE_CHART = "line";
     private static final String BAR_CHART = "bar";
     private static final String PIE_CHART = "pie";
     private static final String ONLY_DATA = "onlyData";
 
-    public DataChartService() {
+    private DataChartService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
-
+    
+    @Getter
+    private static final DataChartService Instance = new DataChartService();
+    
     public static class FormOwnerChecker implements AuthoritySpecialChecker {
         @Override
         public boolean check(Object form) throws Exception {
             return form != null
-                    && SessionContext.getDisplay().equals(((DataChartSimpleForm) form).getCreatedNameBy()) ;
+                    && SessionContext.getDisplay().equals(((DataChartFormSimple) form).getCreatedNameBy()) ;
         }
     }
     
@@ -61,18 +63,18 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
         @Override
         public boolean check(Object form) throws Exception {
             return !(form != null
-                    && SessionContext.getDisplay().equals(((DataChartSimpleForm) form).getCreatedNameBy())
-                    && StringUtils.isNotBlank(((DataChartDetailForm) form).getMailTable()));
+                    && SessionContext.getDisplay().equals(((DataChartFormSimple) form).getCreatedNameBy())
+                    && StringUtils.isNotBlank(((DataChartFormDetail) form).getMailTable()));
         }
     }
     
 
     @Override
-    protected void fillExtraFormFields(Collection<? extends DataChartSimpleForm> forms) throws Exception {
+    protected void fillExtraFormFields(Collection<? extends DataChartFormSimple> forms) throws Exception {
 
         DefaultStateFormSugger.getInstance().apply(forms);
 
-        DataChartSimpleForm form = (DataChartSimpleForm) forms.toArray()[0];
+        DataChartFormSimple form = (DataChartFormSimple) forms.toArray()[0];
         //传进来的映射关系
         NameValuePair[] contextQueries = getContextQueries();
         Map<String, String> sqlParamsMap = new HashMap<>();
@@ -82,7 +84,7 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
             }
         }
         String[] sqlParams = new String[]{};
-        if (DataChartDetailForm.class.isAssignableFrom(form.getClass())) {
+        if (DataChartFormDetail.class.isAssignableFrom(form.getClass())) {
             //处理sql参数
             if (StringUtils.isNotBlank(form.getSqlParams())) {
                 DataChartUtil.SqlMapParam sqlMapParam = 
@@ -91,16 +93,16 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
                 if (sqlParamsMap.size() > 0) {
                     //需要变更默认参数
                     sqlParams = DataChartUtil.replaceParams(sqlParamsMap, replaceParams);
-                    ((DataChartDetailForm)form).setSqlParamsMap(sqlParamsMap);
+                    ((DataChartFormDetail)form).setSqlParamsMap(sqlParamsMap);
                 } else {
                     //无需变更默认参数
                     sqlParams = DataChartUtil.replaceParams(sqlMapParam.getSqlMap(), replaceParams);
-                    ((DataChartDetailForm)form).setSqlParamsMap(sqlMapParam.getSqlMap());
+                    ((DataChartFormDetail)form).setSqlParamsMap(sqlMapParam.getSqlMap());
                 }
             }
             //是否需要从模板生成数据
             if (StringUtils.isNotBlank(form.getMailCode())) {
-                SystemNotifyTemplateSimple templateSimple = null;
+                SystemNotifyTemplateFormSimple templateSimple = null;
                 try {
                     templateSimple = SystemNotifyTemplateService.getInstance().getByCode(form.getMailCode());
                 } catch (Exception e) {
@@ -121,22 +123,22 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
                 } catch (Exception e) {
                     throw new MessageException("模板数据合并异常,请确认模板和数据");
                 }
-                ((DataChartDetailForm) form).setMailTable(mailContent);
-                ((DataChartDetailForm) form).setMailContext(originData);
+                ((DataChartFormDetail) form).setMailTable(mailContent);
+                ((DataChartFormDetail) form).setMailContext(originData);
             }
             if ((LINE_CHART.equals(form.getChartType().getOptionValue()) ||
                     BAR_CHART.equals(form.getChartType().getOptionValue()))) {
-                ((DataChartDetailForm) form).setChartData(DataChartUtil.
+                ((DataChartFormDetail) form).setChartData(DataChartUtil.
                         getOriginData(form.getQuerySql(), sqlParams));
             } else if (PIE_CHART.equals(form.getChartType().getOptionValue())) {
-                ((DataChartDetailForm) form).setChartData(DataChartUtil.
+                ((DataChartFormDetail) form).setChartData(DataChartUtil.
                         getPieChartData(form.getQuerySql(), sqlParams));
             } else if (ONLY_DATA.equals(form.getChartType().getOptionValue())){
-                ((DataChartDetailForm) form).setChartData(DataChartUtil.
+                ((DataChartFormDetail) form).setChartData(DataChartUtil.
                         getOriginData(form.getQuerySql(), sqlParams));
             } else {
                 //不确定图表类型时,默认返回查询结果
-                ((DataChartDetailForm) form).setChartData(DataChartUtil.
+                ((DataChartFormDetail) form).setChartData(DataChartUtil.
                         getOriginData(form.getQuerySql(), sqlParams));
             }
         }
@@ -162,22 +164,22 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
         Edit(EventEdit.class),
         ChartSendMail(EventChartSendMail.class),
         ;
-        private final Class<? extends AbstractStateAction<DataChartSimpleForm, ?, ?>> eventClass;
+        private final Class<? extends AbstractStateAction<DataChartFormSimple, ?, ?>> eventClass;
 
-        EVENTS(Class<? extends AbstractStateAction<DataChartSimpleForm, ?, ?>> eventClass) {
+        EVENTS(Class<? extends AbstractStateAction<DataChartFormSimple, ?, ?>> eventClass) {
             this.eventClass = eventClass;
         }
     }
 
 
-    public class EventCreate extends AbstractStateSubmitAction<DataChartSimpleForm, DataChartCreateForm> {
+    public class EventCreate extends AbstractStateSubmitAction<DataChartFormSimple, DataChartFormCreation> {
         public EventCreate() {
             super("创建图表", STATES.CREATED.getCode());
         }
 
         @Override
-        public Long handle(String event, DataChartSimpleForm originForm,
-                           final DataChartCreateForm form, final String message) throws Exception {
+        public Long handle(String event, DataChartFormSimple originForm,
+                           final DataChartFormCreation form, final String message) throws Exception {
             
             final AtomicLong simpleId = new AtomicLong(0);
             getFormBaseDao().executeUpdate(
@@ -207,19 +209,19 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
 
         @Override
         @Authority(value = AuthorityScopeType.System)
-        public void check(String event, DataChartSimpleForm originForm, String sourceState) {
+        public void check(String event, DataChartFormSimple originForm, String sourceState) {
 
         }
     }
 
-    public class EventEdit extends AbstractStateAction<DataChartSimpleForm, DataChartEditForm, Void> {
+    public class EventEdit extends AbstractStateAction<DataChartFormSimple, DataChartFormEdition, Void> {
         public EventEdit() {
             super("编辑", STATES.CREATED.getCode(), "");
         }
 
         @Override
-        public Void handle(String event, DataChartSimpleForm originForm,
-                        final DataChartEditForm form, final String message) throws Exception {
+        public Void handle(String event, DataChartFormSimple originForm,
+                        final DataChartFormEdition form, final String message) throws Exception {
             
             getFormBaseDao().executeUpdate(
                     SqlQueryUtil.prepareUpdateQuery(getFormTable(), new ObjectMap()
@@ -238,12 +240,12 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
 
         @Override
         @Authority(value = AuthorityScopeType.System, checker = FormOwnerChecker.class)
-        public void check(String event, DataChartSimpleForm originForm, String sourceState) {
+        public void check(String event, DataChartFormSimple originForm, String sourceState) {
 
         }
     }
 
-    public class EventChartSendMail extends AbstractStateAction<DataChartSimpleForm, DataChartMailForm, Void> {
+    public class EventChartSendMail extends AbstractStateAction<DataChartFormSimple, DataChartFormMail, Void> {
         public EventChartSendMail() {
             super("邮件发送", STATES.CREATED.getCode(), "");
         }
@@ -255,12 +257,12 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
         }
 
         @Override
-        public Void handle(String event, DataChartSimpleForm originForm,
-                           final DataChartMailForm form, final String message) throws Exception {
+        public Void handle(String event, DataChartFormSimple originForm,
+                           final DataChartFormMail form, final String message) throws Exception {
 
             Map<String, Object> dataMap = new HashMap<>();
             if (form.getMailContext() == null) {
-                dataMap.put("mailTempData", ((DataChartDetailForm)originForm).getMailContext());
+                dataMap.put("mailTempData", ((DataChartFormDetail)originForm).getMailContext());
             }else{
                 dataMap.put("mailTempData", form.getMailContext());
             }
@@ -271,7 +273,7 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
 
         @Override
         @Authority(value = AuthorityScopeType.System, rejecter = ChartTypeMailTempRejecter.class)
-        public void check(String event, DataChartSimpleForm originForm, String sourceState) {
+        public void check(String event, DataChartFormSimple originForm, String sourceState) {
 
         }
     }
@@ -280,7 +282,7 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
         DEFAULT(new StateFormNamedQuery<>("default",
-                DataChartListForm.class, DataChartDefaultQuery.class));
+                DataChartFormDefault.class, DataChartQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
 
         QUERIES(StateFormNamedQuery<?> namedQuery) {
@@ -299,8 +301,8 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
     }
     
     @Override
-    public DataChartDetailForm getForm(long formId) throws Exception {
-        return this.getForm(DataChartDetailForm.class, formId);
+    public DataChartFormDetail getForm(long formId) throws Exception {
+        return this.getForm(DataChartFormDetail.class, formId);
     }
 
     @Override
@@ -308,4 +310,8 @@ public class DataChartService extends AbstractStateFormServiceWithBaseDaoV2<Data
         return "apply_charts_simple";
     }
     
+    @Override
+    public String getFormDisplay() {
+        return "数据图表";
+    }
 }

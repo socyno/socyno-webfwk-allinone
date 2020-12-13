@@ -3,7 +3,7 @@ package org.socyno.webfwk.state.field;
 import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.state.module.menu.SystemMenuService;
+import org.socyno.webfwk.state.module.menu.SystemMenuItemService;
 
 import com.github.reinert.jjschema.v1.FieldType;
 
@@ -27,14 +27,14 @@ public class FieldSystemMenuPane extends FieldType {
     
     @Override
     public List<OptionSystemMenuPane> getStaticOptions() throws Exception {
-        return SystemMenuService.DEFAULT.getFormBaseDao().queryAsList(OptionSystemMenuPane.class,
+        return SystemMenuItemService.getInstance().getFormBaseDao().queryAsList(OptionSystemMenuPane.class,
                 String.format("%s ORDER BY p.`order` ASC", SQL_QUERY_MENU_PANE_OPTIONS));
     }
     
     public static OptionSystemMenuPane getOption(Long paneId) throws Exception {
         List<OptionSystemMenuPane> list;
         if (paneId == null
-                || (list = SystemMenuService.DEFAULT.getFormBaseDao().queryAsList(OptionSystemMenuPane.class,
+                || (list = SystemMenuItemService.getInstance().getFormBaseDao().queryAsList(OptionSystemMenuPane.class,
                         String.format("%s WHERE p.id = %s", SQL_QUERY_MENU_PANE_OPTIONS, paneId))) == null
                 || list.size() <= 0) {
             return null;

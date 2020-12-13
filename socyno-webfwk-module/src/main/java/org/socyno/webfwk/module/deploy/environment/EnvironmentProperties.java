@@ -69,7 +69,7 @@ public enum EnvironmentProperties {
      * @throws Exception
      */
     private String getProperty(String env) throws Exception {
-        return DeployEnvironmentService.DEFAULT.getFormBaseDao().queryAsObject(
+        return DeployEnvironmentService.getInstance().getFormBaseDao().queryAsObject(
                 String.class, SQL_QUERY_PROPERTIES_VALUE,
                 new Object[] { getKey(), env });
     }

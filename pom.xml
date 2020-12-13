@@ -236,34 +236,34 @@
                 <artifactId>Java-WebSocket</artifactId>
                 <version>1.5.0</version>
             </dependency>
-	        <dependency>
-	            <groupId>javax.ws.rs</groupId>
-	            <artifactId>javax.ws.rs-api</artifactId>
-	            <version>2.0.1</version>
-	            <optional>true</optional>
-	        </dependency>
+            <dependency>
+                <groupId>javax.ws.rs</groupId>
+                <artifactId>javax.ws.rs-api</artifactId>
+                <version>2.0.1</version>
+                <optional>true</optional>
+            </dependency>
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>8.0.22</version>
             </dependency>
-	        
+            
             <!-- com.fasterxml.jackson.core -->
-	        <dependency>
-	            <groupId>com.fasterxml.jackson.core</groupId>
-	            <artifactId>jackson-annotations</artifactId>
-	            <version>${version.jackson}</version>
-	        </dependency>
-	        <dependency>
-	            <groupId>com.fasterxml.jackson.core</groupId>
-	            <artifactId>jackson-core</artifactId>
-	            <version>${version.jackson}</version>
-	        </dependency>
-	        <dependency>
-	            <groupId>com.fasterxml.jackson.core</groupId>
-	            <artifactId>jackson-databind</artifactId>
-	            <version>${version.jackson}</version>
-	        </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
             <!-- com.fasterxml.jackson.core -->
             
             <!-- org.springframework -->
@@ -318,6 +318,13 @@
                 <version>${version.spring.framework}</version>
             </dependency>
             <!-- org.springframework -->
+            <dependency>
+            <groupId>sun.jdk</groupId>
+                <artifactId>tools</artifactId>
+                <version>1.8.0</version>
+                <scope>system</scope>
+                <systemPath>${java.home}/lib/tools.jar</systemPath>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>

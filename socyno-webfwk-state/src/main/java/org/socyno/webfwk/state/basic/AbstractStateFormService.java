@@ -59,8 +59,19 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
     protected abstract <T extends S> T loadFormNoStateRevision(Class<T> clazz, long formId) throws Exception;
 
     public abstract List<? extends FieldOption> getStates();
-
-    protected abstract Map<String, AbstractStateAction<S, ?, ?>> getFormActions();
+    
+    protected abstract String[] getFormActionNames();
+    
+    protected abstract AbstractStateAction<? extends S, ?, ?> getFormAction(String event);
+    
+    @SuppressWarnings("unchecked")
+    protected Map<String, AbstractStateAction<S, ?, ?>> getFormActions() {
+        Map<String, AbstractStateAction<S, ?, ?>> actions = new HashMap<>();
+        for (String event : getFormActionNames()) {
+            actions.put(event, (AbstractStateAction<S, ?, ?>) getFormAction(event));
+        }
+        return actions;
+    }
 
     public boolean isSubmitAction(String event) throws Exception {
         AbstractStateAction<S, ?, ?> action;
@@ -576,7 +587,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
      *            返回 Map 的 key 即为事件的名称（同一流程下具有唯一性），value 则为对应事件的定义
      */
     private Map<String, AbstractStateAction<S, ?, ?>> getFormActions(boolean external, String targetState) throws Exception {
-        Map<String, AbstractStateAction<S, ?, ?>> actions;
+        Map<String, AbstractStateAction<S, ?, ?>> actions = null;
         if ((actions = getFormActions()) == null || actions.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -1170,24 +1181,24 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
     }
 
     public final Class<AbstractStateForm> getActionFormTypeClass(String event) throws Exception {
-        AbstractStateAction<S, ?, ?> action;
-        if((action = getFormActions().get(event)) == null) {
+        AbstractStateAction<? extends S, ?, ?> action;
+        if((action = getFormAction(event)) == null) {
             throw new StateFormActionNotFoundException(getFormName(), event);
         }
         return action.getFormTypeClass();
     }
     
     public final Class<AbstractStateForm> getActionOriginTypeClass(String event) throws Exception {
-        AbstractStateAction<S, ?, ?> action;
-        if((action = getFormActions().get(event)) == null) {
+        AbstractStateAction<? extends S, ?, ?> action;
+        if((action = getFormAction(event)) == null) {
             throw new StateFormActionNotFoundException(getFormName(), event);
         }
         return action.getOriginTypeClass();
     }
 
     public final Class<?> getActionReturnTypeClass(String event) throws Exception {
-        AbstractStateAction<S, ?, ?> action;
-        if((action = getFormActions().get(event)) == null) {
+        AbstractStateAction<? extends S, ?, ?> action;
+        if((action = getFormAction(event)) == null) {
             throw new StateFormActionNotFoundException(getFormName(), event);
         }
         return action.getReturnTypeClass();

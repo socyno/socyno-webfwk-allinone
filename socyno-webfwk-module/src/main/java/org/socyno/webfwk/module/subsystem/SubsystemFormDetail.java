@@ -13,7 +13,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class SubsystemFormDetail extends SubsystemListDefaultForm implements SubsystemWithApplications {
+public class SubsystemFormDetail extends SubsystemFormDefault implements SubsystemWithApplications {
     
     @Attributes(title = "应用清单", type = FieldApplication.class)
     private List<OptionApplication> applications;

@@ -3,16 +3,16 @@ package org.socyno.webfwk.module.basic;
 import javax.servlet.http.HttpServletRequest;
 
 import org.socyno.webfwk.module.app.bookmark.ApplicationBookmarkService;
-import org.socyno.webfwk.module.app.form.ApplicationListAllQuery;
-import org.socyno.webfwk.module.app.form.ApplicationListDefaultQuery;
+import org.socyno.webfwk.module.app.form.ApplicationQueryAll;
+import org.socyno.webfwk.module.app.form.ApplicationQueryDefault;
 import org.socyno.webfwk.module.app.form.ApplicationService;
 import org.socyno.webfwk.module.app.form.FieldApplicationAll;
 import org.socyno.webfwk.module.app.form.FieldApplicationOfflineIncluded;
-import org.socyno.webfwk.module.department.DepartmentListDefaultQuery;
+import org.socyno.webfwk.module.department.DepartmentQueryDefault;
 import org.socyno.webfwk.module.department.DepartmentService;
 import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemNoAnyLimited;
-import org.socyno.webfwk.module.subsystem.SubsystemListDefaultForm;
+import org.socyno.webfwk.module.subsystem.SubsystemFormDefault;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
 import org.socyno.webfwk.module.vcs.common.FieldVcsRefsName;
 import org.socyno.webfwk.module.vcs.common.FilterVcsRefsName;
@@ -76,8 +76,8 @@ public class SubsystemController {
     public R queryProductlines(String namelike, Long applicationId, Long subsystemId, Long ownerId, Integer limit,
             Integer page) throws Exception {
         return R.ok()
-                .setData(DepartmentService.DEFAULT.listFormWithTotal(DepartmentService.QUERIES.DETAILS,
-                        new DepartmentListDefaultQuery(namelike, limit, page).setOwnerId(ownerId)
+                .setData(DepartmentService.getInstance().listFormWithTotal(DepartmentService.QUERIES.DEFAULT,
+                        new DepartmentQueryDefault(namelike, limit, page).setOwnerId(ownerId)
                                 .setSubsystemId(subsystemId).setApplicationId(applicationId)
                                 .setDisableIncluded(false)));
     }
@@ -87,7 +87,7 @@ public class SubsystemController {
      */
     @RequestMapping(value = "/subsystems/{subsystemId}/simple", method = RequestMethod.GET)
     public R getSimpleSubsystem(@PathVariable Long subsystemId) throws Exception {
-        return R.ok().setData(SubsystemService.DEFAULT.get(SubsystemListDefaultForm.class, subsystemId));
+        return R.ok().setData(SubsystemService.getInstance().get(SubsystemFormDefault.class, subsystemId));
     }
     
     /**
@@ -97,8 +97,8 @@ public class SubsystemController {
     public R queryVisibleApps(Boolean bookmarked, String namelike, String type, Long subsystemId, String codeLevel,
             Integer limit, Long page) throws Exception {
         return R.ok()
-                .setData(ApplicationService.DEFAULT.listFormWithTotal(ApplicationService.QUERIES.DEFAULT,
-                        new ApplicationListDefaultQuery(limit, page).setNamelike(namelike).setType(type)
+                .setData(ApplicationService.getInstance().listFormWithTotal(ApplicationService.QUERIES.DEFAULT,
+                        new ApplicationQueryDefault(limit, page).setNamelike(namelike).setType(type)
                                 .setBookmarked(CommonUtil.ifNull(bookmarked, false)).setCodeLevel(codeLevel)
                                 .setSubsystemId(subsystemId).setOfflineIncluded(false)));
     }
@@ -110,8 +110,8 @@ public class SubsystemController {
     public R queryAllApps(String namelike, String type, Long subsystemId, String codeLevel, Integer limit,
             Long page) throws Exception {
         return R.ok()
-                .setData(ApplicationService.DEFAULT.listFormWithTotal(ApplicationService.QUERIES.ALLAPPS,
-                        new ApplicationListAllQuery(limit, page).setNamelike(namelike).setType(type)
+                .setData(ApplicationService.getInstance().listFormWithTotal(ApplicationService.QUERIES.ALLAPPS,
+                        new ApplicationQueryAll(limit, page).setNamelike(namelike).setType(type)
                                 .setBookmarked(false).setCodeLevel(codeLevel)
                                 .setSubsystemId(subsystemId)));
     }
@@ -121,7 +121,7 @@ public class SubsystemController {
      */
     @RequestMapping(value = "/applications/{applicationId}/simple", method = RequestMethod.GET)
     public R getSimpleApp(@PathVariable long applicationId) throws Exception {
-        return R.ok().setData(ApplicationService.DEFAULT.getSimple(applicationId));
+        return R.ok().setData(ApplicationService.getInstance().getSimple(applicationId));
     }
     
     /**
@@ -148,7 +148,7 @@ public class SubsystemController {
     @RequestMapping(value = "/options/appenv/{applicationId}", method = RequestMethod.GET)
     public R queryApplicationEnvOptions(@PathVariable long applicationId) throws Exception {
         return R.ok().setData(ClassUtil.getSingltonInstance(FieldDeployEnvironment.class).queryDynamicOptions(
-                new FilterBasicKeyword("" , ApplicationService.DEFAULT.getFormName() , applicationId)));
+                new FilterBasicKeyword("" , ApplicationService.getInstance().getFormName() , applicationId)));
     }
     
 }
