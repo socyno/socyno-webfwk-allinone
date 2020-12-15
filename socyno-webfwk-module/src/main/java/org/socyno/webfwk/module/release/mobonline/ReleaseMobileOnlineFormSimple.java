@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.FieldApplicationName;
+import org.socyno.webfwk.module.application.FieldApplicationName;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.*;
 import org.socyno.webfwk.util.state.field.*;

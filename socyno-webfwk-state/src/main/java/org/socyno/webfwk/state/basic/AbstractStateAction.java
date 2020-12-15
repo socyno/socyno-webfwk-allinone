@@ -8,7 +8,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.NameValuePair;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.util.StateFormActionDefinition;
 import org.socyno.webfwk.state.util.StateFormDisplayScheduled;
 import org.socyno.webfwk.state.util.StateFormSimpleChoice;

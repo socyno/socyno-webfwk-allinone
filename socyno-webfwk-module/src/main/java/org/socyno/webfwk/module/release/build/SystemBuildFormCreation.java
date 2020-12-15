@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsApplicationType;
+import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
 import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 

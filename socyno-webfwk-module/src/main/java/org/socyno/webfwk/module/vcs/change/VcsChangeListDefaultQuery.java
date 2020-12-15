@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.module.app.form.FieldApplication;
+import org.socyno.webfwk.module.application.FieldApplication;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
+import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -71,24 +71,25 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
     
     private AbstractSqlStatement buildWhereSql() {
         List<Object> sqlargs = new ArrayList<>();
-        StringBuffer sqlwhere = new StringBuffer("WHERE 1 = 1");
+        StringBuilder sqlwhere = new StringBuilder();
         if (getApplicationId() != null) {
             sqlargs.add(getApplicationId());
-            sqlwhere.append(" AND f.application_id = ?");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.application_id = ?");
         }
         if (getCreatedBy() != null) {
             sqlargs.add(getCreatedBy());
-            sqlwhere.append(" AND f.created_by = ?");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.created_by = ?");
         }
         if (StringUtils.isNotBlank(getVcsRefsName())) {
             sqlargs.add(getVcsRefsName());
-            sqlwhere.append(" AND f.vcs_refs_name LIKE CONCAT('%', ?)");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.vcs_refs_name LIKE CONCAT('%', ?)");
         }
         if (StringUtils.isNotBlank(getVcsRevision())) {
             sqlargs.add(getVcsRevision());
-            sqlwhere.append(" AND f.vcs_revision LIKE CONCAT(?, '%')");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.vcs_revision LIKE CONCAT(?, '%')");
         }
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlwhere.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override

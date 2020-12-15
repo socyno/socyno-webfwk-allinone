@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
@@ -32,6 +32,9 @@ public class SystemMenuDirService extends
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
+    
+    @Getter
+    private static final SystemMenuDirService Instance = new SystemMenuDirService();
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum {
@@ -158,9 +161,6 @@ public class SystemMenuDirService extends
         }
     }
     
-    @Getter
-    private static final SystemMenuDirService Instance = new SystemMenuDirService();
-    
     @Override
     public String getFormName() {
         return "system_menu_dir";
@@ -180,10 +180,14 @@ public class SystemMenuDirService extends
     public AbstractDao getFormBaseDao() {
         return ContextUtil.getBaseDataSource();
     }
-
+    
+    @Override
+    protected String loadFormSqlTmpl() {
+        return SystemMenuDirQueryDefault.SQL_QUERY_ALL.concat(" AND d.#(formIdField)=#(formIdValue)");
+    }
+    
     @Override
     protected void fillExtraFormFields(Collection<? extends SystemMenuDirFormSimple> forms) throws Exception {
-        // TODO
         
     }
 }

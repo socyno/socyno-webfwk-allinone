@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestCategory.OptionChangeCategory;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestReleaseId.OptionReleaseId;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
@@ -153,7 +153,7 @@ public class ChangeRequestFormSimple implements AbstractStateForm {
         return ScopeType.productionIncluded(getScopeType());
     }
     
-    @Attributes(title = "变更单号")
+    @Attributes(title = "变更单号", readonly = true)
     private Long id;
     
     @Attributes(title = "上线项目", type = FieldChangeRequestReleaseIdMine.class
@@ -212,10 +212,10 @@ public class ChangeRequestFormSimple implements AbstractStateForm {
             , requiredTags = { })
     private CommonFormAttachement[] attachements;
     
-    @Attributes(title = "状态", type = FieldOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long revision;
     
     public static class FieldOptionsState extends FieldType {

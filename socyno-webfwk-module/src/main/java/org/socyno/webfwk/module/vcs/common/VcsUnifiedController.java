@@ -3,10 +3,10 @@ package org.socyno.webfwk.module.vcs.common;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.socyno.webfwk.module.app.form.ApplicationAbstractForm;
-import org.socyno.webfwk.module.app.form.ApplicationService;
-import org.socyno.webfwk.module.app.form.ApplicationFormVcsRefCreate;
-import org.socyno.webfwk.module.app.form.ApplicationFormVcsRefDelete;
+import org.socyno.webfwk.module.application.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationFormVcsRefCreate;
+import org.socyno.webfwk.module.application.ApplicationFormVcsRefDelete;
+import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
 import org.socyno.webfwk.state.module.user.SystemUserFormLogin;
 import org.socyno.webfwk.state.module.user.SystemUserService;
@@ -55,7 +55,7 @@ public class VcsUnifiedController {
         SystemUserFormLogin user = new SystemUserFormLogin();
         user.setUsername(form.getUsername());
         user.setPassword(form.getPassword());
-        SystemUserService.DEFAULT.login(user);
+        SystemUserService.getInstance().login(user);
         VcsUnifiedService.CommonCloud.resetUserPassword(form.getUsername(),
                 CommonUtil.ifBlank(form.getNewPassword(), form.getPassword()));
         return R.ok();

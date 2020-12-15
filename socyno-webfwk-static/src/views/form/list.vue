@@ -13,7 +13,7 @@
       @input="onFormActionTriggerd"
     />
     <BaseFormTable
-      v-show="currentQuery && currentQuery.resultClass && currentTableData"
+      v-if="currentQuery && currentQuery.resultClass && currentTableData"
       ref="formTable"
       :form-name="formName"
       :data="currentTableData"
@@ -146,8 +146,12 @@ export default {
       currentFieldModels: null,
       filterParams: null,
       currentTableData: null,
-      rowDetailDrawer: null,
-      rowCreateDrawer: null,
+      rowDetailDrawer: {
+        visible: false
+      },
+      rowCreateDrawer: {
+        visible: false
+      },
       rowDetailExpand: null,
       expandDetail: this.$route.query.expandDetail,
       refreshDetail: this.$route.query.refreshDetail
@@ -371,6 +375,9 @@ export default {
       this.loading = true
       this.formApi.queryFormPagedData(this.currentQuery.name, params).then((data) => {
         this.currentTableData = data.list || []
+        this.$nextTick(function() {
+          this.$refs.formTable.setPaging(this.pagingInfo)
+        })
       }).finally(() => {
         this.loading = false
       })

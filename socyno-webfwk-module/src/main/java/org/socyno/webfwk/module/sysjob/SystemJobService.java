@@ -12,7 +12,7 @@ import org.socyno.webfwk.executor.abs.AbstractJobStatus;
 import org.socyno.webfwk.executor.abs.AbstractStatusCallbackCreater;
 import org.socyno.webfwk.executor.model.JobBasicStatus;
 import org.socyno.webfwk.executor.model.JobStatusWebsocketLink;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.*;
@@ -42,7 +42,7 @@ public class SystemJobService
     @Getter
     private static final SystemJobService Instance = new SystemJobService();
     
-    public SystemJobService() {
+    private SystemJobService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
@@ -355,17 +355,18 @@ public class SystemJobService
                             }
                             
                             JobBasicStatus jobManager = null;
-                            if(status instanceof JobBasicStatus){
-                                jobManager = (JobBasicStatus)status;
+                            if (status instanceof JobBasicStatus) {
+                                jobManager = (JobBasicStatus) status;
                             }
-
+                            
                             List<SystemUserFormWithSecurity> usersSecurity = null;
                             try {
-                                usersSecurity = SystemUserService.DEFAULT.getUsersSecurity(SessionContext.getUserId());
+                                usersSecurity = SystemUserService.getInstance()
+                                        .getUsersSecurity(SessionContext.getUserId());
                             } catch (Exception e) {
-                                log.error(e.toString(),e);
+                                log.error(e.toString(), e);
                             }
-
+                            
                             SystemNotifyService.sendAsync(
                                     "system.external.async.job.result.notify",
                                     new ObjectMap()
@@ -466,7 +467,7 @@ public class SystemJobService
 
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemJobFormDetail>("default",
+        DEFAULT(new StateFormNamedQuery<SystemJobFormDetail>("默认查询",
                 SystemJobFormDetail.class, SystemJobQueryDefault.class));
 
         private StateFormNamedQuery<?> namedQuery;

@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
@@ -27,14 +27,14 @@ import org.socyno.webfwk.util.sql.SqlQueryUtil;
 public class SystemNotifyTemplateService extends
         AbstractStateFormServiceWithBaseDao<SystemNotifyTemplateFormDefault, SystemNotifyTemplateFormDefault, SystemNotifyTemplateFormSimple> {
     
-    @Getter
-    private final static SystemNotifyTemplateService instance = new SystemNotifyTemplateService();
-    
-    public SystemNotifyTemplateService() {
+    private SystemNotifyTemplateService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
+    
+    @Getter
+    private final static SystemNotifyTemplateService Instance = new SystemNotifyTemplateService();
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum {
@@ -247,7 +247,6 @@ public class SystemNotifyTemplateService extends
 
     @Override
     protected void fillExtraFormFields(Collection<? extends SystemNotifyTemplateFormSimple> forms) throws Exception {
-        // TODO Auto-generated method stub
         
     }
 }

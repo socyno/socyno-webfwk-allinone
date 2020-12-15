@@ -17,7 +17,6 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-/* 功能详情页简易表单 */
 public class SystemFeatureFormSimple implements AbstractStateForm {
     
     public static class FieldOptionsState extends FieldType {
@@ -32,27 +31,27 @@ public class SystemFeatureFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号", position = 1010)
+    @Attributes(title = "编号", readonly = true)
     private Long   id;
     
-    @Attributes(title = "代码", position = 1020)
+    @Attributes(title = "代码")
     private String code;
     
-    @Attributes(title = "名称", position = 1030)
+    @Attributes(title = "名称")
     private String name;
     
-    @Attributes(title = "状态", position = 1040, type = FieldOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "创建人", position = 1050)
+    @Attributes(title = "创建人")
     private String createdBy;
     
-    @Attributes(title = "创建时间", position = 1060)
+    @Attributes(title = "创建时间")
     private Date   createdAt;
     
-    @Attributes(title = "描述", position = 1070, type = FieldText.class)
+    @Attributes(title = "描述", type = FieldText.class)
     private String description;
     
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long   revision;
 }

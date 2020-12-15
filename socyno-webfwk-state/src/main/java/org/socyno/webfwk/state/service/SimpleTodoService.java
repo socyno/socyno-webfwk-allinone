@@ -32,7 +32,7 @@ public class SimpleTodoService {
      */
     public static long createTodo(String targetKey, Object targetId, Long applierId, String targetPage, String title, String category,
             long... assignee) throws Exception {
-        SystemTodoFormForCreation form = new SystemTodoFormForCreation();
+        SystemTodoFormCreation form = new SystemTodoFormCreation();
         form.setTitle(title);
         form.setCategory(category);
         form.setTargetKey(targetKey);

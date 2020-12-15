@@ -17,7 +17,7 @@ import lombok.Getter;
 public class SuggerDefinitionChangeCategory extends Definition {
     
     @Getter
-    private static final SuggerDefinitionChangeCategory instance = new SuggerDefinitionChangeCategory();
+    private static final SuggerDefinitionChangeCategory Instance = new SuggerDefinitionChangeCategory();
     
     private static final OptionClass<?> optionClass = new OptionClass<OptionChangeCategory>() {
         @Override

@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;

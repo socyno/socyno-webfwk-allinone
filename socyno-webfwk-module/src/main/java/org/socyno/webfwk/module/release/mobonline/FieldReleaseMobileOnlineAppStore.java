@@ -1,6 +1,7 @@
 package org.socyno.webfwk.module.release.mobonline;
 
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -36,8 +37,10 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
         return FieldOptionsType.DYNAMIC;
     }
     
-    public static List<OptionStore> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        JsonElement obj = CommonUtil.fromJson(filter.getFormJson(), JsonElement.class);
+    @Override
+    public List<OptionStore> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        JsonElement obj = CommonUtil.fromJson(keyword.getFormJson(), JsonElement.class);
         String applicationName = CommonUtil.getJstring((JsonObject) obj, "applicationName");
         if (StringUtils.isNotBlank(applicationName)) {
             OptionReleaseMobileOnlineApplication app = ReleaseMobileOnlineService.getInstance()
@@ -49,8 +52,8 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
                 list.add(option);
                 return list;
             }
-        } else if (!filter.getFormId().equals(-1L)) {
-            ReleaseMobileOnlineFormSimple simple = ReleaseMobileOnlineService.getInstance().getForm(filter.getFormId());
+        } else if (!keyword.getFormId().equals(-1L)) {
+            ReleaseMobileOnlineFormSimple simple = ReleaseMobileOnlineService.getInstance().getForm(keyword.getFormId());
             if ("ios".equals(simple.getStoreType())) {
                 List<OptionStore> list = new ArrayList<>();
                 OptionStore option = new OptionStore();
@@ -62,7 +65,7 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
         
         List<OptionStore> optionStoreList = new ArrayList<>();
         List<ReleaseOptionStoreEntity> itemStore;
-        if (StringUtils.isBlank(filter.getKeyword())) {
+        if (StringUtils.isBlank(keyword.getKeyword())) {
             itemStore = ReleaseMobileOnlineService.getInstance().getFormBaseDao().queryAsList(
                     ReleaseOptionStoreEntity.class,
                     " SELECT * FROM `release_app_store` WHERE state_form_status = 'enabled' ");
@@ -70,7 +73,7 @@ public class FieldReleaseMobileOnlineAppStore extends FieldTableView {
             itemStore = ReleaseMobileOnlineService.getInstance().getFormBaseDao().queryAsList(
                     ReleaseOptionStoreEntity.class,
                     " SELECT * FROM `release_app_store` WHERE state_form_status = 'enabled' AND store_name like CONCAT('%', ?, '%') ",
-                    new Object[] { filter.getKeyword() });
+                    new Object[] { keyword.getKeyword() });
         }
         for (ReleaseOptionStoreEntity store : itemStore) {
             OptionStore optionStore = new OptionStore();

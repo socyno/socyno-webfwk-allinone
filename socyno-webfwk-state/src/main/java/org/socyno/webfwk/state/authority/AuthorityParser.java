@@ -1,5 +1,6 @@
 package org.socyno.webfwk.state.authority;
 
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
 import org.socyno.webfwk.state.field.OptionSystemAuth.AuthType;
 import org.socyno.webfwk.util.context.ContextUtil;

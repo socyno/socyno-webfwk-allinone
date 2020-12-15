@@ -17,13 +17,14 @@ import java.util.regex.Pattern;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
 import org.socyno.webfwk.state.module.feature.SystemFeatureService;
 import org.socyno.webfwk.state.service.PermissionService;
@@ -37,12 +38,14 @@ import org.socyno.webfwk.util.model.ObjectMap;
 import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
+import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
 
 import com.github.reinert.jjschema.Attributes;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 public class SystemMenuItemService extends
     AbstractStateFormServiceWithBaseDao<SystemMenuItemFormDetail, SystemMenuItemFormDefault, SystemMenuItemFormSimple> {
     
@@ -51,6 +54,9 @@ public class SystemMenuItemService extends
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
+    
+    @Getter
+    private static final SystemMenuItemService Instance = new SystemMenuItemService();
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum {
@@ -198,9 +204,6 @@ public class SystemMenuItemService extends
         }
     }
     
-    @Getter
-    private static final SystemMenuItemService Instance = new SystemMenuItemService();
-    
     @Override
     public String getFormName() {
         return "system_menu";
@@ -220,42 +223,6 @@ public class SystemMenuItemService extends
     public AbstractDao getFormBaseDao() {
         return ContextUtil.getBaseDataSource();
     }
-    
-//    /**
-//     * SELECT DISTINCT
-//     *     a.auth_key
-//     * FROM
-//     *     system_menu m,
-//     *     system_menu_auth a
-//     * WHERE
-//     *     m.id = a.menu_id
-//     * AND
-//     *     m.id = ?
-//     */
-//    @Multiline
-//    private static final String SQL_QUERY_MENU_AUTHS = "X";
-//    
-//    /**
-//     * 重写获取表单详情的方法, 载如关联的授权清单
-//     * 
-//     */
-//    @Override
-//    public SystemMenuItemFormDetail getForm(long formId) throws Exception {
-////        List<SystemMenuItemFormDetail> list;
-////        if ((list = queryFormWithStateRevision(
-////                String.format("%s AND m.id = %s", SystemMenuItemQueryDefault.SQL_QUERY_ALL, formId))) == null
-////                || list.size() <= 0) {
-////            return null;
-////        }
-////        SystemMenuItemFormDetail menu;
-////        if ((menu = list.get(0)) != null) {
-////            List<String> auths = getFormBaseDao().queryAsList(String.class, SQL_QUERY_MENU_AUTHS,
-////                    new Object[] { menu.getId() });
-////            menu.setAuths(ClassUtil.getSingltonInstance(FieldSystemAuths.class).queryDynamicValues(auths.toArray(new String[0])));
-////        }
-////        return menu;
-//        return getForm(SystemMenuItemFormDetail.class, formId);
-//    }
     
     /**
      * 存储功能的授权数据
@@ -477,10 +444,85 @@ public class SystemMenuItemService extends
         sortChildren(menuTree);
         return menuTree;
     }
-
+    
+    /**
+     * SELECT DISTINCT
+     *     a.menu_id,
+     *     a.auth_key
+     * FROM
+     *     system_menu_auth a
+     * WHERE
+     *     a.menu_id IN (%s)
+     */
+    @Multiline
+    private static final String SQL_QUERY_MENU_AUTHS = "X";
+    
+    @Override
+    protected String loadFormSqlTmpl() {
+        return SystemMenuItemQueryDefault.SQL_QUERY_ALL.concat(" AND m.#(formIdField)=#(formIdValue)");
+    }
+    
+    @Getter
+    @Setter
+    @ToString
+    public static class MenuAuthKey {
+        
+        private long menuId;
+        
+        private String authKey;
+        
+    }
+    
     @Override
     protected void fillExtraFormFields(Collection<? extends SystemMenuItemFormSimple> forms) throws Exception {
-        // TODO Auto-generated method stub
-        
+        if (forms == null || forms.size() <= 0) {
+            return;
+        }
+        List<SystemMenuItemFormWithAuths> sameAuthForms;
+        Map<Long, List<SystemMenuItemFormWithAuths>> mappedAuthForms = new HashMap<>();
+        for (SystemMenuItemFormSimple form : forms) {
+            if (form != null && form.getId() != null
+                    && SystemMenuItemFormWithAuths.class.isAssignableFrom(form.getClass())) {
+                if ((sameAuthForms = mappedAuthForms.get(form.getId())) == null) {
+                    mappedAuthForms.put(form.getId(), sameAuthForms = new ArrayList<>());
+                }
+                sameAuthForms.add((SystemMenuItemFormWithAuths) form);
+            }
+        }
+        if (mappedAuthForms.size() > 0) {
+            List<MenuAuthKey> authKeys = getFormBaseDao().queryAsList(MenuAuthKey.class,
+                    String.format(SQL_QUERY_MENU_AUTHS, CommonUtil.join("?", mappedAuthForms.size(), ",")),
+                    mappedAuthForms.keySet().toArray());
+            Set<String> oneMenuKeys;
+            Set<String> allKeys = new HashSet<>();
+            Map<Long, Set<String>> allMenuKeys = new HashMap<>();
+            for (MenuAuthKey a : authKeys) {
+                allKeys.add(a.getAuthKey());
+                if ((oneMenuKeys = allMenuKeys.get(a.getMenuId())) == null) {
+                    allMenuKeys.put(a.getMenuId(), oneMenuKeys = new HashSet<>());
+                }
+                oneMenuKeys.add(a.getAuthKey());
+            }
+            Map<String, OptionSystemAuth> mappedSystemAuths = new HashMap<>();
+            List<OptionSystemAuth> allSystemAuths = ClassUtil.getSingltonInstance(FieldSystemAuths.class)
+                    .queryDynamicValues(allKeys.toArray(new String[0]));
+            for (OptionSystemAuth a : allSystemAuths) {
+                mappedSystemAuths.put(a.getOptionValue(), a);
+            }
+            List<OptionSystemAuth> oneSystemAuths;
+            Map<Long, List<OptionSystemAuth>> menuSystemAuths = new HashMap<>();
+            for (Map.Entry<Long, Set<String>> e : allMenuKeys.entrySet()) {
+                oneSystemAuths = new ArrayList<>();
+                for (String authKey : e.getValue()) {
+                    oneSystemAuths.add(mappedSystemAuths.get(authKey));
+                }
+                menuSystemAuths.put(e.getKey(), oneSystemAuths);
+            }
+            for (Map.Entry<Long, List<SystemMenuItemFormWithAuths>> e : mappedAuthForms.entrySet()) {
+                for (SystemMenuItemFormWithAuths form : e.getValue()) {
+                    form.setAuths(menuSystemAuths.get(e.getKey()));
+                }
+            }
+        }
     }
 }

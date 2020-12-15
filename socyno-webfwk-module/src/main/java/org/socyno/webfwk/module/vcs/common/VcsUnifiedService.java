@@ -14,7 +14,7 @@ import java.util.Set;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import org.socyno.webfwk.module.app.form.ApplicationService;
+import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.state.module.user.WindowsAdService;

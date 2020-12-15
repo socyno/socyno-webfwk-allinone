@@ -2,12 +2,13 @@ package org.socyno.webfwk.module.deploy.environment;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 import com.github.reinert.jjschema.v1.FieldType;
 
 import lombok.Data;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.module.app.form.ApplicationService;
+import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.util.context.ContextUtil;
@@ -96,7 +97,9 @@ public class FieldDeployEnvironment extends FieldType {
     @Multiline
     private static final String SQL_QUERY_ENVIRONMENT_BY_NAMESPACES = "X";
     
-    public List<OptionDeployEnvironment> queryDynamicOptions(FilterBasicKeyword keyword) throws Exception {
+    @Override
+    public List<OptionDeployEnvironment> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
         if (keyword != null && ApplicationService.getInstance().getFormName().equals(keyword.getFormName())
                 && keyword.getFormId() != null) {
             List<Long> namespaceIds = getBaseDao().queryAsList(Long.class, SQL_QUERY_NAMESPACE_BY_KEYWORD,

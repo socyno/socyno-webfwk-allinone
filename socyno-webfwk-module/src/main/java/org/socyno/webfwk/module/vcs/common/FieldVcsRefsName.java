@@ -3,7 +3,7 @@ package org.socyno.webfwk.module.vcs.common;
 import java.util.Collections;
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.ApplicationService;
+import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.v1.FieldOptionsFilter;
@@ -25,25 +25,27 @@ public class FieldVcsRefsName extends FieldType {
     }
     
     /**
-     * 应用分支、标签及补丁下拉框字段定义s
+     * 应用分支、标签及补丁下拉框字段定义
      * 
      */
-    public List<OptionVcsRefsName> queryDynamicOptions(FilterVcsRefsName filter) throws Exception {
-        if (filter.getFormId() == null || StringUtils.isBlank(filter.getVcsRefsType()) || !StringUtils
-                .equalsIgnoreCase(ApplicationService.getInstance().getFormName(), filter.getFormName())) {
+    @Override
+    public List<OptionVcsRefsName> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterVcsRefsName cond = (FilterVcsRefsName) filter;
+        if (cond.getFormId() == null || StringUtils.isBlank(cond.getVcsRefsType()) || !StringUtils
+                .equalsIgnoreCase(ApplicationService.getInstance().getFormName(), cond.getFormName())) {
             return Collections.emptyList();
         }
         
-        if (VcsRefsType.Branch.name().equalsIgnoreCase(filter.getVcsRefsType())) {
-            return VcsUnifiedService.CommonCloud.listBranches(filter.getFormId(), filter.getKeyword(), 1, 100);
+        if (VcsRefsType.Branch.name().equalsIgnoreCase(cond.getVcsRefsType())) {
+            return VcsUnifiedService.CommonCloud.listBranches(cond.getFormId(), cond.getKeyword(), 1, 100);
         }
         
-        if (VcsRefsType.Tag.name().equalsIgnoreCase(filter.getVcsRefsType())) {
-            return VcsUnifiedService.CommonCloud.listTags(filter.getFormId(), filter.getKeyword(), 1, 100);
+        if (VcsRefsType.Tag.name().equalsIgnoreCase(cond.getVcsRefsType())) {
+            return VcsUnifiedService.CommonCloud.listTags(cond.getFormId(), cond.getKeyword(), 1, 100);
         }
         
-        if (VcsRefsType.Patch.name().equalsIgnoreCase(filter.getVcsRefsType())) {
-            return VcsUnifiedService.CommonCloud.listPatches(filter.getFormId(), filter.getKeyword(), 1, 100);
+        if (VcsRefsType.Patch.name().equalsIgnoreCase(cond.getVcsRefsType())) {
+            return VcsUnifiedService.CommonCloud.listPatches(cond.getFormId(), cond.getKeyword(), 1, 100);
         }
         
         return Collections.emptyList();

@@ -146,7 +146,7 @@ public class SystemLogService
         /**
          *  默认查询
          */
-        DEFAULT(new StateFormNamedQuery<SystemLogFormDefault>("default",
+        DEFAULT(new StateFormNamedQuery<SystemLogFormDefault>("默认查询",
                 SystemLogFormDefault.class, SystemLogQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
 

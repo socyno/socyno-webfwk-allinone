@@ -8,10 +8,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil;
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil.ServiceBackend;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.service.StateFormService;
-import org.socyno.webfwk.state.service.StateFormService.CommonStateFormRegister;
+import org.socyno.webfwk.state.service.StateFormService.StateFormRegister;
 import org.socyno.webfwk.util.remote.R;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,7 +61,7 @@ public class StateFormController {
     @Attributes(title = "获取流程单的定义")
     @RequestMapping(value = "/definition/{formName}", method = RequestMethod.GET)
     public void getFormDefinition(@PathVariable("formName") String formName, 
-                            HttpServletRequest req, HttpServletResponse res) throws Exception {
+            HttpServletRequest req, HttpServletResponse res) throws Exception {
         redirectToBackend(ServiceBackend.getForm(formName), String.format("/api/form/definition/%s", formName), req, res);
     }
     
@@ -277,7 +278,7 @@ public class StateFormController {
     @Authority(AuthorityScopeType.System)
     @Attributes(title = "注册通用流程单")
     @RequestMapping(value = "/form/add", method = RequestMethod.POST)
-    public R addDefinedForm(@RequestBody CommonStateFormRegister form) throws Exception {
+    public R addDefinedForm(@RequestBody StateFormRegister form) throws Exception {
         StateFormService.registerForm(form);
         return R.ok();
     }
@@ -286,7 +287,7 @@ public class StateFormController {
     @Authority(AuthorityScopeType.System)
     @Attributes(title = "编辑注册的流程单")
     @RequestMapping(value = "/form/update", method = RequestMethod.POST)
-    public R updateDefinedForm(@RequestBody CommonStateFormRegister form) throws Exception {
+    public R updateDefinedForm(@RequestBody StateFormRegister form) throws Exception {
         StateFormService.updateForm(form);
         return R.ok();
     }

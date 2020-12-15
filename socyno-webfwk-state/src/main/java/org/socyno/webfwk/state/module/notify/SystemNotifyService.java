@@ -24,7 +24,7 @@ public class SystemNotifyService {
     public final static int NOEXCEPTION_TMPL_NOTFOUD = 1;
     
     @Getter
-    private final static SystemNotifyService instance = new SystemNotifyService();
+    private final static SystemNotifyService Instance = new SystemNotifyService();
     
     private static final ThreadPoolExecutor NotifyThreadsPool = new ThreadPoolExecutor(1, 5, 5, TimeUnit.MINUTES,
                     new LinkedBlockingQueue<Runnable>(200), new ThreadPoolExecutor.DiscardOldestPolicy());
@@ -80,7 +80,7 @@ public class SystemNotifyService {
             throw new SystemNotifiyTemplateNotFoundException(template);
         }
         ObjectMap tmplContext = new ObjectMap()
-                .put("systemUserService", SystemUserService.DEFAULT)
+                .put("systemUserService", SystemUserService.getInstance())
                 .put("sessionContext", SessionContext.getUserContext());
         if (context != null) {
             tmplContext.putAll(context);

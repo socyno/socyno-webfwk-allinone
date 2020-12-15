@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.apache.commons.lang3.StringUtils;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
+import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -28,27 +28,21 @@ public class SystemMenuPaneQueryDefault extends AbstractStateFormQuery {
      *     p.*
      * FROM
      *     system_menu_pane p
-     * WHERE
-     *     1 = 1
      */
     @Multiline
-    public static final String SQL_QUERY_ALL = "X";
+    private static final String SQL_QUERY_ALL = "X";
     
     /**
      * SELECT
      *     COUNT(1) 
      * FROM
      *     system_menu_pane p
-     * WHERE
-     *     1 = 1
      */
     @Multiline
     private static final String SQL_QUERY_COUNT = "X";
     
     /**
-     * AND (
-     *     p.name LIKE CONCAT('%', ?, '%')
-     * )
+     * p.name LIKE CONCAT('%', ?, '%')
      */
     @Multiline
     private static final String SQL_QUERY_NAMELIKE_TMPL = "X";
@@ -57,13 +51,14 @@ public class SystemMenuPaneQueryDefault extends AbstractStateFormQuery {
     private String nameLike;
     
     private AbstractSqlStatement buildWhereSql() {
-        String sqlstmt = "";
+        StringBuilder sqlstmt = new StringBuilder();
         List<Object> sqlargs = new ArrayList<>();
         if (StringUtils.isNotBlank(nameLike)) {
             sqlargs.add(nameLike);
-            sqlstmt = SQL_QUERY_NAMELIKE_TMPL;
+            StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append(SQL_QUERY_NAMELIKE_TMPL);
         }
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt);
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlstmt, " WHERE ").toString());
     }
     
     @Override

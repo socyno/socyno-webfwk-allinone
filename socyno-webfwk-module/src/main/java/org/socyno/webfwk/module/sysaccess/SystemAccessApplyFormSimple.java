@@ -6,6 +6,7 @@ import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import com.github.reinert.jjschema.v1.FieldType;
 
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,8 +19,22 @@ import org.socyno.webfwk.util.state.field.FieldText;
 
 @Data
 @Attributes(title = "权限申请")
-public class SystemAccessApplyFormSimple implements AbstractStateForm,  SystemAccessApplyWithSubSystems {
-
+public class SystemAccessApplyFormSimple implements AbstractStateForm, SystemAccessApplyWithSubSystems {
+    
+    @Getter
+    public enum AccessType {
+        SYSTEM("system", "系统全局"),
+        SUBSYS("subsystem", "业务系统");
+        private final String value;
+        
+        private final String display;
+        
+        AccessType(String value, String display) {
+            this.value = value;
+            this.display = display;
+        }
+    }
+    
     public static class FieldOptionsState extends FieldType {
         
         @Override
@@ -37,8 +52,9 @@ public class SystemAccessApplyFormSimple implements AbstractStateForm,  SystemAc
         @SuppressWarnings("serial")
         private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {
             {
-                add(FieldSimpleOption.create("overallSituation", "全局"));
-                add(FieldSimpleOption.create("subSystem", "业务系统"));
+                for (AccessType type : AccessType.values()) {
+                    add(FieldSimpleOption.create(type.getValue(), type.getDisplay()));
+                }
             }
         };
         

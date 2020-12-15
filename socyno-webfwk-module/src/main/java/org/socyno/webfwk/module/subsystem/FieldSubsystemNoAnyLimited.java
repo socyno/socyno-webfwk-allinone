@@ -4,13 +4,15 @@ import java.util.List;
 
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
 
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 public class FieldSubsystemNoAnyLimited extends FieldSubsystemAccessors {
     /**
      * 覆盖父类的方法，根据关键字检索业务系统
      */
-    public List<SubsystemFormSimple> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        return SubsystemService.getInstance()
-                .list(SubsystemFormSimple.class, new SubsystemQueryAll(50, 1L).setKeyword(filter.getKeyword()))
-                .getList();
+    @Override
+    public List<SubsystemFormSimple> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        return SubsystemService.getInstance().listForm(SubsystemFormSimple.class,
+                new SubsystemQueryAll(50, 1L).setKeyword(((FilterBasicKeyword) filter).getKeyword())).getList();
     }
 }

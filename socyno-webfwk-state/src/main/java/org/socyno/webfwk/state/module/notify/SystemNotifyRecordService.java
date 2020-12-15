@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 import javax.mail.internet.MimeUtility;
 
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
@@ -43,14 +43,14 @@ import org.socyno.webfwk.util.tool.StringUtils;
 public class SystemNotifyRecordService extends
         AbstractStateFormServiceWithBaseDao<SystemNotifyRecordFormDefault, SystemNotifyRecordFormDefault, SystemNotifyRecordFormSimple> {
     
-    @Getter
-    private final static SystemNotifyRecordService instance = new SystemNotifyRecordService();
-    
-    public SystemNotifyRecordService() {
+    private SystemNotifyRecordService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
+    
+    @Getter
+    private final static SystemNotifyRecordService Instance = new SystemNotifyRecordService();
     
     private final static AbstractSendEmailService MAIL_SERVICE = new AbstractSendEmailService() {
         

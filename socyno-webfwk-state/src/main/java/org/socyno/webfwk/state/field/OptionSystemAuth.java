@@ -9,30 +9,39 @@ import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import com.github.reinert.jjschema.v1.FieldType;
 
-import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString
 public class OptionSystemAuth implements FieldOption {
     
     @Getter
     public static enum AuthType {
-        Interfaze("interface"),
-        FormEvent("form_event");
+        Interfaze("interface", "系统接口"),
+        FormEvent("form_event", "表单事件");
         
         private final String code;
         
-        AuthType(String code) {
+        private final String display;
+        
+        AuthType(String code, String display) {
             this.code = code;
+            this.display = display;
         }
     }
     
     public static class FieldOptionsAuthType extends FieldType {
         @SuppressWarnings("serial")
-        private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {{
-            add(FieldSimpleOption.create(AuthType.Interfaze.getCode(), "系统接口"));
-            add(FieldSimpleOption.create(AuthType.FormEvent.getCode(), "表单事件"));
-        }};
+        private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {
+            {
+                for (AuthType type : AuthType.values()) {
+                    add(FieldSimpleOption.create(type.getCode(), type.getDisplay()));
+                }
+            }
+        };
         
         @Override
         public FieldOptionsType getOptionsType() {
@@ -45,19 +54,19 @@ public class OptionSystemAuth implements FieldOption {
         }
     }
     
-    @Attributes(title="授权范围", position = 10)
+    @Attributes(title = "授权范围", position = 10)
     private String scopeType;
     
-    @Attributes(title="授权标识", position = 20, type = FieldOptionsAuthType.class)
+    @Attributes(title = "授权标识", position = 20, type = FieldOptionsAuthType.class)
     private String type;
     
-    @Attributes(title="授权标识", position = 30)
+    @Attributes(title = "授权标识", position = 30)
     private String auth;
     
-    @Attributes(title="请求方式")
+    @Attributes(title = "请求方式")
     private String requestMethods;
     
-    @Attributes(title="请求函数")
+    @Attributes(title = "请求函数")
     private String controllerMethod;
     
     @Override
@@ -69,7 +78,7 @@ public class OptionSystemAuth implements FieldOption {
     public String getOptionDisplay() {
         return String.format("%s:%s", getScopeType(), getAuth());
     }
-
+    
     @Override
     public String getOptionGroup() {
         return type;

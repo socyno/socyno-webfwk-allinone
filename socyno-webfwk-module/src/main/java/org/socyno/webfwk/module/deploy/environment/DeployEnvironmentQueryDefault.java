@@ -9,10 +9,10 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.apache.commons.lang3.StringUtils;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
+import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -33,16 +33,17 @@ public class DeployEnvironmentQueryDefault extends AbstractStateFormQuery {
     
     public AbstractSqlStatement buildWhereSql() {
         List<Object> sqlArgs = new ArrayList<>();
-        StringBuilder sqlWhere = new StringBuilder("WHERE 1 = 1");
+        StringBuilder sqlwhere = new StringBuilder();
         
         if (StringUtils.isNotBlank(getNamelike())) {
             sqlArgs.add(getNamelike());
             sqlArgs.add(getNamelike());
-            sqlWhere.append("and (").append("a.name LIKE CONCAT('%', ?, '%')")
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("(").append("a.name LIKE CONCAT('%', ?, '%')")
                     .append(" OR a.display LIKE CONCAT('%', ?, '%')").append(")");
             
         }
-        return new BasicSqlStatement().setSql(sqlWhere.toString()).setValues(sqlArgs.toArray());
+        return new BasicSqlStatement().setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString())
+                .setValues(sqlArgs.toArray());
     }
     
     @Override

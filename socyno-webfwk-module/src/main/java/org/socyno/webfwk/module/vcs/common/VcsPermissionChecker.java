@@ -3,8 +3,8 @@ package org.socyno.webfwk.module.vcs.common;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.socyno.webfwk.module.app.form.ApplicationAbstractForm;
-import org.socyno.webfwk.module.app.form.ApplicationService;
+import org.socyno.webfwk.module.application.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.service.PermissionService;

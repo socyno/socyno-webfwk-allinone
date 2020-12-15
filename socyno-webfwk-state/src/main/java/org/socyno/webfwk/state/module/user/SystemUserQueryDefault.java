@@ -96,11 +96,11 @@ public class SystemUserQueryDefault extends AbstractStateFormQuery {
     @Attributes(title = "直属领导", type = FieldSystemUser.class)
     private Long manager;
     
-    @Attributes(title = "编号清单", description = "以提供的用户编号仅进行查询，多个可使用逗号、空格或分号进行分割")
-    private String userIds;
+    @Attributes(title = "编号清单", description = "以提供的用户编号进行查询，多个可使用逗号、空格或分号进行分割")
+    private String idsIn;
     
-    @Attributes(title = "帐户清单", description = "以提供的用户帐户名仅进行查询，多个可使用逗号、空格或分号进行分割")
-    private String usernames;
+    @Attributes(title = "帐户清单", description = "以提供的用户帐户进行查询，多个可使用逗号、空格或分号进行分割")
+    private String namesIn;
     
     public SystemUserQueryDefault(long page, int limit) {
         this(null, page, limit);
@@ -121,11 +121,13 @@ public class SystemUserQueryDefault extends AbstractStateFormQuery {
             sqlargs.add(nameLike);
             StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append(SQL_QUERY_NAMELIKE_USERS_TMPL);
         }
+        
         if (!isDisableIncluded()) {
             sqlargs.add(SystemUserService.STATES.DISABLED.getCode());
-            StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append(SystemUserService.DEFAULT.getFormStateField())
+            StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append(SystemUserService.getInstance().getFormStateField())
                     .append(" != ?");
         }
+        
         if (getPermRoleId() != null) {
             String scopePlaced = "";
             sqlargs.add(getPermRoleId());
@@ -140,27 +142,33 @@ public class SystemUserQueryDefault extends AbstractStateFormQuery {
             StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append(SQL_QUERY_SCOPE_USERS_TMPL);
         }
         
-        if (StringUtils.isNotBlank(getUserIds())) {
-            String[] uids;
-            if ((uids = CommonUtil.split(getUserIds(), "[,;\\s]+",
+        if (StringUtils.isNotBlank(getIdsIn())) {
+            String[] ids;
+            if ((ids = CommonUtil.split(getIdsIn(), "[,;\\s]+",
                     CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED)) != null
-                    && uids.length > 0) {
-                sqlargs.addAll(Arrays.asList(uids));
+                    && ids.length > 0) {
+                sqlargs.addAll(Arrays.asList(ids));
                 StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append("f.")
-                        .append(SystemUserService.DEFAULT.getFormIdField())
-                        .append(CommonUtil.join("?", uids.length, ",", " IN (", ")"));
+                        .append(SystemUserService.getInstance().getFormIdField())
+                        .append(CommonUtil.join("?", ids.length, ",", " IN (", ")"));
+            } else {
+                StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append("0 = 1");
             }
         }
-        if (StringUtils.isNotBlank(getUsernames())) {
-            String[] unames;
-            if ((unames = CommonUtil.split(getUsernames(), "[,;\\s]+",
+        
+        if (StringUtils.isNotBlank(getNamesIn())) {
+            String[] names;
+            if ((names = CommonUtil.split(getNamesIn(), "[,;\\s]+",
                     CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED)) != null
-                    && unames.length > 0) {
-                sqlargs.addAll(Arrays.asList(unames));
+                    && names.length > 0) {
+                sqlargs.addAll(Arrays.asList(names));
                 StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append("f.username")
-                        .append(CommonUtil.join("?", unames.length, ",", " IN (", ")"));
+                        .append(CommonUtil.join("?", names.length, ",", " IN (", ")"));
+            } else {
+                StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append("0 = 1");
             }
         }
+        
         if (manager != null) {
             sqlargs.add(manager);
             StringUtils.appendIfNotEmpty(sqlstmt, " AND ").append("f.manager = ?");
@@ -173,7 +181,7 @@ public class SystemUserQueryDefault extends AbstractStateFormQuery {
     public AbstractSqlStatement prepareSqlTotal() {
         AbstractSqlStatement whereQuery = buildWhereSql();
         return new BasicSqlStatement().setValues(whereQuery.getValues()).setSql(String.format("%s %s",
-                String.format(SQL_QUERY_COUNT_USERS, SystemUserService.DEFAULT.getFormTable()), whereQuery.getSql()));
+                String.format(SQL_QUERY_COUNT_USERS, SystemUserService.getInstance().getFormTable()), whereQuery.getSql()));
     }
     
     @Override
@@ -181,7 +189,7 @@ public class SystemUserQueryDefault extends AbstractStateFormQuery {
         AbstractSqlStatement whereQuery = buildWhereSql();
         return new BasicSqlStatement().setValues(whereQuery.getValues())
                 .setSql(String.format("%s %s ORDER BY f.id DESC LIMIT %s, %s",
-                        String.format(SQL_QUERY_ALL_USERS, SystemUserService.DEFAULT.getFormTable()),
+                        String.format(SQL_QUERY_ALL_USERS, SystemUserService.getInstance().getFormTable()),
                         whereQuery.getSql(), getOffset(), getLimit()));
     }
 }

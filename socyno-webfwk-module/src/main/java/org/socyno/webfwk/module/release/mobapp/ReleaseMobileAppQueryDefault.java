@@ -41,19 +41,20 @@ public class ReleaseMobileAppQueryDefault extends AbstractStateFormQuery {
     public final static String SQL_SELECT_COUNT = "X";
     
     private AbstractSqlStatement buildWhereSql() {
-        StringBuffer sqlstmt = new StringBuffer("where 1 = 1");
         List<Object> sqlargs = new ArrayList<>();
-        if (createdByMe == true) {
-            sqlstmt.append(" and a.created_code_by = ? ");
+        StringBuilder sqlwhere = new StringBuilder();
+        if (createdByMe) {
             sqlargs.add(SessionContext.getUsername());
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.created_code_by = ? ");
         }
         
         if (StringUtils.isNotBlank(getStoreType())) {
             sqlargs.add(getStoreType());
-            sqlstmt.append(" and a.store_type = ? ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.store_type = ? ");
         }
         
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override

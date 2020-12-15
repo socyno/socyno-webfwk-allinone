@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.util;
 
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.basic.AbstractStateAction.EventFormType;
 import org.socyno.webfwk.util.tool.ClassUtil;

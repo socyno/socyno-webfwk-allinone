@@ -1,16 +1,17 @@
 package org.socyno.webfwk.module.subsystem;
 
 import lombok.Getter;
-import lombok.NonNull;
 
-import org.socyno.webfwk.module.app.form.*;
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
-import org.socyno.webfwk.module.department.FieldDepartment;
-import org.socyno.webfwk.module.department.FieldDepartment.OptionProductline;
+import org.socyno.webfwk.module.application.*;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.productline.FieldProductline;
+import org.socyno.webfwk.module.productline.FieldProductline.OptionProductline;
+import org.socyno.webfwk.module.subsystem.SubsystemApplicationSummary.AppTypeSummary;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedService;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedSubsystemInfo;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.FieldSystemUser;
@@ -27,7 +28,6 @@ import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.MessageException;
 import org.socyno.webfwk.util.model.AbstractUser;
 import org.socyno.webfwk.util.model.ObjectMap;
-import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
@@ -38,6 +38,7 @@ import org.socyno.webfwk.util.tool.StringUtils;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class SubsystemService
@@ -46,7 +47,7 @@ public class SubsystemService
     @Getter
     private static final SubsystemService Instance = new SubsystemService();
     
-    public SubsystemService() {
+    private SubsystemService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
@@ -264,84 +265,6 @@ public class SubsystemService
         }
     }
     
-    @Override
-    public SubsystemFormDetail getForm(long formId) throws Exception {
-        return get(SubsystemFormDetail.class, formId);
-    }
-    
-    /**
-     * 通过业务系统的编号或代码，查询业务系统及详情数据
-     */
-    public <T extends SubsystemFormSimple> T get(Class<T> clazz, Object idOrCode) throws Exception {
-        if (idOrCode == null || StringUtils.isBlank(idOrCode.toString())) {
-            return null;
-        }
-        List<T> list = idOrCode.toString().matches("^\\d+$") ? list(clazz, false, Long.valueOf(idOrCode.toString()))
-                : list(clazz, false, idOrCode.toString());
-        if (list == null || list.size() != 1) {
-            return null;
-        }
-        return list.get(0);
-    }
-    
-    /**
-     * 补全表单的必要详情数据
-     */
-    <T extends AbstractStateForm> void fillFormDetails(Class<T> itemClazz, List<T> resultSet) throws Exception {
-        if (resultSet == null || resultSet.size() <= 0) {
-            return;
-        }
-        Map<Long, SubsystemAbstractForm> mappedResultSet = new HashMap<>();
-        for (T r : resultSet) {
-            mappedResultSet.put(((SubsystemAbstractForm)r).getId(), (SubsystemAbstractForm) r);
-        }
-        /* 补全负责人数据 */
-        if (SubsystemWithOwners.class.isAssignableFrom(itemClazz)) {
-            Map<Long, List<OptionSystemUser>> subsysOwners;
-            if ((subsysOwners = getOwners(mappedResultSet.keySet().toArray(new Long[0]))) != null
-                    && !subsysOwners.isEmpty()) {
-                for (Map.Entry<Long, List<OptionSystemUser>> e : subsysOwners.entrySet()) {
-                    ((SubsystemWithOwners)mappedResultSet.get(e.getKey())).setOwners(e.getValue());
-                }
-            }
-        }
-        /* 补全产品线数据 */
-        if (SubsystemWithDepartments.class.isAssignableFrom(itemClazz)) {
-            Map<Long, List<OptionProductline>> subsysProds;
-            if ((subsysProds = getProductlines(mappedResultSet.keySet().toArray(new Long[0]))) != null
-                    && !subsysProds.isEmpty()) {
-                for (Map.Entry<Long, List<OptionProductline>> e : subsysProds.entrySet()) {
-                    ((SubsystemWithDepartments)mappedResultSet.get(e.getKey())).setProductlines(e.getValue());
-                }
-            }
-        }
-        
-        List<OptionApplication> allApplications = null;
-        /* 补全应用清单数据 */
-        if (SubsystemWithApplications.class.isAssignableFrom(itemClazz)) {
-            allApplications = CommonUtil.ifNull(allApplications, FieldApplication
-                    .queryValuesBySubsystemIds(OptionApplication.class, false, mappedResultSet.keySet().toArray(new Long[0])));
-            List<OptionApplication> subsysApplications;
-            for (OptionApplication app : allApplications) {
-                if ((subsysApplications = ((SubsystemWithApplications)mappedResultSet.get(app.getSubsystemId())).getApplications()) == null) {
-                    ((SubsystemWithApplications)mappedResultSet.get(app.getSubsystemId())).setApplications(subsysApplications = new ArrayList<>());
-                }            subsysApplications.add(app);
-            }
-        }
-        
-        /* 补全部署资源统计数据 */
-        if (SubsystemWithApplicationSummary.class.isAssignableFrom(itemClazz)) {
-            allApplications = CommonUtil.ifNull(allApplications, FieldApplication
-                    .queryValuesBySubsystemIds(OptionApplication.class, false, mappedResultSet.keySet().toArray(new Long[0])));
-            Map<Long, SubsystemApplicationSummary> subsystemAppSummary = genApplicationSummary(allApplications);
-            if (subsystemAppSummary != null && subsystemAppSummary.size() > 0) {
-                for (T r : resultSet) {
-                    ((SubsystemWithApplicationSummary) r).setAppSummary(subsystemAppSummary.get(r.getId()));
-                }
-            }
-        }
-    }
-    
     /**
      * 获取业务系统的负责人信息
      */
@@ -352,83 +275,6 @@ public class SubsystemService
         return getOwners(new Long[] { subsystemId }).get(subsystemId);
     }
     
-    private static Map<Long, SubsystemApplicationSummary> genApplicationSummary(List<OptionApplication> applications)
-            throws Exception {
-        if (applications == null) {
-            return Collections.emptyMap();
-        }
-        
-        /**
-         * 按照业务系统及类型收集应用
-         */
-        Map<Long, Long> appSubsysIds = new HashMap<>();
-        Map<Long, Map<String, Set<Long>>> subsysTypedAppIds = new HashMap<>();
-        for (OptionApplication app : applications) {
-            if (app.getSubsystemId() == null) {
-                continue;
-            }
-            String type = app.getType();
-            long subsysId = app.getSubsystemId();
-            Map<String, Set<Long>> subsysEntry;
-            if ((subsysEntry = subsysTypedAppIds.get(subsysId)) == null) {
-                subsysTypedAppIds.put(subsysId, subsysEntry = new HashMap<>());
-            }
-            Set<Long> typeIds;
-            if ((typeIds = subsysEntry.get(type)) == null) {
-                subsysEntry.put(type, typeIds = new HashSet<>());
-            }
-            typeIds.add(app.getId());
-            appSubsysIds.put(app.getId(), subsysId);
-        }
-        /**
-         * 统计各环境部署的应用信息
-         */
-        Map<Long, Map<String, DeployEnvNamespaceSummaryDetail>> allEvnNamespaceSummary = new HashMap<>();
-        List<FieldApplicationNamespace.OptionApplicationNamespace> namespaces = FieldApplicationNamespace
-                .queryByApplications(appSubsysIds.keySet().toArray(new Long[0]));
-        if (namespaces != null && !namespaces.isEmpty()) {
-            List<? extends DeployEnvNamespaceSummaryDetail> deployNamespaceSummaries;
-            if ((deployNamespaceSummaries = ApplicationService.genApplicationNamespaceSummary(namespaces)) != null) {
-                for (DeployEnvNamespaceSummaryDetail es : deployNamespaceSummaries) {
-                    
-                    long subId = appSubsysIds.get(es.getTargetScopeId());
-                    String envName = es.getEnvName();
-                    Map<String, DeployEnvNamespaceSummaryDetail> subEvnNamespaceSummary;
-                    if ((subEvnNamespaceSummary = allEvnNamespaceSummary.get(subId)) == null) {
-                        allEvnNamespaceSummary.put(subId, subEvnNamespaceSummary = new HashMap<>());
-                    }
-                    DeployEnvNamespaceSummaryDetail oneEnvNamespaceSummary;
-                    if ((oneEnvNamespaceSummary = subEvnNamespaceSummary.get(envName)) == null) {
-                        subEvnNamespaceSummary.put(envName, oneEnvNamespaceSummary = new DeployEnvNamespaceSummaryDetail());
-                    }
-                    oneEnvNamespaceSummary.setTargetScopeId(subId);
-                    oneEnvNamespaceSummary.setEnvName(envName);
-                    oneEnvNamespaceSummary.setEnvDisplay(es.getEnvDisplay());
-                    oneEnvNamespaceSummary.addReplicas(es.getReplicas());
-                    oneEnvNamespaceSummary.addAppId(es.getAppIds());
-                    oneEnvNamespaceSummary.addClusterInfo(es.getClusters());
-                    oneEnvNamespaceSummary.addNamespaceInfo(es.getNamespaces());
-                }
-            }
-        }
-        
-        Map<Long, SubsystemApplicationSummary> result = new HashMap<>();
-        for (Long subsysId : subsysTypedAppIds.keySet()) {
-            SubsystemApplicationSummary subsysAppSummary = new SubsystemApplicationSummary();
-            if (allEvnNamespaceSummary.containsKey(subsysId)) {
-                subsysAppSummary.getEvnNamespaceSummary().addAll(
-                        DeployEnvNamespaceSummaryDetail.toSimple(allEvnNamespaceSummary.get(subsysId).values()));
-            }
-            for (Map.Entry<String, Set<Long>> entry : subsysTypedAppIds.get(subsysId).entrySet()) {
-                subsysAppSummary.addTypedAppSummary(entry.getKey(),
-                        ApplicationFormDetail.ApplicationType.getDisplayOrValue(entry.getKey()),
-                        entry.getValue().size());
-            }
-            result.put(subsysId, subsysAppSummary);
-        }
-        return result;
-    }
-
     /**
      * 获取业务系统的负责人信息
      */
@@ -438,7 +284,7 @@ public class SubsystemService
         }
         Map<Long, Set<Long>> subsysUsers;
         if ((subsysUsers = PermissionService.getRoleSubsystemUserIdsNoInherited(
-                SystemRoleService.InternalRoles.Admin.getCode(), subsystemIds)) == null || subsysUsers.size() <= 0) {
+                SystemRoleService.InternalRoles.Owner.getCode(), subsystemIds)) == null || subsysUsers.size() <= 0) {
             return Collections.emptyMap();
         }
         Set<Long> allUsers = new HashSet<>();
@@ -491,6 +337,7 @@ public class SubsystemService
         if (prodsubsysIds == null || prodsubsysIds.size() <= 0) {
             return Collections.emptyMap();
         }
+        
         Long productlineId;
         Set<Long> productlineIdsAll = new HashSet<>();
         for (Map<String, Object> prodsubsysId : prodsubsysIds) {
@@ -499,7 +346,7 @@ public class SubsystemService
         }
         
         List<OptionProductline> productlineAll;
-        if ((productlineAll = ClassUtil.getSingltonInstance(FieldDepartment.class)
+        if ((productlineAll = ClassUtil.getSingltonInstance(FieldProductline.class)
                 .queryDynamicValues(productlineIdsAll.toArray(new Long[0]))) == null || productlineAll.size() <= 0) {
             return Collections.emptyMap();
         }
@@ -523,32 +370,31 @@ public class SubsystemService
     }
     
     /**
-     * 通过业务系统的编号，获取清单
-     */
-    private <T extends SubsystemFormSimple> List<T> list(Class<T> clazz, boolean disableIncluded,
-            Long... subsystemIds) throws Exception {
-        if (subsystemIds == null || subsystemIds.length <= 0) {
-            return Collections.emptyList();
-        }
-        return list(clazz, new SubsystemQueryAll(subsystemIds.length, 1L).setDisableIncluded(disableIncluded)
-                .setIdsIn(StringUtils.join(subsystemIds, ','))).getList();
-    }
-    
-    /**
      * 通过业务系统的代码，获取清单
      */
-    public <T extends SubsystemFormSimple> List<T> list(Class<T> clazz, boolean disableIncluded,
+    private <T extends SubsystemFormSimple> List<T> listByCodes(Class<T> clazz, boolean disableIncluded,
             String... subsystemCodes) throws Exception {
         if (subsystemCodes == null || subsystemCodes.length <= 0) {
             return Collections.emptyList();
         }
-        return list(clazz, new SubsystemQueryAll(subsystemCodes.length, 1L).setDisableIncluded(disableIncluded)
+        return listForm(clazz, new SubsystemQueryAll(subsystemCodes.length, 1L).setDisableIncluded(disableIncluded)
                 .setCodesIn(StringUtils.join(subsystemCodes, ','))).getList();
     }
     
-    public <T extends SubsystemFormSimple> PagedList<T> list(@NonNull Class<T> clazz,
-            @NonNull SubsystemQueryAccessable query) throws Exception {
-        return listForm(clazz, query);
+    public <T extends SubsystemFormSimple> List<T> listEnabledByCodes(Class<T> clazz, String... subsystemCodes) throws Exception {
+        return listByCodes(clazz, false, subsystemCodes);
+    }
+    
+    public <T extends SubsystemFormSimple> List<T> listAllByCodes(Class<T> clazz, String... subsystemCodes) throws Exception {
+        return listByCodes(clazz, true, subsystemCodes);
+    }
+    
+    public <T extends SubsystemFormSimple> T getByCode(Class<T> clazz, String subsystemCode) throws Exception {
+        List<T> subsys;
+        if ((subsys = listByCodes(clazz, true, subsystemCode)) == null || subsys.size() <= 0) {
+            return null;
+        }
+        return subsys.get(0);
     }
     
     /**
@@ -572,7 +418,7 @@ public class SubsystemService
             throw new MessageException("获取租户代码空间未设置");
         }
         SubsystemFormSimple subsystem;
-        if ((subsystem = get(SubsystemFormSimple.class, subsystemId)) == null) {
+        if ((subsystem = getForm(SubsystemFormSimple.class, subsystemId)) == null) {
             throw new MessageException("业务系统不存在,或已被删除");
         }
         return new VcsUnifiedSubsystemInfo(tenant.getCodeNamespace(), subsystem.getCode());
@@ -600,7 +446,202 @@ public class SubsystemService
 
     @Override
     protected void fillExtraFormFields(Collection<? extends SubsystemFormSimple> forms) throws Exception {
-        // TODO Auto-generated method stub
+        if (forms == null || forms.size() <= 0) {
+            return;
+        }
+        List<SubsystemFormSimple> sameMappedItems;
+        Map<Long, List<SubsystemFormSimple>> mappedWithOwners = new HashMap<>();
+        Map<Long, List<SubsystemFormSimple>> mappedWithProductlines = new HashMap<>();
+        Map<Long, List<SubsystemFormSimple>> mappedWithApplications = new HashMap<>();
+        Map<Long, List<SubsystemFormSimple>> mappedWithAppsummaries = new HashMap<>();
+        for (SubsystemFormSimple form : forms) {
+            if (SubsystemWithOwners.class.isAssignableFrom(form.getClass())) {
+                if ((sameMappedItems = mappedWithOwners.get(form.getId())) == null) {
+                    mappedWithOwners.put(form.getId(), sameMappedItems = new ArrayList<>());
+                }
+                sameMappedItems.add(form);
+            }
+            
+            if (SubsystemWithProductlines.class.isAssignableFrom(form.getClass())) {
+                if ((sameMappedItems = mappedWithProductlines.get(form.getId())) == null) {
+                    mappedWithProductlines.put(form.getId(), sameMappedItems = new ArrayList<>());
+                }
+                sameMappedItems.add(form);
+            }
+            
+            if (SubsystemWithApplications.class.isAssignableFrom(form.getClass())) {
+                if ((sameMappedItems = mappedWithApplications.get(form.getId())) == null) {
+                    mappedWithApplications.put(form.getId(), sameMappedItems = new ArrayList<>());
+                }
+                sameMappedItems.add(form);
+            }
+            
+            if (SubsystemWithAppSummary.class.isAssignableFrom(form.getClass())) {
+                if ((sameMappedItems = mappedWithAppsummaries.get(form.getId())) == null) {
+                    mappedWithAppsummaries.put(form.getId(), sameMappedItems = new ArrayList<>());
+                }
+                sameMappedItems.add(form);
+            }
+        }
         
+        /* 补全负责人数据 */
+        if (mappedWithOwners.size() > 0) {
+            Map<Long, List<OptionSystemUser>> mappedSubsystemOwners;
+            if ((mappedSubsystemOwners = getOwners(mappedWithOwners.keySet().toArray(new Long[0]))) != null
+                    && !mappedSubsystemOwners.isEmpty()) {
+                for (Map.Entry<Long, List<SubsystemFormSimple>> e : mappedWithOwners.entrySet()) {
+                    for (SubsystemFormSimple app : e.getValue()) {
+                        ((SubsystemWithOwners) app).setOwners(mappedSubsystemOwners.get(e.getKey()));
+                    }
+                }
+            }
+        }
+        
+        /* 补全产品线数据 */
+        if (mappedWithProductlines.size() > 0) {
+            Map<Long, List<OptionProductline>> mappedSubsystemProductlines;
+            if ((mappedSubsystemProductlines = getProductlines(mappedWithProductlines.keySet().toArray(new Long[0]))) != null
+                    && !mappedSubsystemProductlines.isEmpty()) {
+                for (Map.Entry<Long, List<SubsystemFormSimple>> e : mappedWithProductlines.entrySet()) {
+                    for (SubsystemFormSimple app : e.getValue()) {
+                        ((SubsystemWithProductlines) app).setProductlines(mappedSubsystemProductlines.get(e.getKey()));
+                    }
+                }
+            }
+        }
+        
+        Map<Long, List<OptionApplication>> mappedSubsystemApps = null;
+        /* 补全应用清单数据 */
+        if (mappedWithApplications.size() > 0) {
+            mappedSubsystemApps = getMappedSubsystemApplications(mappedWithApplications.keySet().toArray(new Long[0]));
+            for (Map.Entry<Long, List<SubsystemFormSimple>> e : mappedWithApplications.entrySet()) {
+                for (SubsystemFormSimple app : e.getValue()) {
+                    ((SubsystemWithApplications) app).setApplications(mappedSubsystemApps.get(e.getKey()));
+                }
+            }
+        }
+        
+        /* 补全部署资源统计数据 */
+        if (mappedWithAppsummaries.size() >= 0) {
+            mappedSubsystemApps = CommonUtil.ifNull(mappedSubsystemApps,
+                    getMappedSubsystemApplications(mappedWithApplications.keySet().toArray(new Long[0])));
+            /**
+             * 统计各业务系统下应用总数及各类型的数量
+             */
+            AtomicInteger singleSubsystemOneStateCounts;
+            Map<String, AtomicInteger> singleSubsystemTypeMappedCounts;
+            Map<String, Map<String, AtomicInteger>> singleSubsystemTypeStateCounts;
+            Map<Long, Long> mappedAppSubsystemIds = new HashMap<>();
+            Map<Long, AtomicInteger> mappedSubsystemAllCounts = new HashMap<>();
+            Map<Long, Map<String, Map<String, AtomicInteger>>> mappedSubsystemTypeStateCounts = new HashMap<>();
+            for (Map.Entry<Long, List<OptionApplication>> e : mappedSubsystemApps.entrySet()) {
+                Long subsystemId = e.getKey();
+                for (OptionApplication app : e.getValue()) {
+                    String type = app.getType();
+                    String state = app.getState();
+                    String stateDisplay = ApplicationService.getInstance().getStateDisplay(state);
+                    if ((singleSubsystemTypeStateCounts = mappedSubsystemTypeStateCounts.get(subsystemId)) == null) {
+                        mappedSubsystemTypeStateCounts.put(subsystemId,
+                                singleSubsystemTypeStateCounts = new HashMap<>());
+                    }
+                    if ((singleSubsystemTypeMappedCounts = singleSubsystemTypeStateCounts.get(type)) == null) {
+                        singleSubsystemTypeStateCounts.put(type, singleSubsystemTypeMappedCounts = new HashMap<>());
+                    }
+                    if ((singleSubsystemOneStateCounts = singleSubsystemTypeMappedCounts.get(stateDisplay)) == null) {
+                        singleSubsystemTypeMappedCounts.put(stateDisplay,
+                                singleSubsystemOneStateCounts = new AtomicInteger(0));
+                    }
+                    singleSubsystemOneStateCounts.incrementAndGet();
+                    if (mappedSubsystemAllCounts.get(subsystemId) == null) {
+                        mappedSubsystemAllCounts.put(subsystemId, new AtomicInteger(0));
+                    }
+                    mappedAppSubsystemIds.put(app.getId(), subsystemId);
+                    mappedSubsystemAllCounts.get(subsystemId).incrementAndGet();
+                }
+            }
+            
+            /**
+             * 根据应用的部署空间，集群，环境概要信息，统计业务系统在各环境的概要数据
+             */
+            Map<Long, Map<String, DeployEnvNamespaceSummaryDetail>> mappedSubsystemAllNamespaceSummaries = new HashMap<>();
+            List<FieldApplicationNamespace.OptionApplicationNamespace> allAppNamespaceOptions = FieldApplicationNamespace
+                    .queryByApplications(mappedAppSubsystemIds.keySet().toArray(new Long[0]));
+            if (allAppNamespaceOptions != null && !allAppNamespaceOptions.isEmpty()) {
+                List<? extends DeployEnvNamespaceSummaryDetail> flatAppNamespaceSummaries;
+                if ((flatAppNamespaceSummaries = ApplicationService.genApplicationNamespaceSummary(allAppNamespaceOptions)) != null) {
+                    for (DeployEnvNamespaceSummaryDetail appsummary : flatAppNamespaceSummaries) {
+                        long applicationId = appsummary.getTargetScopeId();
+                        long subsystemId = mappedAppSubsystemIds.get(applicationId);
+                        String deployEnvironment = appsummary.getEnvName();
+                        Map<String, DeployEnvNamespaceSummaryDetail> mappedSubsystemEnvNamespaceSummaries;
+                        if ((mappedSubsystemEnvNamespaceSummaries = mappedSubsystemAllNamespaceSummaries.get(subsystemId)) == null) {
+                            mappedSubsystemAllNamespaceSummaries.put(subsystemId, mappedSubsystemEnvNamespaceSummaries = new HashMap<>());
+                        }
+                        DeployEnvNamespaceSummaryDetail singleSubystemEnvNamespaceSummary;
+                        if ((singleSubystemEnvNamespaceSummary = mappedSubsystemEnvNamespaceSummaries.get(deployEnvironment)) == null) {
+                            mappedSubsystemEnvNamespaceSummaries.put(deployEnvironment, singleSubystemEnvNamespaceSummary = new DeployEnvNamespaceSummaryDetail());
+                        }
+                        singleSubystemEnvNamespaceSummary.setTargetScopeId(subsystemId);
+                        singleSubystemEnvNamespaceSummary.setEnvName(deployEnvironment);
+                        singleSubystemEnvNamespaceSummary.setEnvDisplay(appsummary.getEnvDisplay());
+                        singleSubystemEnvNamespaceSummary.addReplicas(appsummary.getReplicas());
+                        singleSubystemEnvNamespaceSummary.addAppId(appsummary.getAppIds());
+                        singleSubystemEnvNamespaceSummary.addClusterInfo(appsummary.getClusters());
+                        singleSubystemEnvNamespaceSummary.addNamespaceInfo(appsummary.getNamespaces());
+                    }
+                }
+            }
+            
+            /**
+             * 整合上述业务系统的应用和部署概要信息，补全各业务系统的概要数据
+             */
+            Map<Long, SubsystemApplicationSummary> mappedSubsystemApplicationSummaries = new HashMap<>();
+            for (Map.Entry<Long, Map<String, Map<String, AtomicInteger>>> sysEntry : mappedSubsystemTypeStateCounts
+                    .entrySet()) {
+                long subsystemId = sysEntry.getKey();
+                AtomicInteger subsystemAppCount = new AtomicInteger(0);
+                SubsystemApplicationSummary subsystemSummary = new SubsystemApplicationSummary();
+                for (Map.Entry<String, Map<String, AtomicInteger>> typeEntry : sysEntry.getValue().entrySet()) {
+                    String type = typeEntry.getKey();
+                    AtomicInteger typedAppCount = new AtomicInteger(0);
+                    AppTypeSummary typedSummary = new AppTypeSummary().setType(type).setDisplay(type);
+                    for (Map.Entry<String, AtomicInteger> stateEntry : typeEntry.getValue().entrySet()) {
+                        String stateName = stateEntry.getKey();
+                        int stateAppCount = stateEntry.getValue().get();
+                        typedAppCount.addAndGet(stateAppCount);
+                        subsystemAppCount.addAndGet(stateAppCount);
+                        typedSummary.addStateSummary(stateName,
+                                ApplicationService.getInstance().getStateDisplay(stateName), stateAppCount);
+                    }
+                    typedSummary.setTotal(typedAppCount.get());
+                    subsystemSummary.getTypes().add(typedSummary);
+                }
+                subsystemSummary.setTotal(subsystemAppCount.get());
+                subsystemSummary.getEnvs().addAll(DeployEnvNamespaceSummaryDetail
+                        .toSimple(mappedSubsystemAllNamespaceSummaries.get(subsystemId).values()));
+                mappedSubsystemApplicationSummaries.put(subsystemId, subsystemSummary);
+                
+            }
+            for (Map.Entry<Long, List<SubsystemFormSimple>> e : mappedWithAppsummaries.entrySet()) {
+                for (SubsystemFormSimple sys : e.getValue()) {
+                    ((SubsystemWithAppSummary) sys)
+                            .setAppSummary(mappedSubsystemApplicationSummaries.get(e.getKey()));
+                }
+            }
+        }
+    }
+    
+    private Map<Long, List<OptionApplication>> getMappedSubsystemApplications(Long ...substsytemIds) throws Exception {
+        Map<Long, List<OptionApplication>> mappedSubsystemApps = new HashMap<>();
+        List<OptionApplication> allSubsystemApps = FieldApplication.queryValuesBySubsystemIds(
+                OptionApplication.class, true, substsytemIds);
+        List<OptionApplication> sameSubsystemApps;
+        for (OptionApplication app : allSubsystemApps) {
+            if ((sameSubsystemApps = mappedSubsystemApps.get(app.getSubsystemId())) == null) {
+                mappedSubsystemApps.put(app.getSubsystemId(), sameSubsystemApps = new ArrayList<>());
+            }
+            sameSubsystemApps.add(app);
+        }
+        return mappedSubsystemApps;
     }
 }

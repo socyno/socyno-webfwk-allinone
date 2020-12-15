@@ -12,6 +12,8 @@ import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ConvertUtil;
 
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 public class FieldSystemRole extends FieldTableView {
     
     @Override
@@ -25,9 +27,12 @@ public class FieldSystemRole extends FieldTableView {
      * @return
      * @throws Exception
      */
-    public static List<OptionSystemRole> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    @Override
+    public List<OptionSystemRole> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         PagedList<SystemRoleFormSimple> list;
-        if ((list = SystemRoleService.DEFAULT.query(filter.getKeyword(), 1, 100)) == null || list.getList() == null) {
+        FilterBasicKeyword keyword = (FilterBasicKeyword)filter;
+        if ((list = SystemRoleService.getInstance().query(keyword.getKeyword(), 1, 100)) == null
+                || list.getList() == null) {
             return null;
         }
         List<OptionSystemRole> options = new ArrayList<>();
@@ -55,9 +60,9 @@ public class FieldSystemRole extends FieldTableView {
     public List<OptionSystemRole> queryDynamicValues(Object[] values) throws Exception {
         Long[] ids;
         List<SystemRoleFormSimple> list = null;
-        if (values == null || values.length <= 0
-                || (ids = ConvertUtil.asNonNullUniqueLongArray(values)).length <= 0
-                || (list = SystemRoleService.DEFAULT.queryByIds(SystemRoleFormSimple.class, ids)) == null || list.isEmpty()) {
+        if (values == null || values.length <= 0 || (ids = ConvertUtil.asNonNullUniqueLongArray(values)).length <= 0
+                || (list = SystemRoleService.getInstance().queryByIds(SystemRoleFormSimple.class, ids)) == null
+                || list.isEmpty()) {
             return Collections.emptyList();
         }
         List<OptionSystemRole> options = new ArrayList<>();

@@ -9,14 +9,14 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.http.NameValuePair;
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.Category;
 import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.ChangeType;
 import org.socyno.webfwk.module.release.change.ChangeRequestFormSimple.ScopeType;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestReleaseId.OptionReleaseId;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdMultipleParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
@@ -261,7 +261,7 @@ public class ChangeRequestService extends
     public class ChangeReleaseSubsystemsParser implements AuthorityScopeIdMultipleParser {
         
         @Override
-        public long[] getAuthorityScopeIds(Object form) {
+        public long[] getAuthorityScopeIds(Object form) throws Exception {
             String category;
             OptionReleaseId releaseId;
             if (form == null || !(form instanceof ChangeRequestFormSimple)
@@ -269,21 +269,12 @@ public class ChangeRequestService extends
                     || StringUtils.isBlank(category = releaseId.getCategory())) {
                 return null;
             }
-            try {
-                List<SubsystemFormSimple> abstractForm = SubsystemService.getInstance().list(SubsystemFormSimple.class, false, category);
-                if (abstractForm == null) {
-                    return new long[0];
-                }
-                long[] ids = new long[abstractForm.size()];
-                for (int i = 0; i < abstractForm.size(); i++) {
-                    ids[i] = abstractForm.get(i).getId();
-                }
-                return ids;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            SubsystemFormSimple subsystem;
+            if ((subsystem = SubsystemService.getInstance().getByCode(SubsystemFormSimple.class, category)) == null) {
+                return new long[0];
             }
+            return new long[] { subsystem.getId() };
         }
-        
     }
     
     /**

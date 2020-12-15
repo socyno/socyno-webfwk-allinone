@@ -16,13 +16,12 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-/* 系统角色的简易表单 */
 public class SystemRoleFormSimple implements AbstractStateForm {
     
     public static class FieldOptionsState extends FieldType {
         @Override
         public List<? extends FieldOption> getStaticOptions() {
-            return SystemRoleService.DEFAULT.getStates();
+            return SystemRoleService.getInstance().getStates();
         }
         
         @Override
@@ -31,13 +30,13 @@ public class SystemRoleFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号")
-    private Long   id;
+    @Attributes(title = "编号", readonly = true)
+    private Long id;
     
-    @Attributes(title = "状态", type = FieldOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long   revision;
     
     @Attributes(title = "代码")

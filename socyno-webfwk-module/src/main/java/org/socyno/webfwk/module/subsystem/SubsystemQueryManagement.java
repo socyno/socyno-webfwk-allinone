@@ -3,7 +3,7 @@ package org.socyno.webfwk.module.subsystem;
 import com.github.reinert.jjschema.Attributes;
 
 @Attributes(title = "可管理的业务系统清单查询")
-public class SubsystemQueryManagement extends SubsystemQueryAccessable {
+public class SubsystemQueryManagement extends SubsystemQueryAbstract {
     
     @Override
     protected String requiredAccessEventKey() {

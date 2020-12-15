@@ -51,7 +51,7 @@ public class SystemUserFormEdition implements AbstractStateForm {
     private String department;
     
     @Attributes(title = "直属领导", position = 1080, type = FieldSystemUser.class)
-    private OptionSystemUser managerEntity;
+    private OptionSystemUser manager;
     
     @Attributes(title = "授权", position = 1300, type = FieldSystemUserAuth.class)
     private List<OptionSystemUserAuth> auths;

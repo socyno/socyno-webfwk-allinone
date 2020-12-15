@@ -22,7 +22,7 @@
         http://www.springframework.org/schema/websocket
         http://www.springframework.org/schema/websocket/spring-websocket.xsd">
     
-    <context:annotation-config  />
+    <context:annotation-config />
     <aop:aspectj-autoproxy />
     
     <!-- 数据源配置 -->
@@ -49,7 +49,7 @@
     </bean>
     
     <!-- 通用流程表单的事件注册服务 -->
-    <bean class="org.socyno.webfwk.state.authority.CommonStateFormParser">
+    <bean class="org.socyno.webfwk.state.util.StateFormDefinitionLoader">
         <constructor-arg index="0" value="backend"/>
     </bean>
     
@@ -60,7 +60,7 @@
     <bean id="responseConverter" class="org.socyno.webfwk.util.context.HttpMessageConverter" lazy-init="false">
         <constructor-arg name="typeAdapters">
             <map>
-                <entry key="org.socyno.webfwk.state.authority.Authority" value ="" />
+                <entry key="org.socyno.webfwk.state.annotation.Authority" value ="" />
                 <entry key="*org.socyno.webfwk.state.basic.AbstractStateFormEventResultView" value ="org.socyno.webfwk.state.util.StateFormSimpleViewJsonSerializer" />
             </map>
         </constructor-arg>

@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.socyno.webfwk.module.app.form.FieldApplication;
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.FieldApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.Definition;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.OptionClass;
@@ -26,7 +26,7 @@ import lombok.Setter;
 public class SuggerDefinitionChangeApplication extends Definition {
     
     @Getter
-    private final static SuggerDefinitionChangeApplication instance = new SuggerDefinitionChangeApplication();
+    private final static SuggerDefinitionChangeApplication Instance = new SuggerDefinitionChangeApplication();
     
     @Getter
     @Setter

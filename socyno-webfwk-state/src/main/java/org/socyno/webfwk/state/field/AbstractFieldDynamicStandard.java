@@ -9,6 +9,8 @@ import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 public abstract class AbstractFieldDynamicStandard extends FieldTableView {
     
     @Override
@@ -54,8 +56,9 @@ public abstract class AbstractFieldDynamicStandard extends FieldTableView {
     public String getCategoryFieldValue(FilterBasicKeyword filter) {
         return "";
     }
-
-    public List<OptionDynamicStandard> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    
+    @Override
+    public List<OptionDynamicStandard> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         String category = "";
         if (categoryRequired()) {
             if (StringUtils.isBlank(category = getCategoryFieldValue(filter))) {
@@ -67,10 +70,11 @@ public abstract class AbstractFieldDynamicStandard extends FieldTableView {
         List<Object> args = new ArrayList<>();
         args.add(getClass().getName());
         args.add(category);
-        if (filter != null && StringUtils.isNotBlank(filter.getKeyword())) {
-            args.add(filter.getKeyword());
-            args.add(filter.getKeyword());
-            args.add(filter.getKeyword());
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if (filter != null && StringUtils.isNotBlank(keyword.getKeyword())) {
+            args.add(keyword.getKeyword());
+            args.add(keyword.getKeyword());
+            args.add(keyword.getKeyword());
             sql.append(" AND ").append(SQL_QUERY_OPTIONS_LIKE_TMPL);
         }
         return getDao().queryAsList(OptionDynamicStandard.class, sql.toString(), args.toArray());

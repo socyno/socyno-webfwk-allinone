@@ -17,13 +17,13 @@ import lombok.ToString;
 @ToString
 @Attributes(title = "添加系统角色")
 public class SystemRoleFormCreation implements AbstractStateForm, SystemRoleSaved {
-    @Attributes(title = "编号")
+    @Attributes(title = "编号", readonly = true)
     private Long   id;
     
-    @Attributes(title = "状态")
+    @Attributes(title = "状态", readonly = true)
     private String state;
     
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long   revision;
     
     @Attributes(title = "代码", position = 1010, required = true)

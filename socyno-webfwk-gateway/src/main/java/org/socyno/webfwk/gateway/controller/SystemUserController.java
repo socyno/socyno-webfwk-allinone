@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.module.user.SystemUserFormLogin;
 import org.springframework.web.bind.annotation.PathVariable;

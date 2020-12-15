@@ -2,15 +2,15 @@ package org.socyno.webfwk.module.basic;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.socyno.webfwk.module.app.bookmark.ApplicationBookmarkService;
-import org.socyno.webfwk.module.app.form.ApplicationQueryAll;
-import org.socyno.webfwk.module.app.form.ApplicationQueryDefault;
-import org.socyno.webfwk.module.app.form.ApplicationService;
-import org.socyno.webfwk.module.app.form.FieldApplicationAll;
-import org.socyno.webfwk.module.app.form.FieldApplicationOfflineIncluded;
-import org.socyno.webfwk.module.department.DepartmentQueryDefault;
-import org.socyno.webfwk.module.department.DepartmentService;
+import org.socyno.webfwk.module.application.ApplicationBookmarkService;
+import org.socyno.webfwk.module.application.ApplicationQueryAll;
+import org.socyno.webfwk.module.application.ApplicationQueryDefault;
+import org.socyno.webfwk.module.application.ApplicationService;
+import org.socyno.webfwk.module.application.FieldApplicationAll;
+import org.socyno.webfwk.module.application.FieldApplicationOfflineIncluded;
 import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment;
+import org.socyno.webfwk.module.productline.ProductlineQueryDefault;
+import org.socyno.webfwk.module.productline.ProductlineService;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemNoAnyLimited;
 import org.socyno.webfwk.module.subsystem.SubsystemFormDefault;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
@@ -74,10 +74,10 @@ public class SubsystemController {
      */
     @RequestMapping(value = "/productlines/list", method = RequestMethod.GET)
     public R queryProductlines(String namelike, Long applicationId, Long subsystemId, Long ownerId, Integer limit,
-            Integer page) throws Exception {
+            Long page) throws Exception {
         return R.ok()
-                .setData(DepartmentService.getInstance().listFormWithTotal(DepartmentService.QUERIES.DEFAULT,
-                        new DepartmentQueryDefault(namelike, limit, page).setOwnerId(ownerId)
+                .setData(ProductlineService.getInstance().listFormWithTotal(ProductlineService.QUERIES.DEFAULT,
+                        new ProductlineQueryDefault(namelike, limit, page).setOwnerId(ownerId)
                                 .setSubsystemId(subsystemId).setApplicationId(applicationId)
                                 .setDisableIncluded(false)));
     }
@@ -87,7 +87,7 @@ public class SubsystemController {
      */
     @RequestMapping(value = "/subsystems/{subsystemId}/simple", method = RequestMethod.GET)
     public R getSimpleSubsystem(@PathVariable Long subsystemId) throws Exception {
-        return R.ok().setData(SubsystemService.getInstance().get(SubsystemFormDefault.class, subsystemId));
+        return R.ok().setData(SubsystemService.getInstance().getForm(SubsystemFormDefault.class, subsystemId));
     }
     
     /**

@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;

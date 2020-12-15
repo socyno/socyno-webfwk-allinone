@@ -43,25 +43,26 @@ public class SystemConfigQueryDefault extends AbstractStateFormQuery {
     public final static String SQL_SELECT_COUNT = "X";
     
     private AbstractSqlStatement buildWhereSql() {
-        StringBuffer sqlstmt = new StringBuffer("where 1 = 1");
         List<Object> sqlargs = new ArrayList<>();
+        StringBuilder sqlwhere = new StringBuilder();
         
         if (StringUtils.isNotBlank(getName())) {
             sqlargs.add(getName());
-            sqlstmt.append(" and a.name like concat('%',?,'%') ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.name like concat('%',?,'%') ");
         }
         
         if (StringUtils.isNotBlank(getValue())) {
             sqlargs.add(getValue());
-            sqlstmt.append(" and a.value like concat('%',?,'%') ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.value like concat('%',?,'%') ");
         }
         
         if (StringUtils.isNotBlank(getComment())) {
             sqlargs.add(getComment());
-            sqlstmt.append(" and a.comment like concat('%',?,'%') ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.comment like concat('%',?,'%') ");
         }
         
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override

@@ -24,13 +24,13 @@ public class SubsystemFormSimple implements SubsystemAbstractForm, FieldOption {
         }
     }
     
-    @Attributes(title = "编号")
+    @Attributes(title = "编号", readonly = true)
     private Long id;
     
-    @Attributes(title = "状态", type = FieldOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long revision;
     
     @Attributes(title = "代码")

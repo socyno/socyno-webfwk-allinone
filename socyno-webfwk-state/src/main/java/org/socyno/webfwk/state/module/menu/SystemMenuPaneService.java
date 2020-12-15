@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
@@ -33,6 +33,9 @@ public class SystemMenuPaneService extends
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
+    
+    @Getter
+    private static final SystemMenuPaneService Instance = new SystemMenuPaneService();
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum {
@@ -157,9 +160,6 @@ public class SystemMenuPaneService extends
         }
     }
     
-    @Getter
-    private static final SystemMenuPaneService Instance = new SystemMenuPaneService();
-    
     @Override
     public String getFormName() {
         return "system_menu_pane";
@@ -182,6 +182,6 @@ public class SystemMenuPaneService extends
     
     @Override
     protected void fillExtraFormFields(Collection<? extends SystemMenuPaneFormSimple> forms) throws Exception {
-        // TODO
+        
     }
 }

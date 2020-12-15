@@ -26,7 +26,9 @@ public class SystemMenuItemQueryDefault extends AbstractStateFormQuery {
     /**
      * SELECT
      *     m.*,
+     *     d.id AS dir_id,
      *     d.name AS dir_name,
+     *     p.id AS pane_id,
      *     p.name AS pane_name
      * FROM
      *     system_menu m,

@@ -3,7 +3,7 @@ package org.socyno.webfwk.module.release.mobonline;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
@@ -623,7 +623,7 @@ public class ReleaseMobileOnlineService extends
         @Override
         protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            SystemUserFormSimple systemUserSimple = SystemUserService.DEFAULT
+            SystemUserFormSimple systemUserSimple = SystemUserService.getInstance()
                     .getSimple(getForm(form.getId()).getApprover().getId());
             long[] scmUser = ConvertUtil
                     .asNonNullUniquePrimitiveLongArray(getActionUserIds(EVENTS.ReleaseComplete.getName(), originForm));
@@ -675,7 +675,7 @@ public class ReleaseMobileOnlineService extends
         @Override
         protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.DEFAULT
+            SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.getInstance()
                     .getSimple(getForm(form.getId()).getSpecialApprover().getId());
             return ConvertUtil.asNonNullUniquePrimitiveLongArray(systemUserSimple.getId());
         }

@@ -9,6 +9,7 @@ import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
+import org.socyno.webfwk.util.tool.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +37,14 @@ public class SystemLockQueryDefault extends AbstractStateFormQuery {
     public final static String SQL_SELECT_COUNT = "X";
     
     private AbstractSqlStatement buildWhereSql() {
-        StringBuffer sqlstmt = new StringBuffer("where 1 = 1");
+        StringBuilder sqlwhere = new StringBuilder();
         List<Object> sqlargs = new ArrayList<>();
         if (locking == true) {
-            sqlstmt.append(" and a.locked is not null ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.locked is not null ");
         }
         
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override

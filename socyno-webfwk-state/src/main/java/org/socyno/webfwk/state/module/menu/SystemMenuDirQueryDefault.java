@@ -26,6 +26,7 @@ public class SystemMenuDirQueryDefault extends AbstractStateFormQuery {
     /**
      * SELECT
      *     d.*,
+     *     p.id AS pane_id,
      *     p.name AS pane_name
      * FROM
      *     system_menu_dir d,
@@ -49,7 +50,7 @@ public class SystemMenuDirQueryDefault extends AbstractStateFormQuery {
     private static final String SQL_QUERY_COUNT = "X";
     
     /**
-     * AND (
+     *  (
      *         d.name LIKE CONCAT('%', ?, '%')
      *     OR
      *         p.name LIKE CONCAT('%', ?, '%')
@@ -62,14 +63,14 @@ public class SystemMenuDirQueryDefault extends AbstractStateFormQuery {
     private String nameLike;
     
     private AbstractSqlStatement buildWhereSql() {
-        String sqlstmt = "";
+        StringBuilder sqlbuld = new StringBuilder();
         List<Object> sqlargs = new ArrayList<>();
         if (StringUtils.isNotBlank(nameLike)) {
             sqlargs.add(nameLike);
             sqlargs.add(nameLike);
-            sqlstmt = SQL_QUERY_NAMELIKE_TMPL;
+            sqlbuld.append(" AND ").append(SQL_QUERY_NAMELIKE_TMPL);
         }
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt);
+        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlbuld.toString());
     }
     
     @Override

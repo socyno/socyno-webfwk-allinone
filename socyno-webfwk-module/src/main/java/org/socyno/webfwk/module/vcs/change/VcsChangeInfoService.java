@@ -15,11 +15,11 @@ import java.util.regex.Pattern;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.ArrayUtils;
-import org.socyno.webfwk.module.app.form.ApplicationAbstractForm;
-import org.socyno.webfwk.module.app.form.ApplicationFormDefault;
-import org.socyno.webfwk.module.app.form.ApplicationService;
-import org.socyno.webfwk.module.app.form.FieldApplication;
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationFormDefault;
+import org.socyno.webfwk.module.application.ApplicationService;
+import org.socyno.webfwk.module.application.FieldApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
@@ -27,7 +27,7 @@ import org.socyno.webfwk.module.vcs.common.VcsPermissionChecker;
 import org.socyno.webfwk.module.vcs.common.VcsRevisionEntry;
 import org.socyno.webfwk.module.vcs.common.VcsType;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedService;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
@@ -611,7 +611,7 @@ public class VcsChangeInfoService extends
     void submit(@NonNull VcsChangeInfoFormCreation info) throws Exception {
         
         final String systemUserCode = formatToSystemUsername(info.getVcsCommiter());
-        SystemUserService.DEFAULT.forceSuToUser(systemUserCode);
+        SystemUserService.getInstance().forceSuToUser(systemUserCode);
         info.setVcsCommiter(systemUserCode);
         triggerAction(EVENTS.Create.getName(), info);
     }

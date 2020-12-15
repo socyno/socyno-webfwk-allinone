@@ -2,7 +2,7 @@ package org.socyno.webfwk.module.datachart;
 
 import lombok.Getter;
 import org.apache.http.NameValuePair;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
@@ -112,7 +112,7 @@ public class DataChartService
                 Map<String, Object> dataMap = new HashMap<>(4);
                 dataMap.put("mailTempData", originData);
                 ObjectMap tempContext = new ObjectMap()
-                        .put("systemUserService", SystemUserService.DEFAULT)
+                        .put("systemUserService", SystemUserService.getInstance())
                         .put("sessionContext", SessionContext.getUserContext());
                 if (dataMap.size() > 0) {
                     tempContext.putAll(dataMap);
@@ -281,8 +281,11 @@ public class DataChartService
 
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<>("default",
-                DataChartFormDefault.class, DataChartQueryDefault.class));
+        DEFAULT(new StateFormNamedQuery<>(
+                "默认查询",
+                DataChartFormDefault.class,
+                DataChartQueryDefault.class
+            ));
         private StateFormNamedQuery<?> namedQuery;
 
         QUERIES(StateFormNamedQuery<?> namedQuery) {

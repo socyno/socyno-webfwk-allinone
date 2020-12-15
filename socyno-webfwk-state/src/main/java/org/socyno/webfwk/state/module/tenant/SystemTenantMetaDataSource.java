@@ -22,9 +22,4 @@ public class SystemTenantMetaDataSource extends AbstractDao {
     public boolean inDebugMode() {
         return super.inDebugMode() || ContextUtil.inDebugMode();
     }
-    
-    @Override
-    public int getColumnMapperCase() {
-        return SQL_COLUMN_MAPPER_CASE_LOWER;
-    }
 }

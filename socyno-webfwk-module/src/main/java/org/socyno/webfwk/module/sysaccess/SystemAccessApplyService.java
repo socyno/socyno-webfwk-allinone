@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdMultipleCleaner;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdMultipleParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
@@ -110,7 +109,7 @@ public class SystemAccessApplyService extends
 
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemAccessApplyFormDefault>("default",
+        DEFAULT(new StateFormNamedQuery<SystemAccessApplyFormDefault>("默认查询",
                 SystemAccessApplyFormDefault.class, SystemAccessApplyQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
 
@@ -142,7 +141,7 @@ public class SystemAccessApplyService extends
                     List<SystemAccessApplySubSystemEntity> entityList = subSystems.get(form.getId());
                     for (SystemAccessApplySubSystemEntity accessRequestSubSystemEntity : entityList) {
                         accessRequestSubSystemEntity
-                                .setSubsystem(ClassUtil.getSingltonInstance(FieldSubsystemAccessors.class)
+                                .setSubsystem(ClassUtil.getSingltonInstance(FieldSubsystemAccessApply.class)
                                         .queryDynamicValue(accessRequestSubSystemEntity.getSubsystemId()));
                         accessRequestSubSystemEntity.setRole(ClassUtil.getSingltonInstance(FieldSystemRole.class)
                                 .queryDynamicValues(new Long[] { accessRequestSubSystemEntity.getRoleId() }).get(0));
@@ -409,7 +408,7 @@ public class SystemAccessApplyService extends
             if (form == null) {
                 return false;
             }
-            SystemUserFormSimple systemUserSimple = SystemUserService.DEFAULT
+            SystemUserFormSimple systemUserSimple = SystemUserService.getInstance()
                     .getSimple(((SystemAccessApplyFormSimple) form).getCreatedBy());
             return systemUserSimple != null && systemUserSimple.getManager().equals(SessionContext.getUserId());
         }
@@ -557,7 +556,7 @@ public class SystemAccessApplyService extends
         @Override
         protected long[] getTodoAssignees(String event, SystemAccessApplyFormSimple originForm, AbstractStateForm form)
                 throws Exception {
-            SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.DEFAULT
+            SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.getInstance()
                     .getSimple(SessionContext.getUserId());
             if (systemUserSimple == null) {
                 return null;
@@ -565,7 +564,7 @@ public class SystemAccessApplyService extends
             if (systemUserSimple.getManager() == null) {
                 throw new MessageException("当前用户直属领导不存在，无法提交申请单。");
             }
-            return new long[] { systemUserSimple.getManager() };
+            return new long[] { systemUserSimple.getManager().getId() };
         }
         
         @Override

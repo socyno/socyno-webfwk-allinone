@@ -14,6 +14,7 @@ import org.socyno.webfwk.util.tool.ConvertUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -91,9 +92,10 @@ public class FieldChangeRequestReleaseId extends FieldTableView {
      */
     @Multiline
     private final static String SQL_QUERY_OPTION_RELEASES = "X";
-    
-    public List<? extends OptionReleaseId> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        return queryDynamicOptions(filter, false);
+
+    @Override
+    public List<? extends OptionReleaseId> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        return queryDynamicOptions((FilterBasicKeyword)filter, false);
         
     }
     

@@ -22,7 +22,7 @@ public class UserController {
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public R login(@RequestBody SystemUserFormLogin loginInfo, HttpServletResponse resp) throws Exception {
         SystemUserToken userToken;
-        if ((userToken = SystemUserService.DEFAULT.login(loginInfo)) == null) {
+        if ((userToken = SystemUserService.getInstance().login(loginInfo)) == null) {
             throw new MessageException("用户或密码错误");
         }
         for (Cookie cookie : userToken.getCookies()) {

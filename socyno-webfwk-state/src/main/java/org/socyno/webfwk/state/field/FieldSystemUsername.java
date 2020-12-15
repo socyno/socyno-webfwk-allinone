@@ -5,6 +5,8 @@ import java.util.List;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ClassUtil;
 
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 public class FieldSystemUsername extends FieldTableView {
     
     @Override
@@ -27,9 +29,10 @@ public class FieldSystemUsername extends FieldTableView {
      * @return
      * @throws Exception
      */
-    public List<OptionSystemUsername> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    @Override
+    public List<OptionSystemUsername> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         return ClassUtil.getSingltonInstance(FieldSystemUser.class).queryDynamicOptions(OptionSystemUsername.class,
-                filter);
+                (FilterBasicKeyword)filter);
     }
     
     /**

@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
@@ -47,7 +47,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
     @Getter
     private static final DeployClusterService Instance = new DeployClusterService();
     
-    public DeployClusterService() {
+    private DeployClusterService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());

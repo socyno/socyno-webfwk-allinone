@@ -8,6 +8,7 @@ import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.ArrayUtils;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
+import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.ConvertUtil;
@@ -110,10 +111,12 @@ public class FieldSystemUserAuth extends FieldTableView {
      * @return
      * @throws Exception
      */
-    public List<OptionSystemUserAuth> queryDynamicOptions(FilterSystemUserAuth filter) throws Exception {
+    @Override
+    public List<OptionSystemUserAuth> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         AuthorityScopeType scopeType;
-        if ((scopeType = AuthorityScopeType.forName(filter.getScopeType())) ==  null
-                    || filter.getRoleId() == null) {
+        FilterSystemUserAuth keyword = (FilterSystemUserAuth)filter;
+        if ((scopeType = AuthorityScopeType.forName(keyword.getScopeType())) ==  null
+                    || keyword.getRoleId() == null) {
             return Collections.emptyList();
         }
         String sql = "X";
@@ -122,12 +125,12 @@ public class FieldSystemUserAuth extends FieldTableView {
             sql = SQL_QUERY_USER_SYSTEM_AUTHS;
         } else if (AuthorityScopeType.Subsystem.equals(scopeType)) {
             sql = SQL_QUERY_USER_SUBSYSTEM_AUTHS;
-            if (StringUtils.isNotBlank(filter.getScopeTargetKeyword())) {
-                args.add(filter.getScopeTargetKeyword());
+            if (StringUtils.isNotBlank(keyword.getScopeTargetKeyword())) {
+                args.add(keyword.getScopeTargetKeyword());
                 sql = String.format("%s %s", SQL_QUERY_USER_SUBSYSTEM_AUTHS, SQL_QUERY_USER_SCOPE_KEYWORD_AUTHS);
             }
         }
-        args.add(0, filter.getRoleId());
+        args.add(0, keyword.getRoleId());
         return SystemTenantDataSource.getMain().queryAsList(OptionSystemUserAuth.class, sql, args.toArray());
     }
     
@@ -146,7 +149,7 @@ public class FieldSystemUserAuth extends FieldTableView {
             return Collections.emptyList();
         }
         String placeHolder = CommonUtil.join("?", idNumbers.length, ",");
-        return SystemTenantDataSource.getMain().queryAsList(OptionSystemUserAuth.class,
+        return SystemUserService.getInstance().getFormBaseDao().queryAsList(OptionSystemUserAuth.class,
                 String.format(SQL_QUERY_USER_AUTHS_BYUSERIDS, placeHolder, placeHolder),
                 ArrayUtils.addAll(idNumbers, idNumbers));
     }

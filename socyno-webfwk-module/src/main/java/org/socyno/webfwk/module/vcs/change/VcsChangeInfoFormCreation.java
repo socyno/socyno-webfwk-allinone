@@ -1,6 +1,6 @@
 package org.socyno.webfwk.module.vcs.change;
 
-import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsVcsType;
+import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 

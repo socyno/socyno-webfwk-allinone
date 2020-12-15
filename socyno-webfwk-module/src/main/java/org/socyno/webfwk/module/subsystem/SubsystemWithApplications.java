@@ -2,7 +2,7 @@ package org.socyno.webfwk.module.subsystem;
 
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 
 public interface SubsystemWithApplications extends SubsystemAbstractForm {
     

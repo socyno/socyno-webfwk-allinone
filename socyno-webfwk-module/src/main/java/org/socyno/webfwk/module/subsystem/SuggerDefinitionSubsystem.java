@@ -16,7 +16,7 @@ import lombok.Getter;
 public class SuggerDefinitionSubsystem extends Definition {
     
     @Getter
-    private static final SuggerDefinitionSubsystem instance = new SuggerDefinitionSubsystem();
+    private static final SuggerDefinitionSubsystem Instance = new SuggerDefinitionSubsystem();
     
     private static final OptionClass<?> optionClass = new OptionClass<SubsystemFormSimple>() {
         @Override

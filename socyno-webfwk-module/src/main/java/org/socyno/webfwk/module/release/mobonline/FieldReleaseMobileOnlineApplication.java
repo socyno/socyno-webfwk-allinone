@@ -1,6 +1,7 @@
 package org.socyno.webfwk.module.release.mobonline;
 
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +37,12 @@ public class FieldReleaseMobileOnlineApplication extends FieldTableView {
         return FieldOptionsType.DYNAMIC;
     }
     
-    public static List<OptionStore> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    @Override
+    public List<OptionStore> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
         List<OptionStore> optionStoreList = new ArrayList<>();
         List<OptionReleaseMobileOnlineApplication> itemApplications;
-        if (StringUtils.isBlank(filter.getKeyword())) {
+        if (StringUtils.isBlank(keyword.getKeyword())) {
             itemApplications = ReleaseMobileOnlineService.getInstance().getFormBaseDao().queryAsList(
                     OptionReleaseMobileOnlineApplication.class,
                     " SELECT * FROM `release_app_config` WHERE state_form_status = 'enabled' ");
@@ -47,12 +50,13 @@ public class FieldReleaseMobileOnlineApplication extends FieldTableView {
             itemApplications = ReleaseMobileOnlineService.getInstance().getFormBaseDao().queryAsList(
                     OptionReleaseMobileOnlineApplication.class,
                     " SELECT * FROM `release_app_config` WHERE state_form_status = 'enabled' AND application_name like CONCAT('%', ?, '%') ",
-                    new Object[] { filter.getKeyword() });
+                    new Object[] { keyword.getKeyword() });
         }
         for (OptionReleaseMobileOnlineApplication itemApplication : itemApplications) {
             OptionStore optionStore = new OptionStore();
             optionStore.setApplicationName(itemApplication.getApplicationName());
-            SystemUserFormSimple systemUserSimple = SystemUserService.DEFAULT.getSimple(itemApplication.getApprover());
+            SystemUserFormSimple systemUserSimple = SystemUserService.getInstance()
+                    .getSimple(itemApplication.getApprover());
             if (systemUserSimple == null) {
                 throw new MessageException("应用对应审批人无法获取详情");
             }

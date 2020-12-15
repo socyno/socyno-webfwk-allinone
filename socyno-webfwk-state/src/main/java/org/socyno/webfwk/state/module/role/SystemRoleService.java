@@ -14,11 +14,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
 import org.socyno.webfwk.state.basic.BasicStateForm;
@@ -36,8 +35,6 @@ import org.socyno.webfwk.util.model.ObjectMap;
 import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
-import org.socyno.webfwk.util.sql.AbstractSqlStatement;
-import org.socyno.webfwk.util.sql.BasicSqlStatement;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
 import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
@@ -48,17 +45,19 @@ import lombok.NonNull;
 
 public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<SystemRoleFormDetail, SystemRoleFormDefault, SystemRoleFormSimple> {
     
-    public static final SystemRoleService DEFAULT = new SystemRoleService();
-    
-    public SystemRoleService() {
+    private SystemRoleService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
     
     @Getter
+    private static final SystemRoleService Instance = new SystemRoleService();
+    
+    @Getter
     public static enum InternalRoles {
         Admin("admin"),
+        Owner("owner"),
         Basic("basic");
         
         private final String code;
@@ -94,7 +93,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
     
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        Default(new StateFormNamedQuery<SystemRoleFormDefault>("default", 
+        DEFAULT(new StateFormNamedQuery<SystemRoleFormDefault>("默认查询", 
                 SystemRoleFormDefault.class, SystemRoleQueryDefault.class))
         ;
         
@@ -246,7 +245,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         return SystemTenantDataSource.getMain();
     }
     
-    protected void ensureRoleSaveFormValid(@NonNull SystemRoleSaved role) throws Exception {
+    private void ensureRoleSaveFormValid(@NonNull SystemRoleSaved role) throws Exception {
         /**
          * 检查命名规范
          */
@@ -272,51 +271,30 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
     }
     
     /**
-     * 检索角色清单（支持模糊检索, 不包括关联功能数据）。
-     * @param nameLike 检索的关键字
+     * 检索角色清单
      */
     public PagedList<SystemRoleFormSimple> query(String nameLike, long page, int limit) throws Exception {
         return listForm(SystemRoleFormSimple.class, new SystemRoleQueryDefault(nameLike, page, limit));
     }
     
     /**
-     * 获取角色清单（不包括关联功能数据）。
-     * @param nameLike 检索的关键字
+     * 获取角色详情
      */
-    public PagedList<SystemRoleFormSimple> query(long page, int limit) throws Exception {
-        return listForm(SystemRoleFormSimple.class, new SystemRoleQueryDefault(page, limit));
-    }
-    
-    /**
-     * 获取角色详情（包括关联功能数据）。
-     */
-    public SystemRoleFormDetail get(Object idOrCode) throws Exception {
+    public SystemRoleFormSimple getSimple(Object idOrCode) throws Exception {
         if (idOrCode == null || StringUtils.isBlank(idOrCode.toString())) {
             return null;
         }
-        List<SystemRoleFormDetail> result;
+        List<SystemRoleFormSimple> result;
         if (idOrCode.toString().matches("^\\d+$")) {
-            result = queryByIds(SystemRoleFormDetail.class, CommonUtil.parseLong(idOrCode));
+            result = queryByIds(SystemRoleFormSimple.class, CommonUtil.parseLong(idOrCode));
         } else {
-            result = queryByCodes(SystemRoleFormDetail.class, idOrCode.toString());
+            result = queryByCodes(SystemRoleFormSimple.class, idOrCode.toString());
         }
         if (result == null || result.size() != 1) {
             return null;
         }
         return result.get(0);
     }
-    
-    /**
-     SELECT
-        f.*
-     FROM
-        %s f
-     WHERE
-        f.id IN (%s)
-     ORDER BY f.id DESC
-     */
-    @Multiline
-    private static final String SQL_QUERY_ID_ROLES = "X";
     
     /**
      * 通过给定的编号列表，检索角色清单
@@ -326,62 +304,20 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         if (ids == null || ids.length <= 0) {
             return Collections.emptyList();
         }
-        return listForm(clazz, new AbstractStateFormQuery(ids.length) {
-            @Override
-            public AbstractSqlStatement prepareSqlTotal() throws Exception {
-                return null;
-            }
-            
-            @Override
-            public AbstractSqlStatement prepareSqlQuery() throws Exception {
-                return new BasicSqlStatement().setSql(
-                        String.format(SQL_QUERY_ID_ROLES, getFormTable(), CommonUtil.join("?", ids.length, ",")))
-                        .setValues(ids);
-            }
-        }).getList();
+        return listForm(clazz, new SystemRoleQueryDefault(1L, ids.length).setIdsIn(StringUtils.join(ids, ",")))
+                .getList();
     }
     
     /**
-     SELECT
-        f.*
-     FROM
-        %s f
-     WHERE
-        f.code IN (%s)
-     ORDER BY f.id DESC
+     * 检索角色详情
      */
-    @Multiline
-    private static final String SQL_QUERY_CODE_ROLES = "X";
-    
-    /**
-     * 检索角色详情（不包括关联功能数据）。
-     */
-    public <T extends SystemRoleFormSimple> List<T> queryByCodes(@NonNull Class<T> clazz, final String... roleCodes)
+    public <T extends SystemRoleFormSimple> List<T> queryByCodes(@NonNull Class<T> clazz, final String... codes)
             throws Exception {
-        if (roleCodes == null || roleCodes.length <= 0) {
+        if (codes == null || codes.length <= 0) {
             return Collections.emptyList();
         }
-        return listForm(clazz, new AbstractStateFormQuery(roleCodes.length) {
-            @Override
-            public AbstractSqlStatement prepareSqlTotal() throws Exception {
-                return null;
-            }
-            
-            @Override
-            public AbstractSqlStatement prepareSqlQuery() throws Exception {
-                return new BasicSqlStatement().setSql(
-                        String.format(SQL_QUERY_CODE_ROLES, getFormTable(), CommonUtil.join("?", roleCodes.length, ",")))
-                        .setValues(roleCodes);
-            }
-        }).getList();
-    }
-    
-    /**
-     * 获取角色详情数据
-     */
-    @Override
-    public SystemRoleFormDetail getForm(long id) throws Exception {
-        return get(id);
+        return listForm(clazz, new SystemRoleQueryDefault(1L, codes.length).setCodesIn(StringUtils.join(codes, ",")))
+                .getList();
     }
     
     private void setFeatures(long formId, List<OptionSystemFeature> features) throws Exception {

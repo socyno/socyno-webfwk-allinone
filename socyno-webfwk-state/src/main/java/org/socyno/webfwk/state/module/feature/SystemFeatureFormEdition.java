@@ -29,15 +29,15 @@ public class SystemFeatureFormEdition implements AbstractStateForm {
     @Attributes(title = "版本", readonly = true)
     private Long   revision;
     
-    @Attributes(title = "代码", position = 1010, readonly = true)
+    @Attributes(title = "代码", readonly = true)
     private String code;
     
-    @Attributes(title = "名称", position = 1020, required = true)
+    @Attributes(title = "名称", required = true)
     private String name;
     
-    @Attributes(title = "描述", position = 1030, type = FieldText.class)
+    @Attributes(title = "描述", type = FieldText.class)
     private String description;
     
-    @Attributes(title = "接口/操作", position = 1040, type = FieldSystemAuths.class)
+    @Attributes(title = "接口/操作", type = FieldSystemAuths.class)
     private List<OptionSystemAuth> auths;
 }

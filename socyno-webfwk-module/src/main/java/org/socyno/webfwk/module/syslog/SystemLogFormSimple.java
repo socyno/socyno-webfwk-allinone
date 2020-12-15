@@ -14,13 +14,13 @@ import org.socyno.webfwk.state.basic.AbstractStateForm;
 @ToString
 public class SystemLogFormSimple implements AbstractStateForm {
 
-    @Attributes(title = "编号")
+    @Attributes(title = "编号", readonly = true)
     private Long id;
 
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long revision;
 
-    @Attributes(title = "状态")
+    @Attributes(title = "状态", readonly = true)
     private String state;
     
     @Attributes(title = "表单类型")

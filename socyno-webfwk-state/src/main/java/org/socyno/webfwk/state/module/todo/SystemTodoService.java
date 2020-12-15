@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityEveryoneChecker;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
@@ -53,15 +53,15 @@ import lombok.experimental.Accessors;
 
 public class SystemTodoService extends
         AbstractStateFormServiceWithBaseDao<SystemTodoFormDetail, SystemTodoFormDefault, SystemTodoFormSimple> {
-
-    @Getter
-    private static final SystemTodoService Instance = new SystemTodoService();
     
     private SystemTodoService () {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
+    
+    @Getter
+    private static final SystemTodoService Instance = new SystemTodoService();
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum  {
@@ -80,7 +80,7 @@ public class SystemTodoService extends
     
     @Getter
     public static enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemTodoFormDefault>("default", 
+        DEFAULT(new StateFormNamedQuery<SystemTodoFormDefault>("默认查询", 
                 SystemTodoFormDefault.class, SystemTodoQueryDefault.class))
         ;
         
@@ -91,7 +91,7 @@ public class SystemTodoService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemTodoFormDetail, SystemTodoFormForCreation> {
+    public class EventCreate extends AbstractStateSubmitAction<SystemTodoFormDetail, SystemTodoFormCreation> {
         
         public EventCreate () {
             super("添加", STATES.OPENED.getCode());
@@ -111,7 +111,7 @@ public class SystemTodoService extends
         }
         
         @Override
-        public Long handle(String event, SystemTodoFormDetail originForm, SystemTodoFormForCreation form, String message) throws Exception {
+        public Long handle(String event, SystemTodoFormDetail originForm, SystemTodoFormCreation form, String message) throws Exception {
             final AtomicLong todoId = new AtomicLong();
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
@@ -127,7 +127,7 @@ public class SystemTodoService extends
                     String applyDisplay = SessionContext.getTokenDisplay();
                     if (form.getApplyUser().getId() != null) {
                         AbstractUser applier;
-                        if ((applier = SystemUserService.DEFAULT.getSimple(form.getApplyUser().getId())) != null) {
+                        if ((applier = SystemUserService.getInstance().getSimple(form.getApplyUser().getId())) != null) {
                             applyUserId = applier.getId();
                             applyUsername = applier.getUsername();
                             applyDisplay = applier.getDisplay();
@@ -230,7 +230,7 @@ public class SystemTodoService extends
                         .put("target_page", form.getTargetPage());
                     if (form.getApplyUser() != null) {
                         AbstractUser applier;
-                        if ((applier = SystemUserService.DEFAULT.getSimple(form.getApplyUser().getId())) != null) {
+                        if ((applier = SystemUserService.getInstance().getSimple(form.getApplyUser().getId())) != null) {
                             updated.put("apply_user_id", applier.getId());
                             updated.put("apply_user_name", applier.getUsername());
                             updated.put("apply_user_display", applier.getDisplay());
@@ -399,7 +399,7 @@ public class SystemTodoService extends
                 allAssigneeIds.add(o.getId());
             }
         }
-        List<SystemUserFormWithSecurity> usersSecurity = SystemUserService.DEFAULT.getUsersSecurity(
+        List<SystemUserFormWithSecurity> usersSecurity = SystemUserService.getInstance().getUsersSecurity(
                         allUserIds.toArray(new Long[0]));
         Map<Long, SystemUserFormWithSecurity> allNotifyInfos = new HashMap<>();
         for (SystemUserFormWithSecurity u : usersSecurity) {
@@ -485,24 +485,24 @@ public class SystemTodoService extends
         if (assignee == null) {
             return Collections.emptyList();
         }
-        return (List<SystemTodoFormDefault>) listForm("default", getOpenedByAssigneeQuery(assignee)).getList();
+        return (List<SystemTodoFormDefault>) listForm(getFormDefaultQuery(), getOpenedByAssigneeQuery(assignee)).getList();
     }
     
     public long queryOpenedCountByAssignee(Long assignee) throws Exception {
         if (assignee == null) {
             return 0;
         }
-        return getListFormTotal("default", getOpenedByAssigneeQuery(assignee));
+        return getListFormTotal(getFormDefaultQuery(), getOpenedByAssigneeQuery(assignee));
     }
     
     @SuppressWarnings("unchecked")
     public PagedListWithTotal<SystemTodoFormDefault> queryTodoByCreator(Long createdUserId , Integer page , Integer limit) throws Exception {
-        return (PagedListWithTotal<SystemTodoFormDefault>) listFormWithTotal("default", getTodoByCreatorQuery(createdUserId , page , limit));
+        return (PagedListWithTotal<SystemTodoFormDefault>) listFormWithTotal(getFormDefaultQuery(), getTodoByCreatorQuery(createdUserId , page , limit));
     }
     
     @SuppressWarnings("unchecked")
     public PagedListWithTotal<SystemTodoFormDefault> queryTodoByCloser(Long closedUserId ,Integer page , Integer limit) throws Exception {
-        return (PagedListWithTotal<SystemTodoFormDefault>) listFormWithTotal("default", getTodoByCloserQuery(closedUserId , page , limit));
+        return (PagedListWithTotal<SystemTodoFormDefault>) listFormWithTotal(getFormDefaultQuery(), getTodoByCloserQuery(closedUserId , page , limit));
     }
     
     @SuppressWarnings("unchecked")
@@ -511,7 +511,7 @@ public class SystemTodoService extends
         if (StringUtils.isBlank(category) || StringUtils.isBlank(targetId)) {
             return Collections.emptyList();
         }
-        return (List<SystemTodoFormDefault>) listForm("default", new SystemTodoQueryDefault(1, 100)
+        return (List<SystemTodoFormDefault>) listForm(getFormDefaultQuery(), new SystemTodoQueryDefault(1, 100)
                 .setCategory(category).setTargetId(targetId).setState(STATES.OPENED.getCode())).getList();
     }
     
@@ -521,7 +521,7 @@ public class SystemTodoService extends
         if (StringUtils.isBlank(targetKey) || StringUtils.isBlank(targetId)) {
             return Collections.emptyList();
         }
-        return (List<SystemTodoFormDefault>) listForm("default", new SystemTodoQueryDefault(1, 100)
+        return (List<SystemTodoFormDefault>) listForm(getFormDefaultQuery(), new SystemTodoQueryDefault(1, 100)
                 .setTargetKey(targetKey).setTargetId(targetId).setState(STATES.OPENED.getCode())).getList();
     }
     

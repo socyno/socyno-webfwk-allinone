@@ -10,6 +10,7 @@ import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 public class FieldSystemAuths extends FieldTableView {
     
@@ -18,46 +19,48 @@ public class FieldSystemAuths extends FieldTableView {
         return FieldOptionsType.DYNAMIC;
     }
     
-    private static AbstractDao getDao() {
+    private AbstractDao getDao() {
         return ContextUtil.getBaseDataSource();
     }
     
-    /**
-    SELECT
-        x.*
-    FROM (
-        SELECT
-            'interface' AS type,
-            i.scope_type AS scopeType,
-            i.auth AS auth 
-        FROM
-            system_interfaze i 
-        WHERE
-            i.deleted_at IS NULL UNION
-        SELECT
-            'form_event' AS type,
-            a.authority_type AS scopeType,
-            a.action_key AS auth 
-        FROM
-            system_form_actions a,
-            system_form_defined f 
-        WHERE
-            f.form_name = a.form_name
-    ) x
-    %s
-    ORDER BY
-        x.type,
-        x.scopeType,
-        x.auth     
+    /****
+     * SELECT
+     *      x.*
+     * FROM (
+     *      SELECT
+     *          'interface' AS type,
+     *          i.scope_type AS scopeType,
+     *          i.auth AS auth
+     *      FROM
+     *          system_interfaze i
+     *      WHERE
+     *          i.deleted_at IS NULL UNION
+     *      SELECT
+     *          'form_event' AS type,
+     *          a.authority_type AS scopeType,
+     *          a.action_key AS auth
+     *      FROM
+     *          system_form_actions a,
+     *          system_form_defined f
+     *      WHERE
+     *          f.form_name = a.form_name
+     * ) x
+     * %s
+     * ORDER BY
+     *      x.type,
+     *      x.scopeType,
+     *      x.auth
      */
     @Multiline
     private final static String SQL_QUERY_AUTH_OPTIONS = "X";
     
-    public List<OptionSystemAuth> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    @Override
+    public List<OptionSystemAuth> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         String placeHolder = "";
         List<String> sqlArgs = new ArrayList<>();
-        if (StringUtils.isNotBlank(filter.getKeyword())) {
-            sqlArgs.add(filter.getKeyword());
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if (StringUtils.isNotBlank(keyword.getKeyword())) {
+            sqlArgs.add(keyword.getKeyword());
             placeHolder = " WHERE auth LIKE CONCAT('%', ?, '%') ";
         }
         return getDao().queryAsList(OptionSystemAuth.class, String.format(SQL_QUERY_AUTH_OPTIONS, placeHolder),

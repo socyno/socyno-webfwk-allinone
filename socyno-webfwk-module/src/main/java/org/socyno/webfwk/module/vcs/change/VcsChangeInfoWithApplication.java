@@ -1,6 +1,6 @@
 package org.socyno.webfwk.module.vcs.change;
 
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 
 public interface VcsChangeInfoWithApplication extends VcsChangeInfoAbstractForm {
     

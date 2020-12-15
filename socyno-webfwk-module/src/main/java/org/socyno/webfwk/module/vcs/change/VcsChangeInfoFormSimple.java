@@ -3,9 +3,9 @@ package org.socyno.webfwk.module.vcs.change;
 import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.FieldApplication;
-import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsVcsType;
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
+import org.socyno.webfwk.module.application.FieldApplication;
+import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;

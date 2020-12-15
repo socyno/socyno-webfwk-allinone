@@ -6,7 +6,7 @@ import org.socyno.webfwk.util.model.AbstractUser;
 import org.socyno.webfwk.util.service.AbstractSessionInterceptor;
 
 public class SessionContextInterceptor extends AbstractSessionInterceptor {
-   
+    
     public final static SessionContextInterceptor DEFAULT = new SessionContextInterceptor();
     
     public SessionContextInterceptor() {
@@ -23,7 +23,7 @@ public class SessionContextInterceptor extends AbstractSessionInterceptor {
     
     @Override
     protected AbstractUser getAbstractUser(String username) throws Exception {
-            return SystemUserService.DEFAULT.getSimple(username);
+            return SystemUserService.getInstance().getSimple(username);
     }
     
     @Override

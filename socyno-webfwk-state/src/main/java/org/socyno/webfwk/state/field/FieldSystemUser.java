@@ -12,6 +12,8 @@ import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ConvertUtil;
 
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 import lombok.NonNull;
 
 public class FieldSystemUser extends FieldTableView {
@@ -24,7 +26,7 @@ public class FieldSystemUser extends FieldTableView {
     public <T extends OptionSystemUser> List<T> queryDynamicOptions(@NonNull Class<T> clazz, FilterBasicKeyword filter)
             throws Exception {
         PagedList<SystemUserFormSimple> users;
-        if ((users = SystemUserService.DEFAULT.queryByNameLike(filter.getKeyword(), false, 1L, 100)) == null || users.getList() == null) {
+        if ((users = SystemUserService.getInstance().queryByNameLike(filter.getKeyword(), false, 1L, 100)) == null || users.getList() == null) {
             return null;
         }
         List<T> simpleUsers = new ArrayList<>();
@@ -50,13 +52,13 @@ public class FieldSystemUser extends FieldTableView {
             if ((names = ConvertUtil.asNonBlankUniqueTrimedStringArray((Object[])values)).length <= 0) {
                 return Collections.emptyList();
             }
-            users = SystemUserService.DEFAULT.queryByUsernames(SystemUserFormSimple.class, names);
+            users = SystemUserService.getInstance().queryByUsernames(SystemUserFormSimple.class, names);
         } else {
             Long[] userIds;
             if ((userIds = ConvertUtil.asNonNullUniqueLongArray((Object[])values)).length <= 0) {
                 return Collections.emptyList();
             }
-            users = SystemUserService.DEFAULT.queryByUserIds(SystemUserFormSimple.class, userIds);
+            users = SystemUserService.getInstance().queryByUserIds(SystemUserFormSimple.class, userIds);
         }
         if (users == null || users.isEmpty()) {
             return Collections.emptyList();
@@ -89,8 +91,9 @@ public class FieldSystemUser extends FieldTableView {
      * @return
      * @throws Exception
      */
-    public List<OptionSystemUser> queryDynamicOptions(FilterBasicKeyword filter)  throws Exception {
-        return queryDynamicOptions(OptionSystemUser.class, filter);
+    @Override
+    public List<OptionSystemUser> queryDynamicOptions(FieldOptionsFilter filter)  throws Exception {
+        return queryDynamicOptions(OptionSystemUser.class, (FilterBasicKeyword)filter);
     }
     
     /**

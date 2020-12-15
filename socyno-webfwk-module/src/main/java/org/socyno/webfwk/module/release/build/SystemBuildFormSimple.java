@@ -6,7 +6,7 @@ import lombok.ToString;
 
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsApplicationType;
+import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
 
 import com.github.reinert.jjschema.Attributes;
@@ -31,7 +31,7 @@ public class SystemBuildFormSimple implements AbstractStateForm {
         }
     }
 
-    @Attributes(title = "编号")
+    @Attributes(title = "编号", readonly = true)
     private Long id;
 
     @Attributes(title = "名称")
@@ -46,9 +46,9 @@ public class SystemBuildFormSimple implements AbstractStateForm {
     @Attributes(title = "描述")
     private String description;
 
-    @Attributes(title = "状态", type = FieldSysBuildOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = FieldSysBuildOptionsState.class)
     private String state;
 
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long revision;
 }

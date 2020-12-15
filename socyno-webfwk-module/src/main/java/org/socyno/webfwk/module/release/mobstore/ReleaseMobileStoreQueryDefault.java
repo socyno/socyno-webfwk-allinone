@@ -10,6 +10,7 @@ import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
+import org.socyno.webfwk.util.tool.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +38,15 @@ public class ReleaseMobileStoreQueryDefault extends AbstractStateFormQuery {
     public final static String SQL_SELECT_COUNT = "X";
     
     private AbstractSqlStatement buildWhereSql() {
-        StringBuffer sqlstmt = new StringBuffer("where 1 = 1");
         List<Object> sqlargs = new ArrayList<>();
-        if (createdByMe == true) {
-            sqlstmt.append(" and a.created_code_by = ? ");
+        StringBuilder sqlwhere = new StringBuilder();
+        if (createdByMe) {
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.created_code_by = ? ");
             sqlargs.add(SessionContext.getUsername());
         }
         
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override

@@ -4,7 +4,7 @@ import lombok.Getter;
 
 import java.util.Collection;
 
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
@@ -27,7 +27,7 @@ public class SystemLockService extends
     @Getter
     private static final SystemLockService Instance = new SystemLockService();
     
-    public SystemLockService() {
+    private SystemLockService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());

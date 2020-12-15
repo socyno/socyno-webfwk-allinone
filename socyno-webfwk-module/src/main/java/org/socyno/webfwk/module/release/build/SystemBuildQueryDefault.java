@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.module.app.form.ApplicationFormDetail.FieldOptionsApplicationType;
+import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
+import org.socyno.webfwk.util.tool.StringUtils;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -39,9 +39,7 @@ public class SystemBuildQueryDefault extends AbstractStateFormQuery {
     }
     
     public SystemBuildQueryDefault(long page, int limit) {
-        super();
-        setPage(page);
-        setLimit(limit);
+        super(limit, page);
     }
     
     /**
@@ -59,31 +57,34 @@ public class SystemBuildQueryDefault extends AbstractStateFormQuery {
     private AbstractSqlStatement buildWhereSql() {
         
         List<Object> sqlargs = new ArrayList<>();
-        StringBuilder builder = new StringBuilder(" 1 = 1");
+        StringBuilder sqlwhere = new StringBuilder();
         if (StringUtils.isNotBlank(getType())) {
             sqlargs.add(getType());
-            builder.append(" AND b.type = ? ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("b.type = ? ");
         }
         
         if (StringUtils.isNotBlank(getKeyword())) {
             sqlargs.add(getKeyword());
             sqlargs.add(getKeyword());
             sqlargs.add(getKeyword());
-            builder.append(" AND ( b.code LIKE CONCAT('%', ?, '%')  OR b.title LIKE CONCAT('%', ?, '%') OR b.description LIKE CONCAT('%', ?, '%') )");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append(
+                    "( b.code LIKE CONCAT('%', ?, '%')  OR b.title LIKE CONCAT('%', ?, '%') OR b.description LIKE CONCAT('%', ?, '%') )");
         }
         
         if (!disableIncluded) {
             sqlargs.add(SystemUserService.STATES.DISABLED.getCode());
-            builder.append(String.format(" AND b.%s != ?", SystemBuildService.getInstance().getFormStateField()));
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ")
+                    .append(String.format("b.%s != ?", SystemBuildService.getInstance().getFormStateField()));
         }
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(builder.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override
     public AbstractSqlStatement prepareSqlQuery() {
         AbstractSqlStatement whereQuery = buildWhereSql();
-        return new BasicSqlStatement().setValues(whereQuery.getValues()).setSql(
-                String.format("%s WHERE %s ORDER BY b.id DESC LIMIT %s, %s",
+        return new BasicSqlStatement().setValues(whereQuery.getValues())
+                .setSql(String.format("%s %s ORDER BY b.id DESC LIMIT %s, %s",
                         String.format(SQL_QUERY_ALL_BUILDS, SystemBuildService.getInstance().getFormTable()),
                         whereQuery.getSql(), getOffset(), getLimit()));
     }
@@ -91,8 +92,8 @@ public class SystemBuildQueryDefault extends AbstractStateFormQuery {
     @Override
     public AbstractSqlStatement prepareSqlTotal() {
         AbstractSqlStatement whereQuery = buildWhereSql();
-        return new BasicSqlStatement().setValues(whereQuery.getValues()).setSql(
-                String.format("%s WHERE %s",
+        return new BasicSqlStatement().setValues(whereQuery.getValues())
+                .setSql(String.format("%s %s",
                         String.format(SQL_QUERY_COUNT_BUILDS, SystemBuildService.getInstance().getFormTable()),
                         whereQuery.getSql()));
     }

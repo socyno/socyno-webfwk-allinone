@@ -47,29 +47,30 @@ public class StateDisplayQueryDefault extends AbstractStateFormQuery {
     public final static String SQL_SELECT_COUNT = "X";
     
     private AbstractSqlStatement buildWhereSql() {
-        StringBuffer sqlstmt = new StringBuffer("where 1 = 1");
         List<Object> sqlargs = new ArrayList<>();
+        StringBuilder sqlwhere = new StringBuilder();
         if (createdByMe == true) {
-            sqlstmt.append(" and a.created_code_by = ? ");
             sqlargs.add(SessionContext.getUsername());
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.created_code_by = ? ");
         }
         
         if (StringUtils.isNotBlank(getName())) {
             sqlargs.add(getName());
-            sqlstmt.append(" and a.name like concat('%',?,'%') ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.name like concat('%',?,'%') ");
         }
         
         if (StringUtils.isNotBlank(getDisplay())) {
             sqlargs.add(getDisplay());
-            sqlstmt.append(" and a.display like concat('%',?,'%') ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.display like concat('%',?,'%') ");
         }
         
         if (StringUtils.isNotBlank(getRemark())) {
             sqlargs.add(getRemark());
-            sqlstmt.append(" and a.remark like concat('%',?,'%') ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.remark like concat('%',?,'%') ");
         }
         
-        return new BasicSqlStatement().setValues(sqlargs.toArray()).setSql(sqlstmt.toString());
+        return new BasicSqlStatement().setValues(sqlargs.toArray())
+                .setSql(StringUtils.prependIfNotEmpty(sqlwhere, " WHERE ").toString());
     }
     
     @Override

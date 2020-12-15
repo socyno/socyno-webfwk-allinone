@@ -16,7 +16,7 @@ import lombok.Getter;
 public class SuggerDefinitionChangeReleaseId extends Definition {
     
     @Getter
-    private static final SuggerDefinitionChangeReleaseId instance = new SuggerDefinitionChangeReleaseId();
+    private static final SuggerDefinitionChangeReleaseId Instance = new SuggerDefinitionChangeReleaseId();
     
     private static final OptionClass<?> optionClass = new OptionClass<OptionReleaseId>() {
         @Override

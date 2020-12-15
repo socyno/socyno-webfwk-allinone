@@ -2,6 +2,8 @@ package org.socyno.webfwk.module.dynamicoption;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -38,15 +40,15 @@ public class FieldDynamicFieldOptionClassPath extends FieldTableView {
         return SystemTenantDataSource.getMain();
     }
     
-    public List<OptionClassPath> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        
-        if (StringUtils.isBlank(filter.getKeyword())) {
+    @Override
+    public List<OptionClassPath> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if (StringUtils.isBlank(keyword.getKeyword())) {
             return getFormBaseDao().queryAsList(OptionClassPath.class, String
                     .format("SELECT DISTINCT s.class_path FROM %s s", DynamicFieldOptionService.getInstance().getFormName()));
         }
-        
         return getFormBaseDao().queryAsList(OptionClassPath.class, SQL_QUERY_CLASS_PATH,
-                new Object[] { filter.getKeyword() });
+                new Object[] { keyword.getKeyword() });
     }
     
     @Getter

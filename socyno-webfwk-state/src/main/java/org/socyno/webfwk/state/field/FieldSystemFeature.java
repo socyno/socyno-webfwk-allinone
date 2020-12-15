@@ -12,6 +12,8 @@ import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ConvertUtil;
 
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 public class FieldSystemFeature extends FieldTableView {
     
     @Override
@@ -25,9 +27,11 @@ public class FieldSystemFeature extends FieldTableView {
      * @return
      * @throws Exception
      */
-    public List<OptionSystemFeature> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    @Override
+    public List<OptionSystemFeature> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         PagedList<SystemFeatureFormSimple> list;
-        if ((list = SystemFeatureService.getInstance().query(filter.getKeyword(), 1, 1000)) == null
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if ((list = SystemFeatureService.getInstance().query(keyword.getKeyword(), 1, 1000)) == null
                 || list.getList() == null) {
             return Collections.emptyList();
         }

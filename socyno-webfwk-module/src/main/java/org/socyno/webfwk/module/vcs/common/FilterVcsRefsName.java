@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.socyno.webfwk.module.app.form.ApplicationService;
+import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
 
 import com.github.reinert.jjschema.Attributes;

@@ -5,7 +5,7 @@ import lombok.NonNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.socyno.webfwk.module.deploy.cluster.FieldDeployNamespace;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.OptionSystemFeature;
@@ -34,7 +34,7 @@ public class SystemTenantService extends
     @Getter
     private static final SystemTenantService Instance = new SystemTenantService();
     
-    public SystemTenantService() {
+    private SystemTenantService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());

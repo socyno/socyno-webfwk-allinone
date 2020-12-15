@@ -244,17 +244,17 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
      */
     public StateFormNamedQuery<? extends L> getFormNamedQuery(String name) {
         Map<String, StateFormNamedQuery<? extends L>> queries;
-        if ((queries = getFormQueries()) == null || queries.isEmpty()) {
+        if (StringUtils.isBlank(name) || (queries = getFormQueries()) == null || queries.isEmpty()) {
             return null;
         }
-        return queries.get(name);
+        if (queries.containsKey(name)) {
+            return queries.get(name);
+        }
+        if (queries.containsKey(name.toUpperCase())) {
+            return queries.get(name.toUpperCase());
+        }
+        return queries.get(name.toLowerCase());
     }
-    
-//    /**
-//     * 获取表单的预定义查询列表
-//     * @return
-//     */
-//    public abstract List<StateFormNamedQuery<?>> getFormNamedQueries();
     
     public String getFormIdField() {
         return "id";

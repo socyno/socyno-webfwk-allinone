@@ -7,11 +7,13 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.*;
 import org.socyno.webfwk.state.model.CommonAttachementItem;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
+import org.socyno.webfwk.state.module.user.SystemUserFormSimple;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
@@ -19,7 +21,6 @@ import org.socyno.webfwk.state.sugger.SuggerDefinitionFormAttachment;
 import org.socyno.webfwk.state.util.*;
 import org.socyno.webfwk.util.context.*;
 import org.socyno.webfwk.util.exception.MessageException;
-import org.socyno.webfwk.util.model.AbstractUser;
 import org.socyno.webfwk.util.model.ObjectMap;
 import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
@@ -253,8 +254,8 @@ public class SysIssueService
         @Override
         public Void handle(String event, SysIssueFormSimple originForm, SysIssueFormAssign form, String message)
                 throws Exception {
-            AbstractUser sysUser;
-            if ((sysUser = SystemUserService.DEFAULT.getSimple(form.getAssignee().getOptionValue())) == null
+            SystemUserFormSimple sysUser;
+            if ((sysUser = SystemUserService.getInstance().getSimple(form.getAssignee().getId())) == null
                     || sysUser.isDisabled()) {
                 throw new MessageException("分配的人员不存在或被禁用，请重新分配处理人员。");
             }
@@ -367,7 +368,7 @@ public class SysIssueService
     
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SysIssueFormDefault>("default",
+        DEFAULT(new StateFormNamedQuery<SysIssueFormDefault>("默认查询",
                 SysIssueFormDefault.class, SysIssueQueryDefault.class));
         private StateFormNamedQuery<?> namedQuery;
 

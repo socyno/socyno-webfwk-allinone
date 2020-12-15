@@ -24,7 +24,7 @@ import com.google.gson.JsonElement;
 public class InternalController {
     
     private void sudoToInternalJobUser(String tenant) throws Exception {
-        SystemUserService.DEFAULT.forceSuToUser(String.format("internal_job@%s", tenant));
+        SystemUserService.getInstance().forceSuToUser(String.format("internal_job@%s", tenant));
     }
     
     /**

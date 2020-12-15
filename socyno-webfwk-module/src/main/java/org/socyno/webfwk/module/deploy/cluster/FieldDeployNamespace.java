@@ -2,6 +2,8 @@ package org.socyno.webfwk.module.deploy.cluster;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
+
 import lombok.*;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.ArrayUtils;
@@ -213,12 +215,14 @@ public class FieldDeployNamespace extends FieldTableView {
     /**
      * 获取当前租户应用可选部署命名空间清单
      */
-    public List<? extends OptionDeployClusterNamespace> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
+    @Override
+    public List<? extends OptionDeployClusterNamespace> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
         String tenantCode;
         if (StringUtils.isBlank(tenantCode = SessionContext.getTenantOrNull())) {
             return Collections.emptyList();
         }
-        if (StringUtils.isBlank(filter.getKeyword())) {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if (StringUtils.isBlank(keyword.getKeyword())) {
             return getDao().queryAsList(OptionDeployClusterNamespace.class,
                     String.format("%s AND t.code = ? ORDER BY c.environment, n.cluster_id, n.namespace",
                             SQL_QUERY_CLUSTER_NAMESPACE),
@@ -230,7 +234,7 @@ public class FieldDeployNamespace extends FieldTableView {
                         + " OR n.namespace LIKE CONCAT('%%', ?, '%%') OR c.environment LIKE CONCAT('%%', ?, '%%')) "
                         + " ORDER BY c.environment, n.cluster_id, n.namespace",
                 SQL_QUERY_CLUSTER_NAMESPACE),
-                new Object[]{tenantCode, filter.getKeyword(), filter.getKeyword(), filter.getKeyword(), filter.getKeyword()});
+                new Object[]{tenantCode, keyword.getKeyword(), keyword.getKeyword(), keyword.getKeyword(), keyword.getKeyword()});
     }
 
     /**

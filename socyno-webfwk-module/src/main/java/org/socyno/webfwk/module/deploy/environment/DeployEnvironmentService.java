@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.util.*;
@@ -51,7 +51,7 @@ public class DeployEnvironmentService extends
     @Getter
     private static final DeployEnvironmentService Instance = new DeployEnvironmentService();
     
-    public DeployEnvironmentService() {
+    private DeployEnvironmentService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());

@@ -16,13 +16,13 @@ import org.socyno.webfwk.util.state.field.FieldDateTime;
 @ToString
 public class DataChartFormSimple implements AbstractStateForm {
 
-    @Attributes(title = "编号")
+    @Attributes(title = "编号", readonly = true)
     private Long id;
 
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long revision;
 
-    @Attributes(title = "状态", type = DataChartFormDetail.FieldOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = DataChartFormDetail.FieldOptionsState.class)
     private String state;
 
     @Attributes(title = "申请人姓名")

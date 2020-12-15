@@ -13,6 +13,7 @@ import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -101,8 +102,10 @@ public class FieldDeployCluster extends FieldTableView {
      * 获取可选部署集群列表
      * 
      */
-    public List<OptionDeployCluster> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        if (filter == null || StringUtils.isBlank(filter.getKeyword())) {
+    @Override
+    public List<OptionDeployCluster> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if (keyword == null || StringUtils.isBlank(keyword.getKeyword())) {
             return getDao().queryAsList(OptionDeployCluster.class,
                     String.format("%s WHERE c.state_form_status = 'enabled' ORDER BY c.environment, c.code, c.title",
                             SQL_QUERY_DEPLOY_CLUSTER));
@@ -111,6 +114,6 @@ public class FieldDeployCluster extends FieldTableView {
         return getDao().queryAsList(OptionDeployCluster.class, String.format(
                 "%s WHERE c.state_form_status = 'enabled' AND (c.title LIKE CONCAT('%%', ?, '%%') OR c.code LIKE CONCAT('%%', ?, '%%'))"
                         + " ORDER BY c.environment, c.code, c.title",
-                SQL_QUERY_DEPLOY_CLUSTER), new Object[] { filter.getKeyword(), filter.getKeyword() });
+                SQL_QUERY_DEPLOY_CLUSTER), new Object[] { keyword.getKeyword(), keyword.getKeyword() });
     }
 }

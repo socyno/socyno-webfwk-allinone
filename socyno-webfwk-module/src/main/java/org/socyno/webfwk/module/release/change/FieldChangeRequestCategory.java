@@ -13,6 +13,7 @@ import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -46,8 +47,9 @@ public class FieldChangeRequestCategory extends FieldTableView {
         return FieldOptionsType.DYNAMIC;
     }
     
-    public List<? extends FieldOption> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        return queryDynamicOptions(filter, false);
+    @Override
+    public List<? extends FieldOption> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        return queryDynamicOptions((FilterBasicKeyword)filter, false);
     }
     
     protected List<? extends FieldOption> queryDynamicOptions(FilterBasicKeyword filter, boolean allAllowed) throws Exception {

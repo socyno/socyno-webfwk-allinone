@@ -13,6 +13,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.http.NameValuePair;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.exec.StateFormCustomFieldFormNotFoundException;
@@ -46,12 +47,12 @@ import com.google.gson.JsonElement;
 public class StateFormService {
 
     @Getter
-    private static class CommonStateFormInstance {
-        private final CommonStateFormRegister form;
+    private static class StateFormInstance {
+        private final StateFormRegister form;
         private final Class<?> serviceClass;
         private final AbstractStateFormServiceWithBaseDao<?, ?, ?> serviceInstance;
         
-        CommonStateFormInstance(CommonStateFormRegister form, Class<?> serviceClass,
+        StateFormInstance(StateFormRegister form, Class<?> serviceClass,
                 AbstractStateFormServiceWithBaseDao<?, ?, ?> serviceInstance) {
             this.form = form;
             this.serviceClass = serviceClass;
@@ -59,7 +60,7 @@ public class StateFormService {
         }
     }
     
-    private static final Map<String, CommonStateFormInstance> STATE_FORM_INSTANCES
+    private static final Map<String, StateFormInstance> STATE_FORM_INSTANCES
                             = new ConcurrentHashMap<>();
     
     private static class FormCustomDataCacher implements Runnable {
@@ -140,7 +141,7 @@ public class StateFormService {
         Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                for (CommonStateFormInstance fi : STATE_FORM_INSTANCES.values()) {
+                for (StateFormInstance fi : STATE_FORM_INSTANCES.values()) {
                     try {
                         String form = fi.getForm().getFormName();
                         Long found = getDao().queryAsObject(Long.class,
@@ -179,7 +180,7 @@ public class StateFormService {
     }
     
     @Data
-    public static class CommonStateFormRegister {
+    public static class StateFormRegister {
         private Long id;
         private String formName;
         private String formService;
@@ -219,7 +220,7 @@ public class StateFormService {
      * @param register
      * @throws Exception
      */
-    public static void registerForm(CommonStateFormRegister register) throws Exception {
+    public static void registerForm(StateFormRegister register) throws Exception {
         if (register == null || StringUtils.isBlank(register.getFormName())
                 || StringUtils.isBlank(register.getFormDisplay())
                 || StringUtils.isBlank(register.getFormService())
@@ -241,7 +242,7 @@ public class StateFormService {
      * @param register
      * @throws Exception
      */
-    public static void updateForm(CommonStateFormRegister register) throws Exception {
+    public static void updateForm(StateFormRegister register) throws Exception {
         if (register == null || StringUtils.isBlank(register.getFormName())
                 || StringUtils.isBlank(register.getFormDisplay())
                 || StringUtils.isBlank(register.getFormService())
@@ -300,11 +301,11 @@ public class StateFormService {
     /**
      * 获取注册的表单信息
      */
-    public static CommonStateFormRegister getFormRegister(String formName) throws Exception {
+    public static StateFormRegister getFormRegister(String formName) throws Exception {
         if (StringUtils.isBlank(formName)) {
             return null;
         }
-        return getDao().queryAsObject(CommonStateFormRegister.class,
+        return getDao().queryAsObject(StateFormRegister.class,
                     "SELECT * FROM system_form_defined WHERE form_name = ?",
                      new Object[ ] {formName});
     }
@@ -330,18 +331,18 @@ public class StateFormService {
     /**
      * 列举所有已注册的通用表单
      */
-    public static List<CommonStateFormRegister> listStateFormRegister() throws Exception {
+    public static List<StateFormRegister> listStateFormRegister() throws Exception {
          return listStateFormRegister(null);
     }
     
     /**
      * 根据给定的关键字检索已注册的通用表单
      */
-    public static List<CommonStateFormRegister> listStateFormRegister(String namelike) throws Exception {
+    public static List<StateFormRegister> listStateFormRegister(String namelike) throws Exception {
         if (StringUtils.isBlank(namelike)) {
-            return getDao().queryAsList(CommonStateFormRegister.class, SQL_QUERY_DEFINED_FORM, null);
+            return getDao().queryAsList(StateFormRegister.class, SQL_QUERY_DEFINED_FORM, null);
         }
-        return getDao().queryAsList(CommonStateFormRegister.class,
+        return getDao().queryAsList(StateFormRegister.class,
                 String.format("%s %s", SQL_QUERY_DEFINED_FORM, SQL_QUERY_DEFINED_LIKE),
                 new Object[] { namelike, namelike });
     }
@@ -354,7 +355,7 @@ public class StateFormService {
     }
     
     public static void parseStateFormRegister(String backend) throws Exception {
-         for (CommonStateFormRegister form : listStateFormRegister()) {
+         for (StateFormRegister form : listStateFormRegister()) {
              if (backend != null && backend.equals(form.getFormBackend())) {
                  parseStateFormRegister(form);
              }
@@ -362,7 +363,7 @@ public class StateFormService {
     }
     
     @SuppressWarnings("unchecked")
-    private static void parseStateFormRegister(CommonStateFormRegister form) throws Exception {
+    private static void parseStateFormRegister(StateFormRegister form) throws Exception {
         if (form == null || !form.isEnabled()) {
             log.warn("通用流程单服务({})被禁用, 忽略。", form);
             return;
@@ -499,14 +500,14 @@ public class StateFormService {
             }
         });
         log.info("完成解析通用流程定义: {}", form);
-        STATE_FORM_INSTANCES.put(form.getFormName(), new CommonStateFormInstance(form, serviceClass, serviceObject));
+        STATE_FORM_INSTANCES.put(form.getFormName(), new StateFormInstance(form, serviceClass, serviceObject));
     }
     
-    private static CommonStateFormInstance getStateFormInstance(String formName) throws Exception {
+    private static StateFormInstance getStateFormInstance(String formName) throws Exception {
         if (!STATE_FORM_INSTANCES.containsKey(formName)) {
             parseStateFormRegister(getFormRegister(formName));
         }
-        CommonStateFormInstance instance;
+        StateFormInstance instance;
         if ((instance = STATE_FORM_INSTANCES.get(formName)) == null) {
             throw new MessageException(String.format("通用流程表单(%s)不存在，或注册信息错误。", formName));
         }
@@ -520,7 +521,7 @@ public class StateFormService {
         return getFormRegister(formName) != null;
     }
     
-    private static void resetActionsVisible(Collection<StateFormActionDefinition> actions, CommonStateFormInstance instance) {
+    private static void resetActionsVisible(Collection<StateFormActionDefinition> actions, StateFormInstance instance) {
         if (actions != null && actions.size() > 0) {
             String[] visibles = CommonUtil.split(instance.getForm().getVisibleActions(), "[,;\\s]+",
                     CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED);
@@ -540,7 +541,7 @@ public class StateFormService {
         }
     }
     
-    private static void removeHiddenActions(Map<String, String> actions, CommonStateFormInstance instance) {
+    private static void removeHiddenActions(Map<String, String> actions, StateFormInstance instance) {
         if (actions != null && actions.size() > 0) {
             String[] visibles = CommonUtil.split(instance.getForm().getVisibleActions(), "[,;\\s]+",
                     CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED);
@@ -567,7 +568,7 @@ public class StateFormService {
      * 获取表单定义
      */
     public static StateFormDefinition getFormDefinition(String formName) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         AbstractStateFormServiceWithBaseDao<?, ?, ?> service = instance.getServiceInstance();
         List<StateFormActionDefinition> actions = service.getExternalFormActionDefinition();
         resetActionsVisible(actions, instance);
@@ -661,7 +662,7 @@ public class StateFormService {
      * 获取表单事件的请求数据类型
      */
     public static Class<AbstractStateForm> getActionFormTypeClass(String formName, String event) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getActionFormTypeClass(event);
     }
     
@@ -669,7 +670,7 @@ public class StateFormService {
      * 获取表单事件的原始数据类型
      */
     public static Class<AbstractStateForm> getActionOriginTypeClass(String formName, String event) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getActionOriginTypeClass(event);
     }
     
@@ -677,7 +678,7 @@ public class StateFormService {
      * 获取表单事件的操作响应类型
      */
     public static Class<?> getActionReturnTypeClass(String formName, String event) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getActionReturnTypeClass(event);
     }
     
@@ -685,7 +686,7 @@ public class StateFormService {
      * 获取表单的默认检索实体类
      */
     public static StateFormNamedQuery<?> getFormDefaultQuery(String formName) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getFormDefaultQuery();
     }
     
@@ -693,7 +694,7 @@ public class StateFormService {
      * 获取表单的默认检索实体类
      */
     public static StateFormNamedQuery<?> getFormNamedQuery(String formName, String namedQuery) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getFormNamedQuery(namedQuery);
     }
 
@@ -738,7 +739,7 @@ public class StateFormService {
      * 获取指定表单当前可执行操作
      */
     public static StateFormWithAction<?> getFormActions(String formName, long formId) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         AbstractStateFormServiceWithBaseDao<?, ?, ?> service = instance.getServiceInstance();
         StateFormWithAction<?> formActions = service.getFormActions(formId);
         resetActionsVisible(formActions.getActions(), instance);
@@ -749,7 +750,7 @@ public class StateFormService {
      * 获取指定表单当前可执行操作
      */
     public static Map<String, String> getFormActionNames(String formName, long formId) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         AbstractStateFormServiceWithBaseDao<?, ?, ?> service = instance.getServiceInstance();
         Map<String, String> formActions = service.getFormActionNames(formId);
         removeHiddenActions(formActions, instance);
@@ -767,7 +768,7 @@ public class StateFormService {
      * 获取指定表单的详情以及当前可执行操作
      */
     public static StateFormWithAction<?> getFormWithActions(String formName, long formId) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         StateFormWithAction<?> formWithActions = instance.getServiceInstance().getFormWithActions(formId);
         resetActionsVisible(formWithActions.getActions(), instance);
         return formWithActions;
@@ -890,7 +891,7 @@ public class StateFormService {
      * 获取制定表单的状态可选值
      */
     public static List<? extends FieldOption> getStates(String formName) throws Exception  {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         AbstractStateFormServiceWithBaseDao<?, ?, ?> service = instance.getServiceInstance();
         return service.getStates();
     }
@@ -1034,7 +1035,7 @@ public class StateFormService {
      * 获取表单的流程定义数据
      */
     public static StateFlowChartDefinition parseFormFlowDefinition(String formName, boolean keepUnChanged, Long formId) throws Exception {
-        CommonStateFormInstance instance = getStateFormInstance(formName);
+        StateFormInstance instance = getStateFormInstance(formName);
         AbstractStateForm currentForm = null;
         if (formId != null) {
             currentForm = instance.getServiceInstance().getForm(formId);

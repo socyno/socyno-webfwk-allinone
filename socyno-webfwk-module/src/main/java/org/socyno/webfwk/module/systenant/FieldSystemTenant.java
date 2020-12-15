@@ -12,6 +12,7 @@ import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
+import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 import lombok.Data;
 
@@ -74,9 +75,10 @@ public class FieldSystemTenant extends FieldTableView {
     /**
      * 覆盖父类的方法，根据关键字检索系统租户
      */
-    public List<OptionSystemTenant> queryDynamicOptions(FilterBasicKeyword filter) throws Exception {
-        
-        if (filter == null || StringUtils.isBlank(filter.getKeyword())) {
+    @Override
+    public List<OptionSystemTenant> queryDynamicOptions(FieldOptionsFilter filter) throws Exception {
+        FilterBasicKeyword keyword = (FilterBasicKeyword) filter;
+        if (filter == null || StringUtils.isBlank(keyword.getKeyword())) {
             return SystemTenantService.getInstance().queryFormWithStateRevision(OptionSystemTenant.class,
                     String.format("%s WHERE t.%s = 'enabled' %s LIMIT 50", SQL_QUERY_TENANT_OPTIONS,
                             SystemTenantService.getInstance().getFormStateField(), SQL_ORDER_TENANT_OPTIONS));
@@ -84,7 +86,7 @@ public class FieldSystemTenant extends FieldTableView {
         return SystemTenantService.getInstance().queryFormWithStateRevision(OptionSystemTenant.class, String.format(
                 "%s WHERE t.%s = 'enabled' AND (t.code LIKE CONCAT('%%', ?, '%%') OR t.name LIKE CONCAT('%%', ?, '%%')) %s LIMIT 50",
                 SQL_QUERY_TENANT_OPTIONS, SystemTenantService.getInstance().getFormStateField(), SQL_ORDER_TENANT_OPTIONS),
-                new Object[] { filter.getKeyword(), filter.getKeyword() });
+                new Object[] { keyword.getKeyword(), keyword.getKeyword() });
     }
     
     /**

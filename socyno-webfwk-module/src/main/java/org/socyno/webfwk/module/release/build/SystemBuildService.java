@@ -8,11 +8,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
 
-import org.socyno.webfwk.module.app.form.ApplicationFormDetail;
-import org.socyno.webfwk.module.app.form.ApplicationService;
-import org.socyno.webfwk.module.app.form.FieldApplication;
-import org.socyno.webfwk.module.app.form.FieldApplication.OptionApplication;
-import org.socyno.webfwk.state.authority.Authority;
+import org.socyno.webfwk.module.application.ApplicationFormDetail;
+import org.socyno.webfwk.module.application.ApplicationService;
+import org.socyno.webfwk.module.application.FieldApplication;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.*;
@@ -35,7 +35,7 @@ public class SystemBuildService extends
     @Getter
     private static final SystemBuildService Instance = new SystemBuildService();
     
-    public SystemBuildService() {
+    private SystemBuildService() {
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
@@ -243,8 +243,11 @@ public class SystemBuildService extends
     
     @Getter
     public enum QUERIES implements StateFormQueryBaseEnum {
-        DEFAULT(new StateFormNamedQuery<SystemBuildFormSimple>("default", SystemBuildFormSimple.class,
-                SystemBuildQueryDefault.class));
+        DEFAULT(new StateFormNamedQuery<SystemBuildFormSimple>(
+                "默认查询",
+                SystemBuildFormSimple.class,
+                SystemBuildQueryDefault.class
+            ));
         private StateFormNamedQuery<?> namedQuery;
 
         QUERIES(StateFormNamedQuery<?> namedQuery) {

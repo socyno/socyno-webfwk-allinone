@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.socyno.webfwk.module.app.form.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationAbstractForm;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 @Getter

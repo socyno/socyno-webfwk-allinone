@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
+import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
 import org.socyno.webfwk.state.exec.StateFormActionDeclinedException;
 import org.socyno.webfwk.state.exec.StateFormActionMessageRequiredException;
