@@ -1,0 +1,8 @@
+{
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn"
+  ],
+  "insecure-registries": [
+    "webfwk-hub.socyno.org:5000"
+  ]
+}

@@ -1,0 +1,19 @@
+# 第一步：生成CA证书
+# 1, 私钥
+openssl genrsa -out ca-key.pem 1024
+# 2, 请求
+openssl req -new -out ca-req.csr -key ca-key.pem
+# 3, 自签(10年)
+openssl x509 -req -in ca-req.csr -out ca-cert.pem -signkey ca-key.pem -days 3650
+# 第二步：生生成 Server 证书
+# 1, 私钥
+openssl genrsa -out server-key.pem 1024
+# 2, 请求
+openssl req -new -out server-req.csr -key server-key.pem
+# 3, 签名(10年)
+openssl x509 -req -in server-req.csr -out server-cert.pem \
+   -signkey server-key.pem -CA ca-cert.pem -CAkey ca-key.pem \
+   -CAcreateserial  -days 3650
+# 第三步：合并证书
+cat server-key.pem > cert-key.pem
+cat server-cert.pem ca-cert.pem > cert-all.pem

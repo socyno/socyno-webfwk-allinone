@@ -109,8 +109,13 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
             queries.remove(name);
             return;
         }
+        if (!getDefaultFormClass().equals(query.getResultClass())) {
+            throw new MessageException(
+                    String.format("Named query result class must be %s", getDefaultFormClass().getName()));
+        }
         queries.put(name, query);
     }
+    
     @SuppressWarnings("unchecked")
     protected void setQueries(StateFormQueryBaseEnum... queries) {
         if (queries == null || queries.length <= 0) {
@@ -119,10 +124,6 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
         for (StateFormQueryBaseEnum q : queries) {
             if (q == null) {
                 continue;
-            }
-            if (q.getNamedQuery() == null || !getDefaultFormClass().equals(q.getNamedQuery().getResultClass())) {
-                throw new MessageException(
-                        String.format("Named query result class must be %s", getDefaultFormClass().getName()));
             }
             setQuery(q.name(), (StateFormNamedQuery<? extends L>) q.getNamedQuery());
         }
@@ -412,7 +413,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
     @SuppressWarnings("unchecked")
     public PagedList<? extends F> listForm(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
         StateFormNamedQuery<?> query;
-        if ((query = namedQuery.getNamedQuery()) == null || !getFormClass().isAssignableFrom(query.getResultClass())) {
+        if ((query = namedQuery.getNamedQuery()) == null) {
             throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
         }
         return listForm((StateFormNamedQuery<? extends F>)query, condition);
@@ -480,7 +481,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
     @SuppressWarnings("unchecked")
     public PagedListWithTotal<? extends F> listFormWithTotal(@NonNull StateFormQueryBaseEnum namedQuery, @NonNull Object condition) throws Exception {
         StateFormNamedQuery<?> query;
-        if ((query = namedQuery.getNamedQuery()) == null || !getFormClass().isAssignableFrom(query.getResultClass())) {
+        if ((query = namedQuery.getNamedQuery()) == null) {
             throw new StateFormNamedQueryNotFoundException(getFormName(), namedQuery.name());
         }
         return listFormWithTotal((StateFormNamedQuery<? extends F>)query, condition);
