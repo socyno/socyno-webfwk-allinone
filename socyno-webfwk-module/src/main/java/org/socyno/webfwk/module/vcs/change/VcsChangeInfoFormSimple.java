@@ -6,6 +6,7 @@ import java.util.List;
 import org.socyno.webfwk.module.application.FieldApplication;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
+import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -19,7 +20,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class VcsChangeInfoFormSimple implements VcsChangeInfoWithApplication {
+public class VcsChangeInfoFormSimple implements AbstractStateForm {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -32,17 +33,14 @@ public class VcsChangeInfoFormSimple implements VcsChangeInfoWithApplication {
         }
     }
     
-    @Attributes(title = "编号")
+    @Attributes(title = "编号", readonly = true)
     private Long id;
     
-    @Attributes(title = "版本")
+    @Attributes(title = "版本", readonly = true)
     private Long revision;
     
-    @Attributes(title = "状态", type = FieldOptionsState.class)
+    @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "应用")
-    private Long applicationId;
     
     @Attributes(title = "源码仓库类型", type = FieldOptionsVcsType.class)
     private String vcsType;

@@ -3,7 +3,7 @@ package org.socyno.webfwk.module.vcs.common;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.socyno.webfwk.module.application.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationFormAbstract;
 import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
@@ -27,11 +27,11 @@ public class VcsPermissionChecker {
     
     public boolean check(RefsOpType refsOpType, VcsRefsType vcsRefsType, long applicationId) throws Exception {
         /* 确认用户有代码仓的变更授权 */
-        ApplicationAbstractForm app;
+        ApplicationFormAbstract app;
         if ((app = ApplicationService.getInstance().getSimple(applicationId)) == null) {
             return false;
         }
-        Long subsystemId = app.getSubsystemId();
+        Long subsystemId = app.getSubsystem().getId();
         
         /* 查询操作 */
         if (RefsOpType.Query.equals(refsOpType)) {

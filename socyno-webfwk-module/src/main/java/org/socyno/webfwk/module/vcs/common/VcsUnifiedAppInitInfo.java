@@ -23,7 +23,7 @@ public class VcsUnifiedAppInitInfo extends VcsUnifiedSubsystemInfo {
     @Attributes(title = "应用仓库类型", required = true)
     private String vcsType;
 
-    @Attributes(title = "应用仓库地址", required = true)
+    @Attributes(title = "应用仓库地址")
     private String vcsPath;
 
     @Attributes(title = "应用的描述信息")
@@ -37,18 +37,12 @@ public class VcsUnifiedAppInitInfo extends VcsUnifiedSubsystemInfo {
     public VcsType getVcsTypeEnum() {
         return VcsType.forName(vcsType);
     }
-
+    
     @SchemaIgnore
     public String getPathWithNamespace() {
-        ClassUtil.checkFormRequiredAndOpValue(this);
-        String pathWithNs = "";
-        if (VcsType.Subversion.equals(getVcsTypeEnum())) {
-            pathWithNs = String.format("apps/%s", getName());
-        }
-        if (StringUtils.isNotBlank(pathWithNs)) {
-            pathWithNs = String.format("%s/%s", getNamespace(), getName());
-        }
         String vcsPath;
+        ClassUtil.checkFormRequiredAndOpValue(this);
+        String pathWithNs = String.format("%s/%s", getNamespace(), getName());
         if (StringUtils.isNotBlank(vcsPath = getVcsPath())) {
             String[] paths;
             if ((paths = CommonUtil.split(vcsPath, "/", CommonUtil.STR_NONBLANK)) != null && paths.length > 2) {

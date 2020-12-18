@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.application.FieldApplication;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
@@ -32,7 +31,7 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
      FROM
          %s f
      LEFT JOIN
-         application a ON a.id = f.application_id
+         application a ON a.id = f.application
     */
    @Multiline
    private static final String SQL_QUERY_COUNT = "X";
@@ -44,7 +43,7 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
      FROM
          %s f
      LEFT JOIN
-         application a ON a.id = f.application_id
+         application a ON a.id = f.application
     */
     @Multiline
     private static final String SQL_QUERY_ALL = "X";
@@ -53,28 +52,28 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
         super(limit);
     }
     
-    public VcsChangeListDefaultQuery(Integer limit, Integer page) {
+    public VcsChangeListDefaultQuery(Integer limit, Long page) {
         super(limit, page);
     }
     
-    @Attributes(title = "应用", position = 1010, type = FieldApplication.class)
-    private Long applicationId;
+    @Attributes(title = "应用", type = FieldApplication.class)
+    private Long application;
     
-    @Attributes(title = "提交人", position = 1020, type = FieldSystemUser.class)
+    @Attributes(title = "提交人", type = FieldSystemUser.class)
     private Long createdBy;
     
-    @Attributes(title = "分支", position = 1030)
+    @Attributes(title = "分支")
     private String vcsRefsName;
     
-    @Attributes(title = "提交版本", position = 1040)
+    @Attributes(title = "提交版本")
     private String vcsRevision;
     
     private AbstractSqlStatement buildWhereSql() {
         List<Object> sqlargs = new ArrayList<>();
         StringBuilder sqlwhere = new StringBuilder();
-        if (getApplicationId() != null) {
-            sqlargs.add(getApplicationId());
-            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.application_id = ?");
+        if (getApplication() != null) {
+            sqlargs.add(getApplication());
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.application = ?");
         }
         if (getCreatedBy() != null) {
             sqlargs.add(getCreatedBy());
@@ -107,11 +106,5 @@ public class VcsChangeListDefaultQuery extends AbstractStateFormQuery {
                .setSql(String.format("%s %s ORDER BY f.id DESC LIMIT %s, %s",
                        String.format(SQL_QUERY_ALL, VcsChangeInfoService.getInstance().getFormTable()),
                        whereQuery.getSql(), getOffset(), getLimit()));
-    }
-    
-    public <T extends AbstractStateForm> List<T> processResultSet(Class<T> itemClazz, List<T> resultSet) throws Exception {
-        VcsChangeInfoService.getInstance().fillFormDetails(itemClazz, resultSet);
-        return resultSet;
-    }
-    
+    }    
 }

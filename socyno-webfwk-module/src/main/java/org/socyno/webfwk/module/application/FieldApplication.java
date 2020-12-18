@@ -27,7 +27,7 @@ public class FieldApplication extends FieldTableView {
         
         @Override
         public String getOptionGroup() {
-            return getSubsystemName();
+            return getSubsystem().getName();
         }
         
         @Override
@@ -49,13 +49,13 @@ public class FieldApplication extends FieldTableView {
     
     public static <T extends OptionApplication> List<T> queryWithAllOptions(@NonNull Class<T> clazz,
             final FilterBasicKeyword filter, final boolean offlineIncluded) throws Exception {
-        return ApplicationService.getInstance().list(clazz, new ApplicationQueryAll(50, 1L)
+        return ApplicationService.getInstance().listForm(clazz, new ApplicationQueryAll(50, 1L)
                 .setNamelike(filter.getKeyword()).setSortByNameAsc(true).setOfflineIncluded(offlineIncluded)).getList();
     }
     
     public static <T extends OptionApplication> List<T> queryOnlyVisibleOptions(@NonNull Class<T> clazz,
             final FilterBasicKeyword filter, final boolean offlineIncluded) throws Exception {
-        return ApplicationService.getInstance().list(clazz, new ApplicationQueryDefault(50, 1L)
+        return ApplicationService.getInstance().listForm(clazz, new ApplicationQueryDefault(50, 1L)
                 .setNamelike(filter.getKeyword()).setSortByNameAsc(true).setOfflineIncluded(offlineIncluded)).getList();
     }
     
@@ -68,12 +68,12 @@ public class FieldApplication extends FieldTableView {
         }
         if (asName) {
             return ApplicationService.getInstance()
-                    .list(clazz,
+                    .listForm(clazz,
                             new ApplicationQueryAll(uniquedValues.length, 1L)
                                     .setAppNamesIn(StringUtils.join(uniquedValues, ',')).setSortByNameAsc(true))
                     .getList();
         }
-        return ApplicationService.getInstance().list(clazz, new ApplicationQueryAll(uniquedValues.length, 1L)
+        return ApplicationService.getInstance().listForm(clazz, new ApplicationQueryAll(uniquedValues.length, 1L)
                 .setAppIdsIn(StringUtils.join(uniquedValues, ',')).setSortByNameAsc(true)).getList();
     }
     
@@ -86,7 +86,7 @@ public class FieldApplication extends FieldTableView {
         }
         
         return ApplicationService.getInstance()
-                .list(clazz,
+                .listForm(clazz,
                         new ApplicationQueryAll(50000, 1L).setOfflineIncluded(offlineIncluded)
                                 .setSubsystemIdsIn(StringUtils.join(subsystemPrimIds, ',')).setSortByNameAsc(true))
                 .getList();

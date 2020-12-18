@@ -8,7 +8,7 @@ import org.socyno.webfwk.state.field.FilterBasicKeyword;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.StringUtils;
 
-public class FieldSubsystemAccessors extends FieldTableView {
+public class FieldSubsystemAccessable extends FieldTableView {
     
     @Override
     public FieldOptionsType getOptionsType() {

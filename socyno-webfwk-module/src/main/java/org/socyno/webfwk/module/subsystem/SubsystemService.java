@@ -637,8 +637,8 @@ public class SubsystemService
                 OptionApplication.class, true, substsytemIds);
         List<OptionApplication> sameSubsystemApps;
         for (OptionApplication app : allSubsystemApps) {
-            if ((sameSubsystemApps = mappedSubsystemApps.get(app.getSubsystemId())) == null) {
-                mappedSubsystemApps.put(app.getSubsystemId(), sameSubsystemApps = new ArrayList<>());
+            if ((sameSubsystemApps = mappedSubsystemApps.get(app.getSubsystem().getId())) == null) {
+                mappedSubsystemApps.put(app.getSubsystem().getId(), sameSubsystemApps = new ArrayList<>());
             }
             sameSubsystemApps.add(app);
         }

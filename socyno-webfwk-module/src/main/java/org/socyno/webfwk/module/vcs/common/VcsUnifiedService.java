@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+//import java.util.Map.Entry;
 import java.util.Set;
 
 import lombok.NonNull;
@@ -28,7 +28,7 @@ import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabApiService;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabApiService.CommonVisibility;
-import org.socyno.webfwk.util.vcs.gitlab.GitlabApiService.FileChangeType;
+//import org.socyno.webfwk.util.vcs.gitlab.GitlabApiService.FileChangeType;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabApiService.ProjectAccessLevel;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabBranch;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabCommit;
@@ -42,7 +42,7 @@ import org.socyno.webfwk.util.vcs.gitlab.GitlabSshKey;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabTag;
 import org.socyno.webfwk.util.vcs.gitlab.GitlabUser;
 import org.socyno.webfwk.util.vcs.svn.SubversionApiService;
-import org.socyno.webfwk.util.vcs.svn.SubversionMaiaGroupPermission;
+//import org.socyno.webfwk.util.vcs.svn.SubversionMaiaGroupPermission;
 import org.socyno.webfwk.util.vcs.svn.SubversionMaiaService;
 import org.socyno.webfwk.util.vcs.svn.SubversionProcessor;
 import org.socyno.webfwk.util.vcs.svn.SubversionUtil;
@@ -57,43 +57,57 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 @Slf4j
 public abstract class VcsUnifiedService {
-
+    
     private String getContextGitlabUsername() {
         return toGitlabUsername(SessionContext.getUsername());
     }
-
-    private String getContextSubversionUsername() {
-        return toSubversionUsername(SessionContext.getUsername());
-    }
-
+    
+//    private String getContextSubversionUsername() {
+//        return toSubversionUsername(SessionContext.getUsername());
+//    }
+    
     private String toSubversionUsername(@NonNull String username) {
         return username;
     }
-
+    
     private String toGitlabUsername(@NonNull String username) {
         if (StringUtils.endsWith(username, WindowsAdService.getDefaultDomainSuffix())) {
             return StringUtils.removeEnd(username, WindowsAdService.getDefaultDomainSuffix());
         }
         return username.replaceAll("@", "_");
     }
-
-    private final static String MESG_AUTO_CREATED = "研发自助服务系统自动创建";
-
-    private String[] getRequiredPermissionGroups() {
+    
+    private final static String MESG_AUTO_CREATED = "系统自动创建";
+    
+    protected String[] getPublicReadGroups() {
         return null;
     }
-
+    
+    protected String[] getPublicWriteGroups() {
+        return null;
+    }
+    
     public final static VcsUnifiedService CommonCloud = new VcsUnifiedService() {
         private String getGitlabApiUrl() {
             return ContextUtil.getConfigTrimed("system.gitlab.common.api.url");
         }
-
+        
         private String getGitlabApiToken() {
             return ContextUtil.getConfigTrimed("system.gitlab.common.api.token");
         }
-
+        
         private GitlabApiService gitlabApiService = null;
-
+        
+        @Override
+        protected String[] getPublicReadGroups() {
+            return ContextUtil.getConfigs("system.gitlab.common.groups.read");
+        }
+        
+        @Override
+        protected String[] getPublicWriteGroups() {
+            return ContextUtil.getConfigs("system.gitlab.common.groups.read");
+        }
+        
         @Override
         public GitlabApiService getGitlabApiService() {
             String apiUrl, apiToken;
@@ -106,23 +120,23 @@ public abstract class VcsUnifiedService {
             }
             return gitlabApiService;
         }
-
+        
         private String getSubversionApiUrl() {
             return ContextUtil.getConfigTrimed("system.subversion.common.api.url");
         }
-
+        
         private String getSubversionApiUser() {
             return ContextUtil.getConfigTrimed("system.subversion.common.api.user");
         }
-
+        
         private String getSubversionApiToken() {
             return ContextUtil.getConfigTrimed("system.subversion.common.api.token");
         }
-
+        
         private String getSubversionMaiaApiUrl() {
             return ContextUtil.getConfigTrimed("system.subversion.common.api.maia.url");
         }
-
+        
         @Override
         public SubversionApiService getSubversionApiService() throws Exception {
             return new SubversionApiService() {
@@ -265,14 +279,9 @@ public abstract class VcsUnifiedService {
      * 初始化或重置应用仓库及其标准化的授权配置。
      */
     public VcsUnifiedAppRepoEntity createOrResetAppRepo(Long applicationId) throws VcsFailToRestAppRepoException {
-        return createOrResetAppRepo(applicationId, false);
-    }
-
-    public VcsUnifiedAppRepoEntity createOrResetAppRepo(Long applicationId, boolean skipApplyAuthz)
-            throws VcsFailToRestAppRepoException {
         VcsUnifiedAppInitInfo appInfo;
         try {
-            if ((appInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
+            if ((appInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicationId)) == null) {
                 throw new MessageException("给定的应用不存在");
             }
             String name = appInfo.getName();
@@ -309,16 +318,11 @@ public abstract class VcsUnifiedService {
                     throw new MessageException("获取应用仓库详情失败", ex);
                 }
                 /**
-                 * 清除当前的授权组数据,出于兼容内部系统的缘故,只针对新规范的组进行 清除（即授权组的 parent
-                 * 与租户命名空间的ID相同）
+                 * 清除当前的授权组数据
                  */
                 List<GitlabSharedWithGroup> sharedGroups;
                 if ((sharedGroups = repo.getSharedWithGroups()) != null) {
                     for (GitlabSharedWithGroup sg : sharedGroups) {
-                        if (!namespaceGroup.getId().equals(
-                                getGitlabApiService().getGroup(sg.getGroupId()).getParentId())) {
-                            continue;
-                        }
                         getGitlabApiService().removeGroupOfProject(repo.getId(), sg.getGroupId());
                     }
                 }
@@ -326,7 +330,7 @@ public abstract class VcsUnifiedService {
                  * 创建授权组，并授予对应的权限
                  */
                 String[] publicPermissionGroups;
-                if ((publicPermissionGroups = getRequiredPermissionGroups()) != null) {
+                if ((publicPermissionGroups = getPublicReadGroups()) != null) {
                     for (String pubGroup : publicPermissionGroups) {
                         if (StringUtils.isBlank(pubGroup)) {
                             continue;
@@ -335,6 +339,21 @@ public abstract class VcsUnifiedService {
                             GitlabGroup typeGroup = getGitlabApiService().getGroup(pubGroup);
                             getGitlabApiService().shareProjectToGroup(repo.getId(), typeGroup.getId(),
                                     ProjectAccessLevel.REPORTER, null, true);
+                        } catch (Exception e) {
+                            log.error(e.toString(), e);
+                            throw new MessageException(String.format("创建授权分组失败 - %s", pubGroup), e);
+                        }
+                    }
+                }
+                if ((publicPermissionGroups = getPublicWriteGroups()) != null) {
+                    for (String pubGroup : publicPermissionGroups) {
+                        if (StringUtils.isBlank(pubGroup)) {
+                            continue;
+                        }
+                        try {
+                            GitlabGroup typeGroup = getGitlabApiService().getGroup(pubGroup);
+                            getGitlabApiService().shareProjectToGroup(repo.getId(), typeGroup.getId(),
+                                    ProjectAccessLevel.DEVELOPER, null, true);
                         } catch (Exception e) {
                             log.error(e.toString(), e);
                             throw new MessageException(String.format("创建授权分组失败 - %s", pubGroup), e);
@@ -352,71 +371,72 @@ public abstract class VcsUnifiedService {
                         throw new MessageException(String.format("授于权限权分组失败 - %s", appInfo.getPermissionGroup()), e);
                     }
                 }
-                return new VcsUnifiedAppRepoEntity().setNamedId(repo.getPathWithNamespace()).setPathToRepo(
-                        repo.getSshUrlToRepo());
-            } else if (VcsType.Subversion.equals(appInfo.getVcsTypeEnum())) {
-                /**
-                 * 创建仓库的目录
-                 */
-                SubversionApiService svnService;
-                if ((svnService = getSubversionApiService()) == null) {
-                    throw new MessageException("创建 Subversion 接口服务失败");
-                }
-                final VcsUnifiedAppRepoEntity appEntity = new VcsUnifiedAppRepoEntity();
-                svnService.batchProcess(new SubversionProcessor() {
-                    @Override
-                    public void run(SVNRepository repo) throws Exception {
-                        final String repoName = appInfo.getNamespace();
-                        final String tagsPath = appInfo.getSubversionTagsPath();
-                        final String trunkPath = appInfo.getSubversionTrunkPath();
-                        final String patchesPath = appInfo.getSubversionPatchesPath();
-                        final String branchesPath = appInfo.getSubversionBranchesPath();
-                        final String createdUsername = getContextSubversionUsername();
-                        final String permGroupPreffix = appInfo.getPermissionGroupNamespacePrefix(VcsType.Subversion);
-                        final String currentPermGroupName = appInfo.getPermissionGroupWithNamespace(VcsType.Subversion);
-                        /**
-                         * 先创建授权分组
-                         */
-                        SubversionMaiaService maiaService = getSubversionMaiaService();
-                        maiaService.createOrResetGroup(currentPermGroupName);
-
-                        /**
-                         * 创建目录结构,并设置授权分组。为兼容老的授权及结构, 只清理符合新规则的授权,且考虑 external
-                         * 挂载地址的场景
-                         */
-                        List<String> permissionPaths = new ArrayList<>();
-                        permissionPaths.add(nameWithNamespace);
-                        SubversionUtil.createDir(repo, tagsPath, MESG_AUTO_CREATED, createdUsername);
-                        SubversionUtil.createDir(repo, patchesPath, MESG_AUTO_CREATED, createdUsername);
-                        SubversionUtil.createDir(repo, branchesPath, MESG_AUTO_CREATED, createdUsername);
-                        Map<String, SVNExternal> externals = SubversionUtil.getExternalsProperty(repo,
-                                nameWithNamespace);
-                        if (SVNNodeKind.NONE.equals(SubversionUtil.checkPath(repo, trunkPath))) {
-                            if (externals != null && externals.containsKey(trunkPath)) {
-                                permissionPaths.add(getSubversionRealPath(repo, trunkPath));
-                            } else {
-                                SubversionUtil.createDir(repo, trunkPath, MESG_AUTO_CREATED, createdUsername);
-                            }
-                        }
-                        for (String path : permissionPaths) {
-                            List<SubversionMaiaGroupPermission> groupAccesses;
-                            if ((groupAccesses = maiaService.listGroupAccesses(repoName, path)) != null) {
-                                for (SubversionMaiaGroupPermission gas : groupAccesses) {
-                                    if (StringUtils.startsWith(gas.getGroupName(), permGroupPreffix)) {
-                                        maiaService.delGroupAccess(repoName, path, gas.getGroupId());
-                                    }
-                                }
-                            }
-                            maiaService.addGroupAccess(repoName, path, currentPermGroupName, true);
-                        }
-                        if (!skipApplyAuthz) {
-                            maiaService.forceUpdateAuthz();
-                        }
-                        appEntity.setNamedId(nameWithNamespace).setPathToRepo(
-                                HttpUtil.concatUrlPath(SubversionUtil.getRootUrl(repo), nameWithNamespace));
-                    }
-                });
-                return appEntity;
+                return new VcsUnifiedAppRepoEntity()
+                                .setNamedId(repo.getPathWithNamespace())
+                                .setPathToRepo(repo.getHttpUrlToRepo());
+//            } else if (VcsType.Subversion.equals(appInfo.getVcsTypeEnum())) {
+//                /**
+//                 * 创建仓库的目录
+//                 */
+//                SubversionApiService svnService;
+//                if ((svnService = getSubversionApiService()) == null) {
+//                    throw new MessageException("创建 Subversion 接口服务失败");
+//                }
+//                final VcsUnifiedAppRepoEntity appEntity = new VcsUnifiedAppRepoEntity();
+//                svnService.batchProcess(new SubversionProcessor() {
+//                    @Override
+//                    public void run(SVNRepository repo) throws Exception {
+//                        final String repoName = appInfo.getNamespace();
+//                        final String tagsPath = appInfo.getSubversionTagsPath();
+//                        final String trunkPath = appInfo.getSubversionTrunkPath();
+//                        final String patchesPath = appInfo.getSubversionPatchesPath();
+//                        final String branchesPath = appInfo.getSubversionBranchesPath();
+//                        final String createdUsername = getContextSubversionUsername();
+//                        final String permGroupPreffix = appInfo.getPermissionGroupNamespacePrefix(VcsType.Subversion);
+//                        final String currentPermGroupName = appInfo.getPermissionGroupWithNamespace(VcsType.Subversion);
+//                        /**
+//                         * 先创建授权分组
+//                         */
+//                        SubversionMaiaService maiaService = getSubversionMaiaService();
+//                        maiaService.createOrResetGroup(currentPermGroupName);
+//
+//                        /**
+//                         * 创建目录结构,并设置授权分组。为兼容老的授权及结构, 只清理符合新规则的授权,且考虑 external
+//                         * 挂载地址的场景
+//                         */
+//                        List<String> permissionPaths = new ArrayList<>();
+//                        permissionPaths.add(nameWithNamespace);
+//                        SubversionUtil.createDir(repo, tagsPath, MESG_AUTO_CREATED, createdUsername);
+//                        SubversionUtil.createDir(repo, patchesPath, MESG_AUTO_CREATED, createdUsername);
+//                        SubversionUtil.createDir(repo, branchesPath, MESG_AUTO_CREATED, createdUsername);
+//                        Map<String, SVNExternal> externals = SubversionUtil.getExternalsProperty(repo,
+//                                nameWithNamespace);
+//                        if (SVNNodeKind.NONE.equals(SubversionUtil.checkPath(repo, trunkPath))) {
+//                            if (externals != null && externals.containsKey(trunkPath)) {
+//                                permissionPaths.add(getSubversionRealPath(repo, trunkPath));
+//                            } else {
+//                                SubversionUtil.createDir(repo, trunkPath, MESG_AUTO_CREATED, createdUsername);
+//                            }
+//                        }
+//                        for (String path : permissionPaths) {
+//                            List<SubversionMaiaGroupPermission> groupAccesses;
+//                            if ((groupAccesses = maiaService.listGroupAccesses(repoName, path)) != null) {
+//                                for (SubversionMaiaGroupPermission gas : groupAccesses) {
+//                                    if (StringUtils.startsWith(gas.getGroupName(), permGroupPreffix)) {
+//                                        maiaService.delGroupAccess(repoName, path, gas.getGroupId());
+//                                    }
+//                                }
+//                            }
+//                            maiaService.addGroupAccess(repoName, path, currentPermGroupName, true);
+//                        }
+//                        if (!skipApplyAuthz) {
+//                            maiaService.forceUpdateAuthz();
+//                        }
+//                        appEntity.setNamedId(nameWithNamespace).setPathToRepo(
+//                                HttpUtil.concatUrlPath(SubversionUtil.getRootUrl(repo), nameWithNamespace));
+//                    }
+//                });
+//                return appEntity;
             }
         } catch (MessageException e) {
             throw new VcsFailToRestAppRepoException(e.getMessage(), e);
@@ -436,7 +456,7 @@ public abstract class VcsUnifiedService {
     public VcsRevisionEntry getRevisionInfo(long applicatoinId, String revision) throws Exception {
 
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicatoinId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicatoinId)) == null) {
             throw new MessageException("检索应用源码仓库注册信息异常");
         }
         if (VcsType.Gitlab.equals(appVcsInfo.getVcsTypeEnum())) {
@@ -463,7 +483,7 @@ public abstract class VcsUnifiedService {
      */
     public List<VcsFileEntry> listDir(long applicationId, String path, String revision) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -538,7 +558,7 @@ public abstract class VcsUnifiedService {
      */
     public byte[] getFileContent(long applicationId, String path, String revision) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -599,11 +619,11 @@ public abstract class VcsUnifiedService {
             }
         }
     }
-    
-    private String getSubversionRealPath(@NonNull SVNRepository repo, @NonNull String svnPath)
-            throws SVNException {
-        return getSubversionRealPath(repo, svnPath, -1L);
-    }
+//    
+//    private String getSubversionRealPath(@NonNull SVNRepository repo, @NonNull String svnPath)
+//            throws SVNException {
+//        return getSubversionRealPath(repo, svnPath, -1L);
+//    }
     
     /**
      * 为解决兼容性问题，Subversion 仓库的部分 trunk 目录为 external 外挂。
@@ -649,7 +669,7 @@ public abstract class VcsUnifiedService {
     private void createVcsRefsName(@NonNull VcsRefsType vcsRefsType, long applicationId, String refsName,
             String baseRevision, String message) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -726,7 +746,7 @@ public abstract class VcsUnifiedService {
             return;
         }
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         VcsRefsType vcsRefsType;
@@ -768,7 +788,7 @@ public abstract class VcsUnifiedService {
     private List<OptionVcsRefsName> listRefsNames(@NonNull VcsRefsType vcsRefsType, long applicationId, String keyword,
             Integer page, Integer limit) throws Exception {
         VcsUnifiedAppInitInfo appVcsInfo;
-        if ((appVcsInfo = ApplicationService.getInstance().getApplicationInitInfo(applicationId)) == null) {
+        if ((appVcsInfo = ApplicationService.getInstance().getVcsRepositoryInitInfo(applicationId)) == null) {
             throw new MessageException(String.format("提供的应用(id=%s)不存在.", applicationId));
         }
         try {
@@ -948,10 +968,6 @@ public abstract class VcsUnifiedService {
      * 重置权业务系统的代码仓权限组的成员(自动创建不存在的用户)
      */
     public void resetGroupMembers(long subsystemId) throws Exception {
-        resetGroupMembers(subsystemId, false);
-    }
-
-    public void resetGroupMembers(long subsystemId, boolean skipApplyAuthz) throws Exception {
         List<? extends AbstractUser> members;
         VcsUnifiedSubsystemInfo vcsSubsystemInfo;
         try {
@@ -1009,17 +1025,16 @@ public abstract class VcsUnifiedService {
                         member.getUsername()));
             }
         }
-
-        /*
-         * ============================ Subversion
-         * ==============================
-         */
-        SubversionMaiaService maiaService = getSubversionMaiaService();
-        maiaService.createOrResetGroupWithMembers(vcsSubsystemInfo.getPermissionGroupWithNamespace(VcsType.Subversion),
-                subversionMembers.toArray(new String[0]));
-        if (!skipApplyAuthz) {
-            maiaService.forceUpdateAuthz();
-        }
+//
+//        /*
+//         * ============================ Subversion ==============================
+//         */
+//        SubversionMaiaService maiaService = getSubversionMaiaService();
+//        maiaService.createOrResetGroupWithMembers(vcsSubsystemInfo.getPermissionGroupWithNamespace(VcsType.Subversion),
+//                subversionMembers.toArray(new String[0]));
+//        if (!skipApplyAuthz) {
+//            maiaService.forceUpdateAuthz();
+//        }
     }
 
     /**
@@ -1031,54 +1046,55 @@ public abstract class VcsUnifiedService {
         }
         getSubversionMaiaService().changePassword(username, password);
     }
-
-    /**
-     * 上传文件。自动创建对应的目录结构，并视文件是否存在来决定是更新，还是创建。
-     * 
-     * 需要注意的是：该方法强制进行文件的覆盖，不执行任何版本的冲突验证，谨慎使用。
-     * 
-     * @param projectNamedId
-     * @param branch
-     * @param message
-     * @param files
-     * @param skipExists
-     *            存在的文件，是否不进行更新。
-     * @return 返回创建的变更版本号，如果为 null 则意味着无需要上传的文件。
-     */
-    public String uploadFiles(String repoNamedId, String branch, String message, Map<String, byte[]> files,
-            boolean skipExists) throws Exception {
-        if (files == null) {
-            throw new IllegalArgumentException();
-        }
-        Map<String, byte[]> uploads = new HashMap<String, byte[]>();
-        for (Entry<String, byte[]> f : files.entrySet()) {
-            if (f == null) {
-                continue;
-            }
-            /* 确认文件的变更类型 */
-            FileChangeType type = FileChangeType.A;
-            if (f.getValue() == null) {
-                type = FileChangeType.D;
-            } else {
-                try {
-                    getGitlabApiService().fetchFile(repoNamedId, f.getKey(), branch);
-                    type = FileChangeType.M;
-                    if (skipExists) {
-                        continue;
-                    }
-                } catch (Exception e) {
-                    // drop exeption
-                }
-            }
-            uploads.put(String.format("%s:%s", type.name(), f.getKey()), f.getValue());
-        }
-        if (uploads.isEmpty()) {
-            return null;
-        }
-        GitlabCommit commited = getGitlabApiService().uploadFiles(repoNamedId, branch, message, uploads);
-        log.info("Push single committed = {}", commited);
-        return commited.getId();
-    }
+//
+//    /**
+//     * 上传文件。自动创建对应的目录结构，并视文件是否存在来决定是更新，还是创建。
+//     * 
+//     * 需要注意的是：该方法强制进行文件的覆盖，不执行任何版本的冲突验证，谨慎使用。
+//     * 
+//     * @param projectNamedId
+//     * @param branch
+//     * @param message
+//     * @param files
+//     * @param skipExists
+//     *            存在的文件，是否不进行更新。
+//     * @return 返回创建的变更版本号，如果为 null 则意味着无需要上传的文件。
+//     */
+//    public String uploadFiles(String repoNamedId, String branch, String message, Map<String, byte[]> files,
+//            boolean skipExists) throws Exception {
+//        if (files == null) {
+//            throw new IllegalArgumentException();
+//        }
+//        Map<String, byte[]> uploads = new HashMap<String, byte[]>();
+//        for (Entry<String, byte[]> f : files.entrySet()) {
+//            if (f == null) {
+//                continue;
+//            }
+//            /* 确认文件的变更类型 */
+//            FileChangeType type = FileChangeType.A;
+//            if (f.getValue() == null) {
+//                type = FileChangeType.D;
+//            } else {
+//                try {
+//                    getGitlabApiService().fetchFile(repoNamedId, f.getKey(), branch);
+//                    type = FileChangeType.M;
+//                    if (skipExists) {
+//                        continue;
+//                    }
+//                } catch (Exception e) {
+//                    // drop exeption
+//                }
+//            }
+//            uploads.put(String.format("%s:%s", type.name(), f.getKey()), f.getValue());
+//        }
+//        if (uploads.isEmpty()) {
+//            return null;
+//        }
+//        GitlabCommit commited = getGitlabApiService().uploadFiles(repoNamedId, branch, message, uploads);
+//        log.info("Push single committed = {}", commited);
+//        return commited.getId();
+//    }
+//    
     private boolean isRevisionNumber(String revsion) {
         return revsion != null && revsion.matches("^[1-9][0-9]*$");
     }

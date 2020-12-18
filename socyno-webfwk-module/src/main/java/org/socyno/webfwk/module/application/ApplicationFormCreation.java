@@ -4,6 +4,7 @@ import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsAp
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsCodeLevel;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemManagement;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -16,7 +17,7 @@ import lombok.AccessLevel;
 @Setter
 @ToString
 @Attributes(title = "创建新的应用")
-public class ApplicationFormCreation implements ApplicationAbstractForm {
+public class ApplicationFormCreation implements ApplicationFormAbstract {
     
     @Attributes(title = "编号", readonly = true)
     private Long id;
@@ -41,7 +42,7 @@ public class ApplicationFormCreation implements ApplicationAbstractForm {
     private String vcsType;
     
     @Attributes(title = "业务系统", required = true, type = FieldSubsystemManagement.class)
-    private Long subsystemId;
+    private SubsystemFormSimple subsystem;
     
     @Attributes(title = "质量分级", required = true, type = FieldOptionsCodeLevel.class)
     private String codeLevel;

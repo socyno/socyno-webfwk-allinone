@@ -1,5 +1,6 @@
 package org.socyno.webfwk.module.application;
 
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.module.vcs.common.VcsType;
@@ -10,7 +11,7 @@ import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.SchemaIgnore;
 
-public interface ApplicationAbstractForm extends AbstractStateForm {
+public interface ApplicationFormAbstract extends AbstractStateForm {
     
     public String getName();
     
@@ -18,7 +19,7 @@ public interface ApplicationAbstractForm extends AbstractStateForm {
     
     public String getReleaseBranch();
     
-    public Long getSubsystemId();
+    public SubsystemFormSimple getSubsystem();
     
     public String getVcsType();
     

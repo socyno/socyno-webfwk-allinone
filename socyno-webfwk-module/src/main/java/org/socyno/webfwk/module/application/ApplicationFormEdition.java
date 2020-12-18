@@ -3,6 +3,7 @@ package org.socyno.webfwk.module.application;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsCodeLevel;
 import org.socyno.webfwk.module.release.build.FieldBuildService;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -15,7 +16,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ApplicationFormForEdit implements ApplicationAbstractForm {
+public class ApplicationFormEdition implements ApplicationFormAbstract {
     
     @Attributes(title = "编号", readonly = true)
     private Long id;
@@ -35,7 +36,7 @@ public class ApplicationFormForEdit implements ApplicationAbstractForm {
     
     @Setter(AccessLevel.NONE)
     @Attributes(title = "业务系统编号", readonly = true)
-    private Long subsystemId;
+    private SubsystemFormSimple subsystem;
     
     @Setter(AccessLevel.NONE)
     @Attributes(title = "发布分支", readonly = true)

@@ -237,7 +237,7 @@ public class SystemBuildService extends
             if (manageForm == null || manageForm.getId() == null) {
                 return null;
             }
-            return manageForm.getSubsystemId();
+            return manageForm.getSubsystem().getId();
         }
     }
     

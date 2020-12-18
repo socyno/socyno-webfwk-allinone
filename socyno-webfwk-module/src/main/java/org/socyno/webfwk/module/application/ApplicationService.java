@@ -6,19 +6,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import lombok.Data;
 import lombok.Getter;
-import lombok.NonNull;
-
-import org.adrianwalker.multilinestring.Multiline;
-import org.apache.commons.lang3.ArrayUtils;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.ApplicationType;
 import org.socyno.webfwk.module.application.FieldApplicationNamespace.OptionApplicationNamespace;
-import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment;
-import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment.OptionDeployEnvironment;
-import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
@@ -40,7 +31,6 @@ import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
-import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.MessageException;
 import org.socyno.webfwk.util.exception.PageNotFoundException;
@@ -49,7 +39,6 @@ import org.socyno.webfwk.util.model.PagedList;
 import org.socyno.webfwk.util.sql.AbstractDao;
 import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
-import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
@@ -132,11 +121,11 @@ public class ApplicationService extends
         }
     }
     
-    public VcsUnifiedAppInitInfo getApplicationInitInfo(Long applicatoinId) throws Exception {
+    public VcsUnifiedAppInitInfo getVcsRepositoryInitInfo(Long applicatoinId) throws Exception {
         if (applicatoinId == null) {
             return null;
         }
-        ApplicationFormWithSubsystem form = get(ApplicationFormWithSubsystem.class, applicatoinId);
+        ApplicationFormSimple form = getSimple(applicatoinId);
         SubsystemFormSimple subsystem;
         if ((subsystem = form.getSubsystem()) == null) {
             throw new MessageException("应用的业务系统未设置");
@@ -165,7 +154,7 @@ public class ApplicationService extends
         @Override
         public Long handle(String event, ApplicationFormDetail originForm, final ApplicationFormCreation form,
                 final String message) throws Exception {
-            ApplicationBasicUtil.ensuerNameFormatValid(form.getName());
+            ApplicationBasicUtil.ensureNameFormatValid(form.getName());
             final AtomicLong id = new AtomicLong(0);
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
@@ -173,13 +162,17 @@ public class ApplicationService extends
                     getFormBaseDao().executeUpdate(
                             SqlQueryUtil.prepareInsertQuery(
                                     getFormTable(),
-                                    new ObjectMap().put("name", form.getName()).put("type", form.getType())
-                                            .put("vcs_type", form.getVcsType()).put("vcs_path", "")
+                                    new ObjectMap()
+                                            .put("name", form.getName())
+                                            .put("type", form.getType())
+                                            .put("vcs_type", form.getVcsType())
+                                            .put("vcs_path", "")
                                             .put("description", form.getDescription())
-                                            .put("code_level", form.getCodeLevel())
-                                            .put("subsystem_id", form.getSubsystemId())
-                                            .put("created_user_code", SessionContext.getUsername())
-                                            .put("created_user_name", SessionContext.getDisplay())),
+                                            .put("code_level",  form.getCodeLevel())
+                                            .put("subsystem",   form.getSubsystem().getId())
+                                            .put("created_by", SessionContext.getUserId())
+                                            .put("created_code_by", SessionContext.getUsername())
+                                            .put("created_name_by", SessionContext.getDisplay())),
                             new ResultSetProcessor() {
                                 @Override
                                 public void process(ResultSet result, Connection conn) throws Exception {
@@ -202,7 +195,7 @@ public class ApplicationService extends
         }
     }
     
-    public class EventEdit extends AbstractStateAction<ApplicationFormDetail, ApplicationFormForEdit, Void> {
+    public class EventEdit extends AbstractStateAction<ApplicationFormDetail, ApplicationFormEdition, Void> {
         
         public EventEdit() {
             super("编辑", getStateCodesEx(), "");
@@ -215,7 +208,7 @@ public class ApplicationService extends
         }
         
         @Override
-        public Void handle(String event, ApplicationFormDetail originForm, final ApplicationFormForEdit form,
+        public Void handle(String event, ApplicationFormDetail originForm, final ApplicationFormEdition form,
                 final String message) throws Exception {
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
@@ -476,42 +469,6 @@ public class ApplicationService extends
         }
     }
     
-    public class EventListDeployNamespaces extends AbstractStateAction<ApplicationFormDetail, BasicStateForm, ApplicationDeployNamespacesView> {
-        
-        public EventListDeployNamespaces() {
-            super("部署机组清单", getStateCodesEx(), "");
-        }
-        
-        @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppNonApplicationRejector.class)
-        public void check(String s, ApplicationFormDetail s1, String s2) {
-            
-        }
-        
-        @Override
-        public ApplicationDeployNamespacesView handle(String event, ApplicationFormDetail originForm,
-                BasicStateForm form, String message) throws Exception {
-            ApplicationDeployNamespacesView view = new ApplicationDeployNamespacesView();
-            view.setDeployNamespaces(get(ApplicationFormDeployNamespaces.class, form.getId()).getDeployNamespaces());
-            return view;
-        }
-        
-        @Override
-        public boolean getStateRevisionChangeIgnored() {
-            return true;
-        }
-        
-        @Override
-        public Boolean messageRequired() {
-            return null;
-        }
-        
-        @Override
-        public boolean confirmRequired() {
-            return false;
-        }
-    }
-    
     @Getter
     public enum EVENTS implements StateFormEventClassEnum {
         Create(EventCreate.class),
@@ -546,10 +503,6 @@ public class ApplicationService extends
          * 删除已有的标签
          */
         VcsTagDelete(EventTagDelete.class),
-        /**
-         * 查看部署机组信息
-         */
-        ListDeployNamespaces(EventListDeployNamespaces.class)
         ;
         
         private final Class<? extends AbstractStateAction<ApplicationFormDetail, ?, ?>> eventClass;
@@ -559,35 +512,27 @@ public class ApplicationService extends
         }
     }
     
-    public ApplicationFormDefault getByVcsPath(String vcsPath) throws Exception {
+    @SuppressWarnings("unchecked")
+    public List<ApplicationFormSimple> queryByVcsPath(String vcsPath) throws Exception {
         if (StringUtils.isBlank(vcsPath)) {
             return null;
         }
-        ApplicationQueryDefault applicationQuery = new ApplicationQueryDefault();
-        applicationQuery.setVcsPathEquals(vcsPath);
-        applicationQuery.setLimit(1);
-        PagedList<?> apps = listForm(QUERIES.DEFAULT, applicationQuery);
-        if (apps == null || apps.getList() == null || apps.getList().size() != 1) {
+        PagedList<? extends ApplicationFormSimple> apps = listForm(ApplicationFormSimple.class,
+                new ApplicationQueryAll(1000, 1L).setVcsPathEquals(vcsPath));
+        if (apps == null) {
             return null;
         }
-        return (ApplicationFormDefault) apps.getList().get(0);
-    }
-    
-    private List<ApplicationRuntimeStatusNodeItem> getRuntimeStatus(String environment, final Long appId,
-            final String appName) throws Exception {
-        List<ApplicationRuntimeStatusNodeItem> result = new ArrayList<>();
-        
-        return result;
+        return (List<ApplicationFormSimple>) apps.getList();
     }
     
     public class AppSubsystemParser implements AuthorityScopeIdParser {
         @Override
         public Long getAuthorityScopeId(Object originForm) {
-            ApplicationAbstractForm manageForm = (ApplicationAbstractForm) originForm;
+            ApplicationFormAbstract manageForm = (ApplicationFormAbstract) originForm;
             if (manageForm == null) {
                 return null;
             }
-            return manageForm.getSubsystemId();
+            return manageForm.getSubsystem().getId();
         }
     }
     
@@ -652,7 +597,7 @@ public class ApplicationService extends
         
         @Override
         public boolean check(Object originForm) throws Exception {
-            return !ApplicationType.APPLICATION.getValue().equals(((ApplicationAbstractForm) originForm).getType());
+            return !ApplicationType.APPLICATION.getValue().equals(((ApplicationFormAbstract) originForm).getType());
         }
         
     }
@@ -703,195 +648,20 @@ public class ApplicationService extends
         return newVersion;
     }
     
-    /**
-     * SELECT
-     *      env_name env,
-     *      env_display display,
-     *      GROUP_CONCAT(DISTINCT version) AS versions
-     * FROM
-     *      application_runtime_status
-     * WHERE
-     *      app_id = ?
-     * GROUP BY env_name
-     */
-    @Multiline
-    private final static String SQL_QUERY_APP_RUNTIME_VERSIONS = "X";
-    
-    /**
-     * SELECT
-     *     env_name,
-     *     MIN(last_updated) AS last_updated
-     * FROM
-     *     application_runtime_status
-     * WHERE
-     *     app_id = ?
-     * GROUP by env_name
-     */
-    @Multiline
-    private final static String SQL_QUERY_APP_LAST_UPDATED_ENVSTATUS = "X";
-    
-    /**
-     * DELETE FROM
-     *     application_runtime_status
-     * WHERE
-     *     app_id = ?
-     */
-    @Multiline
-    private final static String SQL_CLEAN_APP_LAST_UPDATED_ENVSTATUS = "X";
-    
-    @Data
-    public static class AppEnvStatusLastUpdated {
-        
-        private String envName;
-        
-        private Date lastUpdated;
-        
-    }
-    
-    private String[] getCachedUnExpiredAppStatusEnvs(List<AppEnvStatusLastUpdated> items) {
-        if (items == null || items.size() <= 0) {
-            return new String[0];
+    public <T extends ApplicationFormSimple> T getByName(Class<T> clazz, String appName) throws Exception {
+        if (StringUtils.isBlank(appName)) {
+            throw new PageNotFoundException(); 
         }
-        List<String> exclussions = new ArrayList<>();
-        long expiredMS = CommonUtil.parseLong(ContextUtil.getConfigTrimed("system.appenv.runtime.status.expired.ms"),
-                6000000L);
-        for (AppEnvStatusLastUpdated last : items) {
-            long lastUpdated = last.getLastUpdated().getTime();
-            if ((lastUpdated + expiredMS) > new Date().getTime()) {
-                exclussions.add(last.getEnvName());
-            }
-        }
-        return exclussions.toArray(new String[0]);
-    }
-    
-    /**
-     * 获取应用的环境版本信息，为提升效率，该数据做了一定时间的本地缓存
-     */
-    public List<ApplicationRuntimeEvnVersions> getCachedApplicationVersion(long applicationId) throws Exception {
-        
-        List<AppEnvStatusLastUpdated> envsLastUpdated = getFormBaseDao().queryAsList(
-                AppEnvStatusLastUpdated.class, SQL_QUERY_APP_LAST_UPDATED_ENVSTATUS, new Object[] { applicationId });
-        String[] unexpired = getCachedUnExpiredAppStatusEnvs(envsLastUpdated);
-        
-        List<Object> cleanArgs = new ArrayList<>();
-        List<OptionDeployEnvironment> appEnvOptions = ClassUtil.getSingltonInstance(FieldDeployEnvironment.class)
-                .queryDynamicOptionsByAppId(applicationId);
-        for (OptionDeployEnvironment openv : appEnvOptions) {
-            cleanArgs.add(openv.getName());
-            if (ArrayUtils.contains(unexpired, openv.getName())) {
-                continue;
-            }
-            getRuntimeStatus(openv.getOptionValue(), applicationId, "");
-        }
-        String cleanSql = SQL_CLEAN_APP_LAST_UPDATED_ENVSTATUS;
-        if (cleanArgs.size() > 0) {
-            cleanSql = String.format("%s AND env_name NOT IN (%s)", cleanSql,
-                    CommonUtil.join("?", cleanArgs.size(), ","));
-        }
-        cleanArgs.add(0, applicationId);
-        getFormBaseDao().executeUpdate(cleanSql, cleanArgs.toArray());
-        
-        return getFormBaseDao().queryAsList(ApplicationRuntimeEvnVersions.class, SQL_QUERY_APP_RUNTIME_VERSIONS,
-                new Object[] { applicationId });
-    }
-    
-    public <T extends ApplicationFormSimple> PagedList<T> list(@NonNull Class<T> clazz,
-            @NonNull ApplicationQueryDefault query) throws Exception {
-        return listForm(clazz, query);
-    }
-    
-    public <T extends ApplicationFormSimple> T get(Class<T> clazz, long id) throws Exception {
         List<T> list;
-        if ((list = list(clazz, new ApplicationQueryAll(2, 1L).setAppIdsIn(id + "")).getList()) == null
-                || list.size() != 1) {
-            throw new PageNotFoundException();
-        }
-        return list.get(0);
-    }
-
-    public <T extends ApplicationFormSimple> T get(Class<T> clazz, String appName) throws Exception {
-        List<T> list;
-        if ((list = list(clazz, new ApplicationQueryAll().setAppNamesIn(appName + "")).getList()) == null
+        if ((list = listForm(clazz, new ApplicationQueryAll(1,1L).setAppNamesIn(appName)).getList()) == null
                 || list.size() != 1) {
             throw new PageNotFoundException();
         }
         return list.get(0);
     }
     
-    public ApplicationAbstractForm getSimple(long id) throws Exception {
-        return get(ApplicationFormSimple.class, id);
-    }
-    
-    @Override
-    public ApplicationFormDetail getForm(long id) throws Exception {
-        return get(ApplicationFormDetail.class, id);
-    }
-    
-    <T extends AbstractStateForm> void fillFormDetails(@NonNull Class<T> itemClazz, List<T> resultSet) throws Exception {
-        if (resultSet == null || resultSet.isEmpty()) {
-            return;
-        }
-        Long subsystemId;
-        Long applicationId;
-        Map<Long, List<ApplicationAbstractForm>> idApps = new HashMap<>();
-        Map<Long, List<ApplicationAbstractForm>> subApps = new HashMap<>();
-        for (T r : resultSet) {
-            if (r == null) {
-                continue;
-            }
-            if ((subsystemId = ((ApplicationAbstractForm) r).getSubsystemId()) != null) {
-                if (!subApps.containsKey(subsystemId)) {
-                    subApps.put(subsystemId, new ArrayList<>());
-                }
-                subApps.get(subsystemId).add((ApplicationAbstractForm) r);
-            }
-            if ((applicationId = ((ApplicationAbstractForm) r).getId()) != null) {
-                if (!idApps.containsKey(applicationId)) {
-                    idApps.put(applicationId, new ArrayList<>());
-                }
-                idApps.get(applicationId).add((ApplicationAbstractForm) r);
-            }
-        }
-        /**
-         * 补全业务系统实体
-         */
-        if (ApplicationWithSubsystemEntity.class.isAssignableFrom(itemClazz) && subApps.size() > 0) {
-            for (SubsystemFormSimple subsystem : ClassUtil.getSingltonInstance(FieldSubsystemAccessors.class)
-                    .queryDynamicValues(subApps.keySet().toArray(new Long[0]))) {
-                for (ApplicationAbstractForm app : subApps.get(subsystem.getId())) {
-                    ((ApplicationWithSubsystemEntity) app).setSubsystem(subsystem);
-                }
-            }
-        }
-        /**
-         * 补全部署命名空间清单
-         */
-        if (ApplicationWithNamespaces.class.isAssignableFrom(itemClazz) && idApps.size() > 0) {
-            
-            List<OptionApplicationNamespace> namespaceList = FieldApplicationNamespace
-                    .queryByApplications(idApps.keySet().toArray(new Long[0]));
-            for (OptionApplicationNamespace oan : namespaceList) {
-                List<OptionApplicationNamespace> deployNamespaces;
-                for (ApplicationAbstractForm app : idApps.get(oan.getApplicationId())) {
-                    if ((deployNamespaces = ((ApplicationWithNamespaces) app).getDeployNamespaces()) == null) {
-                        ((ApplicationWithNamespaces) app).setDeployNamespaces(deployNamespaces = new ArrayList<>());
-                    }
-                    deployNamespaces.add(oan);
-                }
-            }
-        }
-        
-        if (ApplicationWithNamespaceSummaries.class.isAssignableFrom(itemClazz)) {
-            List<OptionApplicationNamespace> optionNamespaces = FieldApplicationNamespace
-                    .queryByApplications(idApps.keySet().toArray(new Long[0]));
-            Map<Long, List<OptionApplicationNamespace>> applicationNamespaces = optionNamespaces.stream()
-                    .collect(Collectors.groupingBy(OptionApplicationNamespace::getApplicationId));
-            for (T t : resultSet) {
-                ((ApplicationWithNamespaceSummaries) t).setDeployNamespaceSummaries(DeployEnvNamespaceSummaryDetail
-                        .toSimple(genApplicationNamespaceSummary(applicationNamespaces.get(t.getId()))));
-            }
-        }
-        
+    public ApplicationFormSimple getSimple(long id) throws Exception {
+        return getForm(ApplicationFormSimple.class, id);
     }
     
     public String getCodeAccessFormEventKey() {
@@ -1004,7 +774,47 @@ public class ApplicationService extends
 
     @Override
     protected void fillExtraFormFields(Collection<? extends ApplicationFormSimple> forms) throws Exception {
-        // TODO Auto-generated method stub
         
+        if (forms == null || forms.isEmpty()) {
+            return;
+        }
+        DefaultStateFormSugger.getInstance().apply(forms);
+        
+        List<ApplicationFormSimple> singleApps;
+        Map<Long, List<ApplicationFormSimple>> withNamespaces = new HashMap<>();
+        for (ApplicationFormSimple form : forms) {
+            if (form == null || form.getId() == null) {
+                continue;
+            }
+            if (ApplicationWithNamespaces.class.isAssignableFrom(form.getClass())) {
+                if ((singleApps = withNamespaces.get(form.getId())) == null) {
+                    withNamespaces.put(form.getId(), singleApps = new ArrayList<>());
+                }
+                singleApps.add(form);
+            }
+        }
+        /**
+         * 补全部署命名空间清单
+         */
+        if (withNamespaces.size() > 0) {
+            List<OptionApplicationNamespace> sameAppNamespaces;
+            Map<Long, List<OptionApplicationNamespace>> mappedAppNamespaces = new HashMap<>();
+            List<OptionApplicationNamespace> flattedAppNamespaces = FieldApplicationNamespace
+                    .queryByApplications(withNamespaces.keySet().toArray(new Long[0]));
+            for (OptionApplicationNamespace oan : flattedAppNamespaces) {
+                if ((sameAppNamespaces = mappedAppNamespaces.get(oan.getApplicationId())) == null) {
+                    mappedAppNamespaces.put(oan.getApplicationId(), sameAppNamespaces = new ArrayList<>());
+                }
+                sameAppNamespaces.add(oan);
+            }
+            for (Map.Entry<Long, List<ApplicationFormSimple>> e : withNamespaces.entrySet()) {
+                for (ApplicationFormSimple form : e.getValue()) {
+                    sameAppNamespaces = mappedAppNamespaces.get(form.getId());
+                    ((ApplicationWithNamespaces) form).setDeployNamespaces(sameAppNamespaces);
+                    ((ApplicationWithNamespaces) form).setDeployNamespaceSummaries(DeployEnvNamespaceSummaryDetail
+                            .toSimple(genApplicationNamespaceSummary(sameAppNamespaces)));
+                }
+            }
+        }
     }
 }

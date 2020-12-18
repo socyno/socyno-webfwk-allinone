@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.socyno.webfwk.module.application.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationFormSimple;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 @Getter
@@ -23,14 +23,14 @@ public class VcsRefsNameOperation {
     private final String vcsPath;
     private final String vcsRefsName;
     private RefsOpType refsOpType;
-    private ApplicationAbstractForm applicationForm;
+    private ApplicationFormSimple applicationForm;
     
     public VcsRefsNameOperation(String application, String vcsPath, String vcsRefsName, RefsOpType refsOpType) {
         this(application, vcsPath, vcsRefsName, refsOpType, null);
     }
     
     public VcsRefsNameOperation(String application, String vcsPath, String vcsRefsName, RefsOpType refsOpType,
-            ApplicationAbstractForm applicationForm) {
+            ApplicationFormSimple applicationForm) {
         this.vcsPath = vcsPath;
         this.vcsRefsName = vcsRefsName;
         this.application = application;

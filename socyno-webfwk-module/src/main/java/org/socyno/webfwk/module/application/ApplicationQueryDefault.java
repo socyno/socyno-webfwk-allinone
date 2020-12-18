@@ -11,8 +11,7 @@ import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsCo
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsState;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.module.release.build.FieldBuildService;
-import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -29,7 +28,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-@Accessors(chain=true)
+@Accessors(chain = true)
 public class ApplicationQueryDefault extends AbstractStateFormQuery {
     
     @Attributes(title = "我的收藏")
@@ -41,7 +40,7 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
     @Attributes(title = "包括已下线")
     private boolean offlineIncluded = false;
     
-    @Attributes(title = "业务系统", type = FieldSubsystemAccessors.class)
+    @Attributes(title = "业务系统", type = FieldSubsystemAccessable.class)
     private Long subsystemId;
     
     @Attributes(title = "状态", type = FieldOptionsState.class)
@@ -61,7 +60,7 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
     
     @Attributes(title = "源码仓库地址")
     private String vcsPathEquals;
-
+    
     @Attributes(title = "应用编号清单")
     private String appIdsIn;
 
@@ -73,7 +72,6 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
 
     @Attributes(title = "根据名称正序")
     private boolean sortByNameAsc = false;
-    
     
     public ApplicationQueryDefault() {
         super();
@@ -95,7 +93,7 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
             s.name   AS subsystemName
         FROM
             %s a
-        LEFT JOIN subsystem s ON s.id = a.subsystem_id
+        LEFT JOIN subsystem s ON s.id = a.subsystem
         LEFT JOIN application_bookmark b ON b.app_id = a.id AND b.user_id = ?
      **/
     @Multiline
@@ -114,12 +112,12 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
             if ((mySubsystems = PermissionService
                     .queryMySubsystemByAuthKey(ApplicationService.getInstance().getFormAccessEventKey())) != null) {
                 StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append(mySubsystems.length <= 0 ? "1 = 0"
-                        : String.format("a.subsystem_id IN (%s)", StringUtils.join(mySubsystems, ',')));
+                        : String.format("a.subsystem IN (%s)", StringUtils.join(mySubsystems, ',')));
             }
         }
         sqlargs.add(SessionContext.getUserId());
         if (getSubsystemId() != null) {
-            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.subsystem_id = ? ");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.subsystem = ? ");
             sqlargs.add(getSubsystemId());
         }
         if (getStates() != null && getStates().length > 0) {
@@ -190,7 +188,7 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
                 StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("1 = 0");
             } else {
                 sqlargs.addAll(Arrays.asList(subIds));
-                StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.subsystem_id IN ")
+                StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.subsystem IN ")
                         .append(CommonUtil.join("?", subIds.length, ",", " (", ")"));
             }
         }
@@ -203,7 +201,7 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
             COUNT(1)
         FROM
             %s a
-        LEFT JOIN subsystem s ON s.id = a.subsystem_id
+        LEFT JOIN subsystem s ON s.id = a.subsystem
         LEFT JOIN application_bookmark b ON b.app_id = a.id AND b.user_id = ?
      */
     @Multiline
@@ -225,11 +223,5 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
                 query.getSql(),
                 isSortByNameAsc() ? "a.name ASC" : "a.id DESC",
                  getOffset(), getLimit()));
-    }
-    
-    @Override
-    public <T extends AbstractStateForm> List<T> processResultSet(Class<T> itemClazz, List<T> resultSet) throws Exception {
-        ApplicationService.getInstance().fillFormDetails(itemClazz, resultSet);
-        return resultSet;
     }
 }

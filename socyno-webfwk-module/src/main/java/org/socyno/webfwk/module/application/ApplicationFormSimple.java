@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.socyno.webfwk.module.release.build.FieldBuildService;
+import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.vcs.common.VcsType;
 import org.socyno.webfwk.util.state.field.FieldText;
 
@@ -20,7 +22,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ApplicationFormSimple implements ApplicationAbstractForm {
+public class ApplicationFormSimple implements ApplicationFormAbstract {
     @Attributes(title = "编号", readonly = true)
     private Long id;
     
@@ -36,17 +38,11 @@ public class ApplicationFormSimple implements ApplicationAbstractForm {
     @Attributes(title = "描述", type = FieldText.class)
     private String description;
     
-    @Attributes(title = "业务系统")
-    private Long subsystemId;
+    @Attributes(title = "业务系统", type = FieldSubsystemAccessable.class)
+    private SubsystemFormSimple subsystem;
     
-    @Attributes(title = "业务系统")
-    private String subsystemCode;
-    
-    @Attributes(title = "业务系统")
-    private String subsystemName;
-
-    @Attributes(title = "应用类型" , type = FieldOptionsApplicationType.class)
-    private String type ;
+    @Attributes(title = "应用类型", type = FieldOptionsApplicationType.class)
+    private String type;
     
     @Attributes(title = "源码仓库类型", type = FieldOptionsVcsType.class)
     private String vcsType;

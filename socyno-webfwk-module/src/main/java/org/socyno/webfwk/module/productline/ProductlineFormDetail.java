@@ -2,7 +2,7 @@ package org.socyno.webfwk.module.productline;
 
 import java.util.List;
 
-import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
+import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 
 import com.github.reinert.jjschema.Attributes;
@@ -15,7 +15,7 @@ import lombok.ToString;
 @ToString
 public class ProductlineFormDetail extends ProductlineFormDefault implements ProductlineWithSubsystems {
     
-    @Attributes(title = "业务系统清单", type = FieldSubsystemAccessors.class)
+    @Attributes(title = "业务系统清单", type = FieldSubsystemAccessable.class)
     private List<SubsystemFormSimple> subsystems;
     
 }

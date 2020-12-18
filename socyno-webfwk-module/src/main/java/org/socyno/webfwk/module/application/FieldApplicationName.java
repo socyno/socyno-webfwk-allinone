@@ -22,7 +22,7 @@ public class FieldApplicationName extends FieldApplication {
         
         @Override
         public String getOptionGroup() {
-            return getSubsystemName();
+            return getSubsystem().getName();
         }
         
         @Override

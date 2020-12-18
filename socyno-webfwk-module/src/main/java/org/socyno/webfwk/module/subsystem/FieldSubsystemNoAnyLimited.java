@@ -6,7 +6,7 @@ import org.socyno.webfwk.state.field.FilterBasicKeyword;
 
 import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
-public class FieldSubsystemNoAnyLimited extends FieldSubsystemAccessors {
+public class FieldSubsystemNoAnyLimited extends FieldSubsystemAccessable {
     /**
      * 覆盖父类的方法，根据关键字检索业务系统
      */

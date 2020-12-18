@@ -3,7 +3,7 @@ package org.socyno.webfwk.module.vcs.common;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.socyno.webfwk.module.application.ApplicationAbstractForm;
+import org.socyno.webfwk.module.application.ApplicationFormAbstract;
 import org.socyno.webfwk.module.application.ApplicationFormVcsRefCreate;
 import org.socyno.webfwk.module.application.ApplicationFormVcsRefDelete;
 import org.socyno.webfwk.module.application.ApplicationService;
@@ -63,16 +63,16 @@ public class VcsUnifiedController {
     
     @RequestMapping(value = "/auth/sync/apps/{applicationId}", method = RequestMethod.POST)
     @ResponseBody
-    public R resetApplicationGroups(@PathVariable("applicationId") Long applicationId, String forceUpdate)
+    public R resetApplicationGroups(@PathVariable("applicationId") Long applicationId)
             throws Exception {
-        VcsUnifiedService.CommonCloud.createOrResetAppRepo(applicationId, !CommonUtil.parseBoolean(forceUpdate));
+        VcsUnifiedService.CommonCloud.createOrResetAppRepo(applicationId);
         return R.ok();
     }
     
     @RequestMapping(value = "/auth/sync/subsys/{subystemId}", method = RequestMethod.POST)
     @ResponseBody
-    public R resetSubsystemMembers(@PathVariable("subystemId") Long subystemId, String forceUpdate) throws Exception {
-        VcsUnifiedService.CommonCloud.resetGroupMembers(subystemId, !CommonUtil.parseBoolean(forceUpdate));
+    public R resetSubsystemMembers(@PathVariable("subystemId") Long subystemId) throws Exception {
+        VcsUnifiedService.CommonCloud.resetGroupMembers(subystemId);
         return R.ok();
     }
     
@@ -101,7 +101,7 @@ public class VcsUnifiedController {
     
     private void fillApplicationVcsRefsCreate(Long applicationId, ApplicationFormVcsRefCreate refsCreate) throws Exception {
         if (applicationId != null && refsCreate != null) {
-            ApplicationAbstractForm app = null;
+            ApplicationFormAbstract app = null;
             if ((app = ApplicationService.getInstance().getSimple(applicationId)) == null) {
                 return;
             }
@@ -112,9 +112,9 @@ public class VcsUnifiedController {
         }
     }
     
-    private ApplicationAbstractForm fillApplicationVcsRefsDelete(Long applicationId, ApplicationFormVcsRefDelete refsDelete)
+    private ApplicationFormAbstract fillApplicationVcsRefsDelete(Long applicationId, ApplicationFormVcsRefDelete refsDelete)
             throws Exception {
-        ApplicationAbstractForm app = null;
+        ApplicationFormAbstract app = null;
         if (applicationId != null && refsDelete != null) {
             if ((app = ApplicationService.getInstance().getSimple(applicationId)) != null) {
                 refsDelete.setId(app.getId());
@@ -171,7 +171,7 @@ public class VcsUnifiedController {
     @ResponseBody
     public R deleteRefName(@PathVariable("applicationId") Long applicationId,
             @RequestBody ApplicationFormVcsRefDelete refsDelete) throws Exception {
-        ApplicationAbstractForm app = fillApplicationVcsRefsDelete(applicationId, refsDelete);
+        ApplicationFormAbstract app = fillApplicationVcsRefsDelete(applicationId, refsDelete);
         VcsRefsType vcsRefsType = app.getVcsTypeEnum().getVcsRefsType(refsDelete.getVcsRefsName());
         if (VcsRefsType.Patch.equals(vcsRefsType)) {
             ApplicationService.getInstance().triggerAction(ApplicationService.EVENTS.VcsPatchDelete.getName(),

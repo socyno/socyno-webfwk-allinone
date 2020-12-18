@@ -7,7 +7,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.application.FieldApplicationOfflineIncluded;
-import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessors;
+import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
 import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
@@ -38,7 +38,7 @@ public class ProductlineQueryDefault extends AbstractStateFormQuery {
     @Attributes(title = "包含应用", position = 30, type = FieldApplicationOfflineIncluded.class)
     private Long applicationId;
     
-    @Attributes(title = "包含业务系统", position = 40, type = FieldSubsystemAccessors.class)
+    @Attributes(title = "包含业务系统", position = 40, type = FieldSubsystemAccessable.class)
     private Long subsystemId;
     
     @Attributes(title = "产品编号列表")
