@@ -1,6 +1,8 @@
 package org.socyno.webfwk.state.basic;
 
-public abstract class AbstractStateCommentAction<S extends AbstractStateForm> extends AbstractStateAction<S, BasicStateForm, Void> {
+import org.socyno.webfwk.state.util.StateFormBasicForm;
+
+public abstract class AbstractStateCommentAction<S extends AbstractStateForm> extends AbstractStateAction<S, StateFormBasicForm, Void> {
     
     public static final String getFormLogEvent() {
         return "system:comment";

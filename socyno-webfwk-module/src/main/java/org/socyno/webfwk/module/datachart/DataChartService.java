@@ -8,7 +8,7 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.module.notify.SystemNotifyTemplateService;
 import org.socyno.webfwk.state.module.notify.SystemNotifyTemplateFormSimple;
@@ -16,6 +16,7 @@ import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -172,13 +173,13 @@ public class DataChartService
     }
 
 
-    public class EventCreate extends AbstractStateSubmitAction<DataChartFormSimple, DataChartFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<DataChartFormSimple, DataChartFormCreation> {
         public EventCreate() {
             super("创建图表", STATES.CREATED.getCode());
         }
 
         @Override
-        public Long handle(String event, DataChartFormSimple originForm,
+        public StateFormEventResultCreateViewBasic handle(String event, DataChartFormSimple originForm,
                            final DataChartFormCreation form, final String message) throws Exception {
             
             final AtomicLong simpleId = new AtomicLong(0);
@@ -204,7 +205,7 @@ public class DataChartService
                         }
                     });
 
-            return simpleId.get();
+            return new StateFormEventResultCreateViewBasic(simpleId.get());
         }
 
         @Override

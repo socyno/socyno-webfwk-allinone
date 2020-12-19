@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.AbstractFieldDynamicStandard;
 import org.socyno.webfwk.state.field.OptionDynamicStandard;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 @Getter
 @Setter
@@ -22,7 +22,7 @@ import org.socyno.webfwk.state.field.OptionDynamicStandard;
         visibleSelector = {"event_chart_create"},
         requiredSelector = {"event_chart_create"},
         editableSelector = {"event_chart_create"})
-public class DataChartFormCreation extends BasicStateForm {
+public class DataChartFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "图表标题",             
             visibleTags= {"event_chart_create", "event_chart_edit"},

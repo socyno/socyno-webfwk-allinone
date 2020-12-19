@@ -22,13 +22,14 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
 import org.socyno.webfwk.state.module.feature.SystemFeatureService;
 import org.socyno.webfwk.state.service.PermissionService;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -88,7 +89,7 @@ public class SystemMenuItemService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemMenuItemFormSimple, SystemMenuItemFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemMenuItemFormSimple, SystemMenuItemFormCreation> {
         
         public EventCreate() {
             super("创建", STATES.ENABLED.getCode());
@@ -101,8 +102,8 @@ public class SystemMenuItemService extends
         }
         
         @Override
-        public Long handle(String event, SystemMenuItemFormSimple originForm, SystemMenuItemFormCreation form, String message)
-                throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemMenuItemFormSimple originForm,
+                SystemMenuItemFormCreation form, String message) throws Exception {
             final AtomicLong id = new AtomicLong(-1);
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
@@ -128,7 +129,7 @@ public class SystemMenuItemService extends
                         });
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -182,7 +183,7 @@ public class SystemMenuItemService extends
         }
         
         @Override
-        public Void handle(String event, final SystemMenuItemFormSimple originForm, final BasicStateForm form,
+        public Void handle(String event, final SystemMenuItemFormSimple originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
                     getFormTable(),

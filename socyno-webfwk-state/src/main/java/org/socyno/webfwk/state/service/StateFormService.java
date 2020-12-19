@@ -439,7 +439,7 @@ public class StateFormService {
                                 "通用流程表单事件(%s/%s), 多授权标的选择器开关(multipleChoice) 和标记清理器(multipleClear) 禁止同时使用",
                                 formAction.getFormName(), formAction.getName()));
                     }
-                    if (formAction.getEventType() == StateFormActionDefinition.EventType.Submit) {
+                    if (StateFormActionDefinition.EventType.Create.equals(formAction.getEventType())) {
                         if (authority.multipleChoice()
                                 || !AuthorityScopeIdNoopMultipleCleaner.class.equals(authority.multipleCleaner())) {
                             throw new MessageException(String.format(
@@ -574,7 +574,7 @@ public class StateFormService {
         resetActionsVisible(actions, instance);
         List<String> allownActions = new ArrayList<>();
         for (StateFormActionDefinition action : actions) {
-            if (service.checkSubmitAction(action.getName(), null)) {
+            if (service.checkCreateAction(action.getName(), null)) {
                 allownActions.add(action.getName());
             }
         }
@@ -587,7 +587,6 @@ public class StateFormService {
                     .setRowsExpand(instance.getForm().getRowsExpand())
                     .setQueries(service.getFormQueryDefinition())
                     .setAllownActions(allownActions.toArray(new String[0]))
-                    .setCommentSupported(service.supportCommentFormAction())
                     ;
     }
     
@@ -800,8 +799,9 @@ public class StateFormService {
     /**
      * 执行指定的表单创建操作
      */
-    public static Long triggerSubmitAction(String formName, String formAction, AbstractStateForm formData) throws Exception  {
-        return getStateFormInstance(formName).getServiceInstance().triggerSubmitAction(formAction, formData);
+    public static AbstractStateCreateView triggerCreateAction(String formName, String formAction,
+            AbstractStateForm formData) throws Exception {
+        return getStateFormInstance(formName).getServiceInstance().triggerCreateAction(formAction, formData);
     }
     
     /**

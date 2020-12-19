@@ -23,15 +23,16 @@ import org.socyno.webfwk.state.basic.AbstractStateEnterAction;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStateLeaveAction;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserFormWithSecurity;
 import org.socyno.webfwk.state.module.user.SystemUserService;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -91,7 +92,7 @@ public class SystemTodoService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemTodoFormDetail, SystemTodoFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemTodoFormDetail, SystemTodoFormCreation> {
         
         public EventCreate () {
             super("添加", STATES.OPENED.getCode());
@@ -111,7 +112,7 @@ public class SystemTodoService extends
         }
         
         @Override
-        public Long handle(String event, SystemTodoFormDetail originForm, SystemTodoFormCreation form, String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemTodoFormDetail originForm, SystemTodoFormCreation form, String message) throws Exception {
             final AtomicLong todoId = new AtomicLong();
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
@@ -157,7 +158,7 @@ public class SystemTodoService extends
                     setAssignee(todoId.get(), form.getAssignee());
                 }
             });
-            return todoId.get();
+            return new StateFormEventResultCreateViewBasic(todoId.get());
         }
     }
     
@@ -293,7 +294,7 @@ public class SystemTodoService extends
         }
     }
     
-    public class EventReopen extends AbstractStateAction<SystemTodoFormDetail, BasicStateForm, Void> {
+    public class EventReopen extends AbstractStateAction<SystemTodoFormDetail, StateFormBasicForm, Void> {
         
         public EventReopen() {
             super("恢复", STATES.CLOSED.getCode(), STATES.OPENED.getCode());
@@ -319,7 +320,7 @@ public class SystemTodoService extends
         }
         
         @Override
-        public Void handle(String event, SystemTodoFormDetail originForm, BasicStateForm form, String message)
+        public Void handle(String event, SystemTodoFormDetail originForm, StateFormBasicForm form, String message)
                         throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
                     getFormTable(), new ObjectMap()

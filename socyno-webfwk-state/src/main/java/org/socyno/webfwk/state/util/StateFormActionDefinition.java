@@ -82,7 +82,7 @@ public class StateFormActionDefinition {
     @Getter
     public static enum EventType {
           Normal("normal")
-        , Submit("submit")
+        , Create("create")
         , Delete("delete")
         , Comment("comment")
         ;
@@ -111,8 +111,8 @@ public class StateFormActionDefinition {
         EventType eventType = EventType.Normal;
         if (action instanceof AbstractStateCommentAction) {
             eventType = EventType.Comment;
-        } else if (action instanceof AbstractStateSubmitAction) {
-            eventType = EventType.Submit;
+        } else if (action instanceof AbstractStateCreateAction) {
+            eventType = EventType.Create;
         } else if (action instanceof AbstractStateDeleteAction) {
             eventType = EventType.Delete;
         }

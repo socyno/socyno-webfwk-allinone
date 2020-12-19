@@ -9,7 +9,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.*;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -82,7 +84,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<DeployClusterFormDetail, DeployClusterFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<DeployClusterFormDetail, DeployClusterFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.DISABLED.getCode());
@@ -95,7 +97,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
         }
         
         @Override
-        public Long handle(String event, DeployClusterFormDetail originForm,
+        public StateFormEventResultCreateViewBasic handle(String event, DeployClusterFormDetail originForm,
                 final DeployClusterFormCreation form, String message) throws Exception {
 
             AtomicLong id = new AtomicLong(0);
@@ -120,7 +122,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
                             id.set(resultSet.getLong(1));
                         }
                     });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -156,7 +158,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
         }
     }
     
-    public class EventEnable extends AbstractStateAction<DeployClusterFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<DeployClusterFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -169,7 +171,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
         }
     }
     
-    public class EventDisable extends AbstractStateAction<DeployClusterFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<DeployClusterFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());

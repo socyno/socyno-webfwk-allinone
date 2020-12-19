@@ -1,9 +1,9 @@
 package org.socyno.webfwk.state;
 
 import org.junit.Test;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.AbstractFieldDynamicStandard;
 import org.socyno.webfwk.state.field.OptionDynamicStandard;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -16,7 +16,7 @@ public class TestFieldStandardOption extends AbstractFieldDynamicStandard {
     
     @Getter
     @ToString
-    public static class TestForm extends BasicStateForm {
+    public static class TestForm extends StateFormBasicForm {
         
         @Attributes(title="选项002", type = TestFieldStandardOption.class)
         private OptionDynamicStandard option2;

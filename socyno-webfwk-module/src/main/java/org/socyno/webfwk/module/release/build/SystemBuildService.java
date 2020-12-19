@@ -17,7 +17,9 @@ import org.socyno.webfwk.state.authority.AuthorityScopeIdParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -75,7 +77,7 @@ public class SystemBuildService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemBuildFormDetail, SystemBuildFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemBuildFormDetail, SystemBuildFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -88,7 +90,7 @@ public class SystemBuildService extends
         }
         
         @Override
-        public Long handle(String event, SystemBuildFormDetail originForm, final SystemBuildFormCreation form,
+        public StateFormEventResultCreateViewBasic handle(String event, SystemBuildFormDetail originForm, final SystemBuildFormCreation form,
                 final String message) throws Exception {
             String regex = "^[A-Za-z-0-9]+$";// 构建服务的名称。要求:英文、数字或短横行
             if (!form.getCode().matches(regex)) {
@@ -107,7 +109,7 @@ public class SystemBuildService extends
                             id.set(result.getLong(1));
                         }
                     });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -141,7 +143,7 @@ public class SystemBuildService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SystemBuildFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<SystemBuildFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -159,7 +161,7 @@ public class SystemBuildService extends
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SystemBuildFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<SystemBuildFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("启用", STATES.ENABLED.getCode(), STATES.ENABLED.getCode());

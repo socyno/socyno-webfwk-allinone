@@ -12,8 +12,7 @@ import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.util.*;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -65,7 +64,7 @@ public class SystemNotifyTemplateService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemNotifyTemplateFormSimple, SystemNotifyTemplateFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemNotifyTemplateFormSimple, SystemNotifyTemplateFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -78,7 +77,7 @@ public class SystemNotifyTemplateService extends
         }
             
         @Override
-        public Long handle(String event, SystemNotifyTemplateFormSimple originForm, SystemNotifyTemplateFormCreation form, String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemNotifyTemplateFormSimple originForm, SystemNotifyTemplateFormCreation form, String message) throws Exception {
             checkNotifyTemplateFormChange(form);
             final AtomicLong id = new AtomicLong(-1);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
@@ -101,7 +100,7 @@ public class SystemNotifyTemplateService extends
                     id.set(r.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -135,7 +134,7 @@ public class SystemNotifyTemplateService extends
         }
     }
     
-    public class EventDisabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, BasicStateForm, Void> {
+    public class EventDisabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, StateFormBasicForm, Void> {
         
         public EventDisabled() {
             super("禁用", getStateCodesEx(), STATES.DISABLED.getCode());
@@ -153,7 +152,7 @@ public class SystemNotifyTemplateService extends
         }
     }
     
-    public class EventEnabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, BasicStateForm, Void> {
+    public class EventEnabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, StateFormBasicForm, Void> {
         
         public EventEnabled() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());

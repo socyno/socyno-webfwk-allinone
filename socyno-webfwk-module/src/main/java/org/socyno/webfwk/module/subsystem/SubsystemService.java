@@ -20,7 +20,9 @@ import org.socyno.webfwk.state.module.role.SystemRoleService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -92,7 +94,7 @@ public class SubsystemService
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SubsystemFormDetail, SubsystemFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SubsystemFormDetail, SubsystemFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -105,7 +107,7 @@ public class SubsystemService
         }
         
         @Override
-        public Long handle(String event, SubsystemFormDetail originForm, final SubsystemFormCreation form,
+        public StateFormEventResultCreateViewBasic handle(String event, SubsystemFormDetail originForm, final SubsystemFormCreation form,
                 final String message) throws Exception {
             AtomicLong id = new AtomicLong(0);
             SubsystemBasicUtil.ensuerNameFormatValid(form.getCode());
@@ -119,7 +121,7 @@ public class SubsystemService
                             id.set(resultSet.getLong(1));
                         }
                     });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -161,7 +163,7 @@ public class SubsystemService
         }
         
         @Override
-        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, SubsystemFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(
                     SqlQueryUtil.prepareDeleteQuery(getFormTable(), new ObjectMap().put("=id", originForm.getId())));
@@ -169,7 +171,7 @@ public class SubsystemService
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<SubsystemFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -182,13 +184,13 @@ public class SubsystemService
         }
         
         @Override
-        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, SubsystemFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<SubsystemFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -201,13 +203,13 @@ public class SubsystemService
         }
         
         @Override
-        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, SubsystemFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
     }
     
-    public class EventSyncCodePermission extends AbstractStateAction<SubsystemFormDetail, BasicStateForm, Void> {
+    public class EventSyncCodePermission extends AbstractStateAction<SubsystemFormDetail, StateFormBasicForm, Void> {
         
         public EventSyncCodePermission() {
             super("同步代码仓授权", getStateCodesEx(), "");
@@ -225,7 +227,7 @@ public class SubsystemService
         }
         
         @Override
-        public Void handle(String event, SubsystemFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, SubsystemFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             VcsUnifiedService.CommonCloud.resetGroupMembers(originForm.getId());
             return null;

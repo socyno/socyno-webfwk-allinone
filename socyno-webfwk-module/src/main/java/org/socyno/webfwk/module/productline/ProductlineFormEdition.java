@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.socyno.webfwk.module.subsystem.FieldSubsystemNoAnyLimited;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -17,7 +17,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ProductlineFormEdition extends BasicStateForm {
+public class ProductlineFormEdition extends StateFormBasicForm {
     
     @Attributes(title = "代码", readonly = true)
     private String code;

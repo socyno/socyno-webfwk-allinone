@@ -7,13 +7,13 @@ import lombok.ToString;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 @Getter
 @Setter
 @ToString
-public class SystemAccessApplyFormCreation extends BasicStateForm  {
+public class SystemAccessApplyFormCreation extends StateFormBasicForm  {
 
     @Attributes(title = "申请原因", required = true, position = 1001 ,type = FieldText.class)
     private String reasonForApplication ;

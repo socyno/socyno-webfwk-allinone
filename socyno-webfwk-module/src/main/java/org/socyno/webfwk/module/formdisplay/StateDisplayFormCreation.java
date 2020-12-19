@@ -1,6 +1,6 @@
 package org.socyno.webfwk.module.formdisplay;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -9,7 +9,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class StateDisplayFormCreation extends BasicStateForm  {
+public class StateDisplayFormCreation extends StateFormBasicForm  {
 
     @Attributes(title = "路径", required = true, position = 1001)
     private String name ;

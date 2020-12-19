@@ -1,8 +1,8 @@
 package org.socyno.webfwk.state.module.notify;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.FieldOptionsType;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -14,7 +14,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "创建通知记录")
-public class SystemNotifyRecordFormCreation extends BasicStateForm {
+public class SystemNotifyRecordFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "类型", required = true, type = FieldOptionsType.class)
     private String type;

@@ -115,7 +115,7 @@ public class StateDisplayService extends
 
     }
 
-    public class EventCreate extends AbstractStateSubmitAction<StateDisplayFormSimple, StateDisplayFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<StateDisplayFormSimple, StateDisplayFormCreation> {
 
         public EventCreate() {
             super("申请", STATES.ENABLED.getCode());
@@ -128,7 +128,7 @@ public class StateDisplayService extends
         }
 
         @Override
-        public Long handle(String event, StateDisplayFormSimple originForm, StateDisplayFormCreation form, String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, StateDisplayFormSimple originForm, StateDisplayFormCreation form, String message) throws Exception {
 
             AtomicLong id = new AtomicLong(0);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
@@ -148,7 +148,7 @@ public class StateDisplayService extends
                     id.set(resultSet.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
 
@@ -191,7 +191,7 @@ public class StateDisplayService extends
         }
 
         @Override
-        public Void handle(String event, StateDisplayFormSimple originForm, BasicStateForm form, String sourceState) throws Exception {
+        public Void handle(String event, StateDisplayFormSimple originForm, StateFormBasicForm form, String sourceState) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
                     getFormTable(), new ObjectMap()
                             .put("=id", originForm.getId())

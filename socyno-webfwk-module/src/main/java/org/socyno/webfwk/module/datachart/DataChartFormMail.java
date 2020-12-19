@@ -8,12 +8,12 @@ import lombok.ToString;
 import java.util.List;
 import java.util.Map;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 @Getter
 @Setter
 @ToString
-public class DataChartFormMail extends BasicStateForm {
+public class DataChartFormMail extends StateFormBasicForm {
 
     @Attributes(title = "邮件模板代码", readonly = true)
     private String mailCode;

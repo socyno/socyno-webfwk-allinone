@@ -196,7 +196,7 @@ public class SystemAccessApplyService extends
         
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemAccessApplyFormSimple, SystemAccessApplyFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemAccessApplyFormSimple, SystemAccessApplyFormCreation> {
         
         public EventCreate() {
             super("申请", STATES.CREATED.getCode());
@@ -209,9 +209,8 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Long handle(String event, SystemAccessApplyFormSimple originForm, SystemAccessApplyFormCreation form, String message)
+        public StateFormEventResultCreateViewBasic handle(String event, SystemAccessApplyFormSimple originForm, SystemAccessApplyFormCreation form, String message)
                 throws Exception {
-            
             if (form.getSubSystems().size() == 0) {
                 throw new MessageException("请至少填写一项申请信息!");
             } else {
@@ -261,7 +260,7 @@ public class SystemAccessApplyService extends
                     }
                 });
                 saveSubSystems(id.get(), form.getSubSystems());
-                return id.get();
+                return new StateFormEventResultCreateViewBasic(id.get());
             }
         }
     }
@@ -327,7 +326,7 @@ public class SystemAccessApplyService extends
 
     }
 
-    public class EventSubmit extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void>{
+    public class EventSubmit extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void>{
 
         public EventSubmit(){
             super("提交" , getStateCodes(STATES.CREATED) , STATES.SUBMITTED.getCode());
@@ -340,7 +339,7 @@ public class SystemAccessApplyService extends
         }
 
         @Override
-        public Void handle(String event , SystemAccessApplyFormSimple originForm , BasicStateForm form , String sourceState) throws Exception{
+        public Void handle(String event , SystemAccessApplyFormSimple originForm , StateFormBasicForm form , String sourceState) throws Exception{
 
 
 
@@ -348,7 +347,7 @@ public class SystemAccessApplyService extends
         }
     }
 
-    public class EventAbolition extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void>{
+    public class EventAbolition extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void>{
 
         public EventAbolition(){
             super("废除" , getStateCodes(STATES.CREATED,STATES.SCM_REJECT,STATES.APPLICANT_LEADER_REJECT,STATES.SUBSYSTEM_OWNER_APPROVAL_REJECT) , STATES.ABOLITION.getCode());
@@ -361,14 +360,14 @@ public class SystemAccessApplyService extends
         }
 
         @Override
-        public Void handle(String event , SystemAccessApplyFormSimple originForm , BasicStateForm form , String sourceState) throws Exception{
+        public Void handle(String event , SystemAccessApplyFormSimple originForm , StateFormBasicForm form , String sourceState) throws Exception{
 
             return null ;
         }
     }
 
     public class EventApplicantLeaderPassed
-            extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void> {
+            extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void> {
         
         public EventApplicantLeaderPassed() {
             super("审批通过(L)", getStateCodes(STATES.SUBMITTED), new AbstractStateChoice("是否包含业务系统？",
@@ -394,7 +393,7 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Void handle(String event, SystemAccessApplyFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, SystemAccessApplyFormSimple originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
@@ -416,7 +415,7 @@ public class SystemAccessApplyService extends
     }
     
     public class EventApplicantLeaderReject
-            extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void> {
+            extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void> {
         
         public EventApplicantLeaderReject() {
             super("审批拒绝(L)", getStateCodes(STATES.SUBMITTED), STATES.APPLICANT_LEADER_REJECT.getCode());
@@ -429,7 +428,7 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Void handle(String event, SystemAccessApplyFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, SystemAccessApplyFormSimple originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
@@ -442,7 +441,7 @@ public class SystemAccessApplyService extends
     }
     
     public class EventSubsystemOwnerApprovePassed
-            extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void> {
+            extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void> {
         
         public EventSubsystemOwnerApprovePassed() {
             super("审批通过(O)", getStateCodes(STATES.APPLICANT_LEADER_PASS),
@@ -456,7 +455,7 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Void handle(String event, SystemAccessApplyFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, SystemAccessApplyFormSimple originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
@@ -464,7 +463,7 @@ public class SystemAccessApplyService extends
     }
     
     public class EventSubsystemOwnerApproveRejected
-            extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void> {
+            extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void> {
         
         public EventSubsystemOwnerApproveRejected() {
             super("审批拒绝(O)", getStateCodes(STATES.APPLICANT_LEADER_PASS),
@@ -478,7 +477,7 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Void handle(String event, SystemAccessApplyFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, SystemAccessApplyFormSimple originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
@@ -489,7 +488,7 @@ public class SystemAccessApplyService extends
         }
     }
     
-    public class EventScmPassed extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void> {
+    public class EventScmPassed extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void> {
         
         public EventScmPassed() {
             super("审批通过(M)", getStateCodes(STATES.SUBSYSTEM_OWNER_APPROVAL_PASS), STATES.APPROVAL_COMPLETED.getCode());
@@ -502,7 +501,7 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Void handle(String event, SystemAccessApplyFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, SystemAccessApplyFormSimple originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             for (SystemAccessApplySubSystemEntity entity : originForm.getSubSystems()) {
                 getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery("system_user_scope_role",
@@ -517,7 +516,7 @@ public class SystemAccessApplyService extends
         }
     }
     
-    public class EventScmReject extends AbstractStateAction<SystemAccessApplyFormSimple, BasicStateForm, Void> {
+    public class EventScmReject extends AbstractStateAction<SystemAccessApplyFormSimple, StateFormBasicForm, Void> {
         
         public EventScmReject() {
             super("审批拒绝(M)", getStateCodes(STATES.SUBSYSTEM_OWNER_APPROVAL_PASS), STATES.SCM_REJECT.getCode());
@@ -530,7 +529,7 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        public Void handle(String event, SystemAccessApplyFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, SystemAccessApplyFormSimple originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }

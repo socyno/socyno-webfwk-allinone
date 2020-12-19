@@ -657,14 +657,14 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
         }
         
         /* 确认无内容变更的操作, 不添加分布锁 */
-        if ((EventType.Submit.equals(action.getEventType()) || action.ensureNoStateChange())
+        if ((EventType.Create.equals(action.getEventType()) || action.ensureNoStateChange())
                     && action.getStateRevisionChangeIgnored()) {
             return superTriggerActionWithTransactional(event, form, message, clazz);
         }
         
         /* 加锁且事务处理, 表单创建使用表单全局锁 */
     	Long lockObjectId = form.getId();
-    	if (EventType.Submit.equals(action.getEventType())) {
+    	if (EventType.Create.equals(action.getEventType())) {
     	    lockObjectId = -1000000L;
     	}
         final Object[] result = new Object[] {null};

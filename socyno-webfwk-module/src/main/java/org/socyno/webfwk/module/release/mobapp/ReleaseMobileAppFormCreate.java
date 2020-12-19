@@ -1,9 +1,9 @@
 package org.socyno.webfwk.module.release.mobapp;
 
 import org.socyno.webfwk.module.release.mobapp.ReleaseMobileAppFormSimple.FieldOptionsAppStoreType;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 import lombok.Getter;
@@ -14,7 +14,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "移动端应用配置创建")
-public class ReleaseMobileAppFormCreate extends BasicStateForm {
+public class ReleaseMobileAppFormCreate extends StateFormBasicForm {
     
     @Attributes(title = "应用名", required = true, position = 1001)
     private String applicationName;

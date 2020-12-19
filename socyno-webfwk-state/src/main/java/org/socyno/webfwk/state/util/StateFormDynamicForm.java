@@ -1,4 +1,4 @@
-package org.socyno.webfwk.state.basic;
+package org.socyno.webfwk.state.util;
 
 import com.github.reinert.jjschema.SchemaIgnore;
 import com.google.gson.JsonElement;
@@ -10,7 +10,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class DynamicStateForm extends BasicStateForm {
+public class StateFormDynamicForm extends StateFormBasicForm {
     @SchemaIgnore
     private JsonElement jsonData;
 }

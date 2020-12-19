@@ -14,5 +14,5 @@ mkdir -p /opt/log/tomcat \
           -v /opt/log/webfwk:/opt/log/ \
           --add-host webfwk-db:103.39.217.201 \
           --add-host webfwk-db.socyno.org:103.39.217.201 \
-          -e CATALINA_OPTS=" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050 " \
+          -e CATALINA_OPTS=" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5050 " \
           "$1"

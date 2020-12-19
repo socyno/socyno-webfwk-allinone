@@ -10,9 +10,9 @@ import org.socyno.webfwk.gateway.util.HttpRedirectUtil;
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil.ServiceBackend;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.service.StateFormService;
 import org.socyno.webfwk.state.service.StateFormService.StateFormRegister;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.remote.R;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -136,7 +136,7 @@ public class StateFormController {
     @Attributes(title = "执行流程单事件(响应数据参照流程单的定义)")
     @RequestMapping(value = "/trigger/{formName}/{formAction}", method = RequestMethod.POST)
     public void triggerAction(@PathVariable("formName") String formName, @PathVariable("formAction") String formAction,
-                        @RequestBody BasicStateForm form, HttpServletRequest req, HttpServletResponse res) throws Exception {
+                        @RequestBody StateFormBasicForm form, HttpServletRequest req, HttpServletResponse res) throws Exception {
         redirectToBackend(ServiceBackend.getForm(formName), String.format("/api/form/trigger/%s/%s", formName, formAction), req, res);
     }
     
@@ -153,7 +153,7 @@ public class StateFormController {
     @Attributes(title = "执行表单创建事件")
     @RequestMapping(value = "/create/{formName}/{formAction}", method = RequestMethod.POST)
     public void triggerSubmitAction(@PathVariable("formName") String formName, @PathVariable("formAction") String formAction, 
-                        @RequestBody BasicStateForm form, HttpServletRequest req, HttpServletResponse res) throws Exception {
+                        @RequestBody StateFormBasicForm form, HttpServletRequest req, HttpServletResponse res) throws Exception {
         redirectToBackend(ServiceBackend.getForm(formName), String.format("/api/form/create/%s/%s", formName, formAction), req, res);
     }
     

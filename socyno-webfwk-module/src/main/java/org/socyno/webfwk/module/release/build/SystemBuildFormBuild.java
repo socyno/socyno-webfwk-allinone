@@ -5,7 +5,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -13,7 +13,7 @@ import com.github.reinert.jjschema.Attributes;
 @Setter
 @ToString
 @Attributes(title = "启动应用构建")
-public class SystemBuildFormBuild extends BasicStateForm {
+public class SystemBuildFormBuild extends StateFormBasicForm {
     
     @Attributes(title = "租户代码", required = true)
     private String tenant;

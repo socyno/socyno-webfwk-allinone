@@ -1,6 +1,6 @@
 package org.socyno.webfwk.module.release.mobstore;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "移动应用市场设置")
-public class ReleaseMobileStoreFormCreate extends BasicStateForm  {
+public class ReleaseMobileStoreFormCreate extends StateFormBasicForm  {
 
     @Attributes(title = "商店名", required = true, position = 1001)
     private String storeName ;

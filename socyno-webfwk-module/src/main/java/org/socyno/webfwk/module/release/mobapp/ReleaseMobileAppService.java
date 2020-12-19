@@ -13,11 +13,12 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -126,7 +127,7 @@ public class ReleaseMobileAppService extends
         
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<ReleaseMobileAppFormSimple, ReleaseMobileAppFormCreate> {
+    public class EventCreate extends AbstractStateCreateAction<ReleaseMobileAppFormSimple, ReleaseMobileAppFormCreate> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -139,9 +140,8 @@ public class ReleaseMobileAppService extends
         }
         
         @Override
-        public Long handle(String event, ReleaseMobileAppFormSimple originForm, ReleaseMobileAppFormCreate form,
+        public StateFormEventResultCreateViewBasic handle(String event, ReleaseMobileAppFormSimple originForm, ReleaseMobileAppFormCreate form,
                 String message) throws Exception {
-            
             AtomicLong id = new AtomicLong(0);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
                     getFormTable(), new ObjectMap()
@@ -159,7 +159,7 @@ public class ReleaseMobileAppService extends
                     id.set(resultSet.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -189,7 +189,7 @@ public class ReleaseMobileAppService extends
         }
     }
     
-    public class EventEnabled extends AbstractStateAction<ReleaseMobileAppFormSimple, BasicStateForm, Void> {
+    public class EventEnabled extends AbstractStateAction<ReleaseMobileAppFormSimple, StateFormBasicForm, Void> {
         
         public EventEnabled() {
             super("启用", getStateCodes(STATES.DISABLED), STATES.ENABLED.getCode());
@@ -202,13 +202,13 @@ public class ReleaseMobileAppService extends
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileAppFormSimple originForm, BasicStateForm form, String sourceState)
+        public Void handle(String event, ReleaseMobileAppFormSimple originForm, StateFormBasicForm form, String sourceState)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventDisabled extends AbstractStateAction<ReleaseMobileAppFormSimple, BasicStateForm, Void> {
+    public class EventDisabled extends AbstractStateAction<ReleaseMobileAppFormSimple, StateFormBasicForm, Void> {
         
         public EventDisabled() {
             super("禁用", getStateCodes(STATES.ENABLED), STATES.DISABLED.getCode());
@@ -221,7 +221,7 @@ public class ReleaseMobileAppService extends
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileAppFormSimple originForm, BasicStateForm form, String sourceState)
+        public Void handle(String event, ReleaseMobileAppFormSimple originForm, StateFormBasicForm form, String sourceState)
                 throws Exception {
             return null;
         }

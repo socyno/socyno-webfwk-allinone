@@ -1,7 +1,7 @@
 package org.socyno.webfwk.module.productline;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -12,7 +12,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ProductlineFormCreation extends BasicStateForm {
+public class ProductlineFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "代码", required = true)
     private String code;

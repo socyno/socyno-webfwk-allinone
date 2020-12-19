@@ -115,13 +115,14 @@ public class SysIssueService
         }
     }
     
-    public class EventSubmit extends AbstractStateSubmitAction<SysIssueFormSimple, SysIssueFormCreation> {
+    public class EventSubmit extends AbstractStateCreateAction<SysIssueFormSimple, SysIssueFormCreation> {
         public EventSubmit() {
             super("提交", STATES.SUBMITTED.getCode());
         }
         
         @Override
-        public Long handle(String event, SysIssueFormSimple originForm, final SysIssueFormCreation form, String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SysIssueFormSimple originForm,
+                final SysIssueFormCreation form, String message) throws Exception {
             AtomicLong id = new AtomicLong(0);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
                     getFormTable(), new ObjectMap()
@@ -137,7 +138,7 @@ public class SysIssueService
                 }
             });
             handleAttachments(form.getAttachments(), id.get());
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
         
         @Override
@@ -210,7 +211,7 @@ public class SysIssueService
         return StringUtils.join(ConvertUtil.asNonBlankUniqueTrimedStringArray((Object[])values), ',');
     }
     
-    public class EventAccept extends AbstractStateAction<SysIssueFormSimple, BasicStateForm, Void> {
+    public class EventAccept extends AbstractStateAction<SysIssueFormSimple, StateFormBasicForm, Void> {
         public EventAccept() {
             super("接收", STATES.SUBMITTED.getCode(), STATES.ACCEPTED.getCode());
         }
@@ -222,7 +223,7 @@ public class SysIssueService
         }
     }
     
-    public class EventReject extends AbstractStateAction<SysIssueFormSimple, BasicStateForm, Void> {
+    public class EventReject extends AbstractStateAction<SysIssueFormSimple, StateFormBasicForm, Void> {
         public EventReject() {
             super("拒绝", getStateCodes(STATES.SUBMITTED, STATES.ACCEPTED), STATES.REJECTED.getCode());
         }
@@ -267,7 +268,7 @@ public class SysIssueService
         }
     }
     
-    public class EventPause extends AbstractStateAction<SysIssueFormSimple, BasicStateForm, Void> {
+    public class EventPause extends AbstractStateAction<SysIssueFormSimple, StateFormBasicForm, Void> {
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = IsAssigneeChecker.class)

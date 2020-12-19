@@ -13,10 +13,11 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -123,7 +124,7 @@ public class SystemConfigService extends
 
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemConfigFormSimple, SystemConfigFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemConfigFormSimple, SystemConfigFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -136,8 +137,8 @@ public class SystemConfigService extends
         }
         
         @Override
-        public Long handle(String event, SystemConfigFormSimple originForm, SystemConfigFormCreation form, String message) throws Exception {
-            
+        public StateFormEventResultCreateViewBasic handle(String event, SystemConfigFormSimple originForm,
+                SystemConfigFormCreation form, String message) throws Exception {
             AtomicLong id = new AtomicLong(0);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
                     getFormTable(), new ObjectMap()
@@ -155,7 +156,7 @@ public class SystemConfigService extends
                     id.set(resultSet.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -197,7 +198,7 @@ public class SystemConfigService extends
         }
         
         @Override
-        public Void handle(String event, SystemConfigFormSimple originForm, BasicStateForm form, String sourceState) throws Exception {
+        public Void handle(String event, SystemConfigFormSimple originForm, StateFormBasicForm form, String sourceState) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
                     getFormTable(), new ObjectMap()
                             .put("=id", originForm.getId())

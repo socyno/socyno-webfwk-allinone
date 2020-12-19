@@ -6,8 +6,8 @@ import org.socyno.webfwk.module.sysjob.SystemJobQueryDefault;
 import org.socyno.webfwk.module.sysjob.SystemJobService;
 import org.socyno.webfwk.module.systenant.SystemTenantQueryDefault;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
-import org.socyno.webfwk.state.basic.DynamicStateForm;
 import org.socyno.webfwk.state.module.user.SystemUserService;
+import org.socyno.webfwk.state.util.StateFormDynamicForm;
 import org.socyno.webfwk.state.util.StateFormEventResultWebSocketViewLink;
 import org.socyno.webfwk.util.remote.R;
 import org.socyno.webfwk.util.tool.CommonUtil;
@@ -53,7 +53,7 @@ public class InternalController {
     public R executeTenantScheduleJob(@PathVariable String tenant, @PathVariable long scheduleId) throws Exception {
         sudoToInternalJobUser(tenant);
         SystemJobFormDetail schedule = SystemJobService.getInstance().getForm(scheduleId);
-        DynamicStateForm form = new DynamicStateForm();
+        StateFormDynamicForm form = new StateFormDynamicForm();
         form.setId(scheduleId);
         form.setRevision(schedule.getRevision());
         form.setJsonData(CommonUtil.fromJson("{}", JsonElement.class));

@@ -13,7 +13,9 @@ import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -83,7 +85,7 @@ public class ProductlineService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<ProductlineFormDetail, ProductlineFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<ProductlineFormDetail, ProductlineFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -96,7 +98,7 @@ public class ProductlineService extends
         }
         
         @Override
-        public Long handle(String event, ProductlineFormDetail originForm, final ProductlineFormCreation form,
+        public StateFormEventResultCreateViewBasic handle(String event, ProductlineFormDetail originForm, final ProductlineFormCreation form,
                 final String message) throws Exception {
             AtomicLong id = new AtomicLong(0);
             ProductlineBasicUtil.ensuerNameFormatValid(form.getCode());
@@ -114,7 +116,7 @@ public class ProductlineService extends
                             id.set(resultSet.getLong(1));
                         }
                     });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -166,7 +168,7 @@ public class ProductlineService extends
         }
         
         @Override
-        public Void handle(String event, ProductlineFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, ProductlineFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(
                     SqlQueryUtil.prepareDeleteQuery(getFormTable(), new ObjectMap().put("=id", originForm.getId())));
@@ -174,7 +176,7 @@ public class ProductlineService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<ProductlineFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<ProductlineFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -187,13 +189,13 @@ public class ProductlineService extends
         }
         
         @Override
-        public Void handle(String event, ProductlineFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, ProductlineFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }
     }
     
-    public class EventEnable extends AbstractStateAction<ProductlineFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<ProductlineFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -206,7 +208,7 @@ public class ProductlineService extends
         }
         
         @Override
-        public Void handle(String event, ProductlineFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, ProductlineFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             return null;
         }

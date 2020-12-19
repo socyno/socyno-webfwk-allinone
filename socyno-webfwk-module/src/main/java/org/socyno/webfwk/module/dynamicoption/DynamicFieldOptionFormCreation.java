@@ -7,12 +7,12 @@ import lombok.ToString;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 @Getter
 @Setter
 @ToString
-public class DynamicFieldOptionFormCreation extends BasicStateForm {
+public class DynamicFieldOptionFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "路径/名称", required = true)
     private String classPath;

@@ -1,7 +1,7 @@
 package org.socyno.webfwk.module.vcs.change;
 
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 @Setter
 @ToString
 @Accessors(chain = true)
-public class VcsChangeInfoFormCreation extends BasicStateForm {
+public class VcsChangeInfoFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "源码仓库类型", required = true, type = FieldOptionsVcsType.class)
     private String vcsType;

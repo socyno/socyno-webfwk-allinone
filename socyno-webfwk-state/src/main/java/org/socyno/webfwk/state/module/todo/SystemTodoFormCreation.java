@@ -2,9 +2,9 @@ package org.socyno.webfwk.state.module.todo;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -16,7 +16,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "待办事项创建")
-public class SystemTodoFormCreation extends BasicStateForm {
+public class SystemTodoFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "标题", required = true)
     private String title;

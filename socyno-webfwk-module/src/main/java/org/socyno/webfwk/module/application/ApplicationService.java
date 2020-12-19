@@ -27,7 +27,9 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -139,7 +141,7 @@ public class ApplicationService extends
                 .setDescription(form.getDescription()).setVcsPath(form.getVcsPath()).setVcsType(form.getVcsType());
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<ApplicationFormDetail, ApplicationFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<ApplicationFormDetail, ApplicationFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.CREATED.getCode());
@@ -152,7 +154,7 @@ public class ApplicationService extends
         }
         
         @Override
-        public Long handle(String event, ApplicationFormDetail originForm, final ApplicationFormCreation form,
+        public StateFormEventResultCreateViewBasic handle(String event, ApplicationFormDetail originForm, final ApplicationFormCreation form,
                 final String message) throws Exception {
             ApplicationBasicUtil.ensureNameFormatValid(form.getName());
             final AtomicLong id = new AtomicLong(0);
@@ -191,7 +193,7 @@ public class ApplicationService extends
                                                     VcsType.forName(form.getVcsType()).getMasterName())));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -300,7 +302,7 @@ public class ApplicationService extends
         }
     }
     
-    public class EventResetVcsPermission extends AbstractStateAction<ApplicationFormDetail, BasicStateForm, Void> {
+    public class EventResetVcsPermission extends AbstractStateAction<ApplicationFormDetail, StateFormBasicForm, Void> {
         
         public EventResetVcsPermission() {
             super("重置仓库授权组", getStateCodesEx(), "");
@@ -312,7 +314,7 @@ public class ApplicationService extends
         }
 
         @Override
-        public Void handle(String event, ApplicationFormDetail originForm, BasicStateForm form, String message)
+        public Void handle(String event, ApplicationFormDetail originForm, StateFormBasicForm form, String message)
                 throws Exception {
             VcsUnifiedService.CommonCloud.createOrResetAppRepo(originForm.getId());
             return null;

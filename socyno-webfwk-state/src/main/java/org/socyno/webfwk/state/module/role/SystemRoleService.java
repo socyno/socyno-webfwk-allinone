@@ -19,12 +19,13 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemFeatureWithTenant;
 import org.socyno.webfwk.state.field.OptionSystemFeature;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -119,7 +120,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemRoleFormSimple, SystemRoleFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemRoleFormSimple, SystemRoleFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.Enabled.getCode());
@@ -132,8 +133,8 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         }
         
         @Override
-        public Long handle(String event, SystemRoleFormSimple originForm, SystemRoleFormCreation role, String message)
-                throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemRoleFormSimple originForm,
+                SystemRoleFormCreation role, String message) throws Exception {
             /* 添加角色及其授权信息 */
             ensureRoleSaveFormValid(role);
             final AtomicLong id = new AtomicLong();
@@ -157,7 +158,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
                             });
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -174,7 +175,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         }
         
         @Override
-        public Void handle(String event, SystemRoleFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, SystemRoleFormSimple originForm, StateFormBasicForm form, String message)
                         throws Exception {
             if (InternalRoles.contains(originForm.getCode())) {
                 throw new MessageException("系统内建角色，禁止删除");

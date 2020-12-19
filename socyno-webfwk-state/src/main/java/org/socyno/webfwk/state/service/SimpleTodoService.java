@@ -16,22 +16,22 @@ public class SimpleTodoService {
      * 创建待办事项清单
      * 
      * @param targetKey
-     *          待办项标识
+     *                   待办项标识
      * @param targetId
-     *          流程单编号
+     *                   流程单编号
      * @param applierId
-     *          流程单发起人
+     *                   流程单发起人
      * @param targetPage
-     *          待办项页面
+     *                   待办项页面
      * @param title
-     *          待办项标题
+     *                   待办项标题
      * @param category
-     *          待办项分类
+     *                   待办项分类
      * @param assignee
-     *          待办项处理人员清单
+     *                   待办项处理人员清单
      */
-    public static long createTodo(String targetKey, Object targetId, Long applierId, String targetPage, String title, String category,
-            long... assignee) throws Exception {
+    public static long createTodo(String targetKey, Object targetId, Long applierId, String targetPage, String title,
+            String category, long... assignee) throws Exception {
         SystemTodoFormCreation form = new SystemTodoFormCreation();
         form.setTitle(title);
         form.setCategory(category);
@@ -48,7 +48,8 @@ public class SimpleTodoService {
             }
             form.setAssignee(options);
         }
-        return SystemTodoService.getInstance().triggerSubmitAction(SystemTodoService.EVENTS.Create.getName(), form);
+        return SystemTodoService.getInstance().triggerCreateAction(SystemTodoService.EVENTS.Create.getName(), form)
+                .getId();
     }
     
     /**

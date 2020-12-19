@@ -19,11 +19,12 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -82,7 +83,7 @@ public class SystemFeatureService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemFeatureFormDetail, SystemFeatureFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemFeatureFormDetail, SystemFeatureFormCreation> {
         
         public EventCreate() {
             super("创建", STATES.ENABLED.getCode());
@@ -95,8 +96,8 @@ public class SystemFeatureService extends
         }
         
         @Override
-        public Long handle(String event, SystemFeatureFormDetail originForm, SystemFeatureFormCreation form, String message)
-                throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemFeatureFormDetail originForm,
+                SystemFeatureFormCreation form, String message) throws Exception {
             final AtomicLong id = new AtomicLong(-1);
             getFormBaseDao().executeTransaction(new ResultSetProcessor() {
                 @Override
@@ -121,7 +122,7 @@ public class SystemFeatureService extends
                         });
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -173,7 +174,7 @@ public class SystemFeatureService extends
         }
         
         @Override
-        public Void handle(String event, final SystemFeatureFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, final SystemFeatureFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(getFormTable(),
                     new ObjectMap().put("=id", originForm.getId())));

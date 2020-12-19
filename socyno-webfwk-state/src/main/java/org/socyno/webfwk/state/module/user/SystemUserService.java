@@ -12,8 +12,7 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemUserAuth;
 import org.socyno.webfwk.state.field.OptionSystemUserAuth;
 import org.socyno.webfwk.state.module.role.SystemRoleFormSimple;
@@ -92,7 +91,7 @@ public class SystemUserService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemUserFormDetail, SystemUserFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemUserFormDetail, SystemUserFormCreation> {
         
         public EventCreate() {
             super("添加常规账户", STATES.ENABLED.getCode());
@@ -105,7 +104,7 @@ public class SystemUserService extends
         }
         
         @Override
-        public Long handle(String event, SystemUserFormDetail originForm, SystemUserFormCreation form, String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemUserFormDetail originForm, SystemUserFormCreation form, String message) throws Exception {
             String nameNoTenant = "";
             String nameSuffix = String.format("@%s", SessionContext.getTenant());
             if ((nameNoTenant = StringUtils.removeEnd(form.getUsername(), nameSuffix)).equals(form.getUsername())) {
@@ -141,12 +140,13 @@ public class SystemUserService extends
                     id.set(r.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
-    public class EventCreateDomain extends AbstractStateSubmitAction<SystemUserFormDetail, SystemUserFormCreationDomain> {
-
+    public class EventCreateDomain
+            extends AbstractStateCreateAction<SystemUserFormDetail, SystemUserFormCreationDomain> {
+        
         public EventCreateDomain() {
             super("添加域(Windows)用户", STATES.ENABLED.getCode());
         }
@@ -158,8 +158,8 @@ public class SystemUserService extends
         }
         
         @Override
-        public Long handle(String event, SystemUserFormDetail originForm, SystemUserFormCreationDomain form, String message)
-                throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemUserFormDetail originForm,
+                SystemUserFormCreationDomain form, String message) throws Exception {
             SystemWindowsAdUser windowsAdUser;
             if ((windowsAdUser = WindowsAdService.getAdUser(form.getUsername())) == null) {
                 throw new MessageException(String.format("用户（%s）的未在域中注册", form.getUsername()));
@@ -167,7 +167,8 @@ public class SystemUserService extends
             if (getSimple(String.format("%s@%s", windowsAdUser.getLogin(), SessionContext.getTenant())) != null) {
                 throw new MessageException(String.format("用户(%s)已存在", windowsAdUser.getLogin()));
             }
-            return ensureAdUserExisted(windowsAdUser, SessionContext.getTenant()).getId();
+            return new StateFormEventResultCreateViewBasic(
+                    ensureAdUserExisted(windowsAdUser, SessionContext.getTenant()).getId());
         }
     }
     
@@ -275,7 +276,7 @@ public class SystemUserService extends
         
     }
     
-    public class EventMarkDisabled extends AbstractStateAction<SystemUserFormDetail, BasicStateForm, Void> {
+    public class EventMarkDisabled extends AbstractStateAction<SystemUserFormDetail, StateFormBasicForm, Void> {
         
         public EventMarkDisabled() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());
@@ -294,7 +295,7 @@ public class SystemUserService extends
         
     }
     
-    public class EventMarkEnabled extends AbstractStateAction<SystemUserFormDetail, BasicStateForm, Void> {
+    public class EventMarkEnabled extends AbstractStateAction<SystemUserFormDetail, StateFormBasicForm, Void> {
         
         public EventMarkEnabled() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());

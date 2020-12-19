@@ -11,10 +11,11 @@ import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.OptionDynamicStandard;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -111,13 +112,13 @@ public class DynamicFieldOptionService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<DynamicFieldOptionFormSimple, DynamicFieldOptionFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<DynamicFieldOptionFormSimple, DynamicFieldOptionFormCreation> {
         public EventCreate() {
             super("新增", STATES.ENABLED.getCode());
         }
         
         @Override
-        public Long handle(String event, DynamicFieldOptionFormSimple originForm,
+        public StateFormEventResultCreateViewBasic handle(String event, DynamicFieldOptionFormSimple originForm,
                            final DynamicFieldOptionFormCreation form, final String message) throws Exception {
             if (form.getOptions() == null || form.getOptions().size() <= 0) {
                 throw new MessageException("请至少添加一条选项清单记录");
@@ -153,7 +154,7 @@ public class DynamicFieldOptionService extends
                     }
                 }
             });
-            return simpleId.get();
+            return new StateFormEventResultCreateViewBasic(simpleId.get());
         }
         
         @Override

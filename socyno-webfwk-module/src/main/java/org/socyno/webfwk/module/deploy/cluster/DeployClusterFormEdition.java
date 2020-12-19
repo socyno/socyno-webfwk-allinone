@@ -6,7 +6,7 @@ import lombok.ToString;
 
 import org.socyno.webfwk.module.deploy.cluster.DeployClusterFormSimple.FieldOptionsType;
 import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -14,7 +14,7 @@ import com.github.reinert.jjschema.Attributes;
 @Getter
 @Setter
 @ToString
-public class DeployClusterFormEdition extends BasicStateForm {
+public class DeployClusterFormEdition extends StateFormBasicForm {
     @Attributes(title = "代码", required = true)
     private String code;
     

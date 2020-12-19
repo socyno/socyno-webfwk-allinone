@@ -11,9 +11,10 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -66,7 +67,7 @@ public class SystemMenuDirService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemMenuDirFormDetail, SystemMenuDirFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemMenuDirFormDetail, SystemMenuDirFormCreation> {
         
         public EventCreate() {
             super("创建", STATES.ENABLED.getCode());
@@ -79,8 +80,8 @@ public class SystemMenuDirService extends
         }
         
         @Override
-        public Long handle(String event, SystemMenuDirFormDetail originForm, SystemMenuDirFormCreation form, String message)
-                throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemMenuDirFormDetail originForm,
+                SystemMenuDirFormCreation form, String message) throws Exception {
             final AtomicLong id = new AtomicLong(-1);
             getFormBaseDao().executeUpdate(
                     SqlQueryUtil.prepareInsertQuery(getFormTable(),
@@ -97,7 +98,7 @@ public class SystemMenuDirService extends
                         id.set(r.getLong(1));
                     }
                 });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -141,7 +142,7 @@ public class SystemMenuDirService extends
         }
         
         @Override
-        public Void handle(String event, final SystemMenuDirFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, final SystemMenuDirFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(getFormTable(),
                     new ObjectMap().put("=id", originForm.getId())));

@@ -12,9 +12,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.DynamicStateForm;
 import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.service.StateFormService;
+import org.socyno.webfwk.state.util.StateFormDynamicForm;
 import org.socyno.webfwk.state.service.SimpleLogService;
 import org.socyno.webfwk.util.context.HttpMessageConverter;
 import org.socyno.webfwk.util.exception.MessageException;
@@ -142,8 +142,8 @@ public class FormController {
         Class<?> actionResult = StateFormService.getActionReturnTypeClass(formName, formAction);
         Class<AbstractStateForm> actionClass = StateFormService.getActionFormTypeClass(formName, formAction);
         AbstractStateForm formData = HttpMessageConverter.toInstance(actionClass, jsonForm);
-        if (formData instanceof DynamicStateForm) {
-            ((DynamicStateForm) formData).setJsonData(jsonForm);
+        if (formData instanceof StateFormDynamicForm) {
+            ((StateFormDynamicForm) formData).setJsonData(jsonForm);
         }
         return R.ok().setData(StateFormService.triggerAction(formName, formAction, formData,
                 CommonUtil.getJstring((JsonObject) jsonData, "message"), actionResult));
@@ -168,7 +168,7 @@ public class FormController {
             @PathVariable("formAction") String formAction, HttpServletRequest req) throws Exception {
         String bodyJson = new String(IOUtils.toByteArray(req.getInputStream()), "UTF-8");
         Class<AbstractStateForm> actionClass = StateFormService.getActionFormTypeClass(formName, formAction);
-        return R.ok().setData(StateFormService.triggerSubmitAction(formName, formAction,
+        return R.ok().setData(StateFormService.triggerCreateAction(formName, formAction,
                 HttpMessageConverter.toInstance(actionClass, bodyJson)));
     }
     

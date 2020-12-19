@@ -1,6 +1,6 @@
 package org.socyno.webfwk.module.sysjob;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -11,7 +11,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class SystemJobFormEdit extends BasicStateForm {
+public class SystemJobFormEdit extends StateFormBasicForm {
     
     @Attributes(title = "名称", required = true)
     private String title;

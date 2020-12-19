@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.module.menu;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -12,7 +12,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "添加菜单面板")
-public class SystemMenuPaneFormCreation extends BasicStateForm {
+public class SystemMenuPaneFormCreation extends StateFormBasicForm {
     
     @Attributes(title = "名称", required = true)
     private String name;

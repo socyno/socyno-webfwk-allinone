@@ -1,6 +1,8 @@
 package org.socyno.webfwk.state.basic;
 
-public abstract class AbstractStateDeleteAction<S extends AbstractStateForm> extends AbstractStateAction<S, BasicStateForm, Void> {
+import org.socyno.webfwk.state.util.StateFormBasicForm;
+
+public abstract class AbstractStateDeleteAction<S extends AbstractStateForm> extends AbstractStateAction<S, StateFormBasicForm, Void> {
     
     @Override
     public EventFormType getEventFormType() throws Exception {

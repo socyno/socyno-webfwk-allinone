@@ -87,7 +87,7 @@ public class DeployEnvironmentService extends
     }
     
     public class EventCreate
-            extends AbstractStateSubmitAction<DeployEnvironmentFormDetail, DeployEnvironmentFormCreation> {
+            extends AbstractStateCreateAction<DeployEnvironmentFormDetail, DeployEnvironmentFormCreation> {
         
         public EventCreate() {
             super("添加", STATES.DISABLED.getCode());
@@ -99,7 +99,7 @@ public class DeployEnvironmentService extends
         }
         
         @Override
-        public Long handle(String event, DeployEnvironmentFormDetail originForm,
+        public StateFormEventResultCreateViewBasic handle(String event, DeployEnvironmentFormDetail originForm,
                 final DeployEnvironmentFormCreation form, String message) throws Exception {
             
             AtomicLong id = new AtomicLong(0);
@@ -119,7 +119,7 @@ public class DeployEnvironmentService extends
                                     id.set(resultSet.getLong(1));
                                 }
                             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -149,7 +149,7 @@ public class DeployEnvironmentService extends
         }
     }
     
-    public class EventEnable extends AbstractStateAction<DeployEnvironmentFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<DeployEnvironmentFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -162,7 +162,7 @@ public class DeployEnvironmentService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<DeployEnvironmentFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<DeployEnvironmentFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());

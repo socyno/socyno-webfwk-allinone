@@ -25,7 +25,9 @@ import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -110,7 +112,7 @@ public class VcsChangeInfoService extends
         }
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<VcsChangeInfoFormDetail, VcsChangeInfoFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<VcsChangeInfoFormDetail, VcsChangeInfoFormCreation> {
         
         public EventCreate() {
             super("创建", STATES.DRAFT.getCode());
@@ -133,14 +135,14 @@ public class VcsChangeInfoService extends
         }
         
         @Override
-        public Long handle(String event, VcsChangeInfoFormDetail originForm, VcsChangeInfoFormCreation form,
-                String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, VcsChangeInfoFormDetail originForm,
+                VcsChangeInfoFormCreation form, String message) throws Exception {
             create(form);
             return null;
         }
     }
     
-    public class EventFixRevision extends AbstractStateAction<VcsChangeInfoFormDetail, BasicStateForm, Void> {
+    public class EventFixRevision extends AbstractStateAction<VcsChangeInfoFormDetail, StateFormBasicForm, Void> {
         
         public EventFixRevision() {
             super("确认", STATES.DRAFT.getCode(), STATES.CREATED.getCode());
@@ -153,7 +155,7 @@ public class VcsChangeInfoService extends
         }
         
         @Override
-        public Void handle(String event, VcsChangeInfoFormDetail originForm, final BasicStateForm form,
+        public Void handle(String event, VcsChangeInfoFormDetail originForm, final StateFormBasicForm form,
                 final String message) throws Exception {
             if (!VcsType.Subversion.equals(VcsType.forName(originForm.getVcsType()))) {
                 return null;
@@ -704,7 +706,7 @@ public class VcsChangeInfoService extends
                             || !StringUtils.equals(((VcsChangeInfoFormSimple) entry).getVcsRefsName(), vcsRefsName)) {
                         continue;
                     }
-                    BasicStateForm eventForm = new BasicStateForm();
+                    StateFormBasicForm eventForm = new StateFormBasicForm();
                     eventForm.setId(((VcsChangeInfoFormSimple) entry).getId());
                     eventForm.setRevision(((VcsChangeInfoFormSimple) entry).getRevision());
                     triggerAction(EVENTS.FixRevision.getName(), eventForm);

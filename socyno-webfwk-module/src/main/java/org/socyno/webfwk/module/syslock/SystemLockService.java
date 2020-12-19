@@ -9,9 +9,9 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
@@ -108,7 +108,7 @@ public class SystemLockService extends
         
     }
     
-    public class EventUnlock extends AbstractStateAction<SystemLockFormSimple, BasicStateForm, Void> {
+    public class EventUnlock extends AbstractStateAction<SystemLockFormSimple, StateFormBasicForm, Void> {
         
         public EventUnlock() {
             super("解锁", getStateCodes(STATES.CREATED,STATES.STARTED), "");
@@ -121,7 +121,7 @@ public class SystemLockService extends
         }
         
         @Override
-        public Void handle(String event, SystemLockFormSimple originForm, BasicStateForm form, String sourceState) throws Exception {
+        public Void handle(String event, SystemLockFormSimple originForm, StateFormBasicForm form, String sourceState) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                     getFormTable(), new ObjectMap()
                             .put("=id", originForm.getId())

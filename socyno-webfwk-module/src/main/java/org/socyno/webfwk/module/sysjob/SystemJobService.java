@@ -129,7 +129,7 @@ public class SystemJobService
         return formDefinition;
     }
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemJobFormDetail, SystemJobFormCreate> {
+    public class EventCreate extends AbstractStateCreateAction<SystemJobFormDetail, SystemJobFormCreate> {
         
         public EventCreate() {
             super("创建", STATES.DISABLED.getCode());
@@ -142,7 +142,7 @@ public class SystemJobService
         }
         
         @Override
-        public Long handle(String event, SystemJobFormDetail originForm, SystemJobFormCreate form, final String message)
+        public StateFormEventResultCreateViewBasic handle(String event, SystemJobFormDetail originForm, SystemJobFormCreate form, final String message)
                 throws Exception {
             checkCronExpression(form.getCronExpression());
             if (StringUtils.isNotBlank(form.getServiceParametersForm())
@@ -181,7 +181,7 @@ public class SystemJobService
                 }
             });
             
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -222,7 +222,7 @@ public class SystemJobService
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SystemJobFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<SystemJobFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("置空闲", getStateCodesEx(STATES.ENABLED), STATES.ENABLED.getCode());
@@ -235,13 +235,13 @@ public class SystemJobService
         }
         
         @Override
-        public Void handle(String event, SystemJobFormDetail originForm, BasicStateForm form, final String message)
+        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicForm form, final String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SystemJobFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<SystemJobFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -254,13 +254,13 @@ public class SystemJobService
         }
         
         @Override
-        public Void handle(String event, SystemJobFormDetail originForm, BasicStateForm form, final String message)
+        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicForm form, final String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventResetRunnings extends AbstractStateAction<SystemJobFormDetail, BasicStateForm, Void> {
+    public class EventResetRunnings extends AbstractStateAction<SystemJobFormDetail, StateFormBasicForm, Void> {
         
         public EventResetRunnings() {
             super("重置运行任务数", getStateCodesEx(STATES.RUNNING), "");
@@ -273,7 +273,7 @@ public class SystemJobService
         }
 
         @Override
-        public Void handle(String event, SystemJobFormDetail originForm, BasicStateForm form,
+        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicForm form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                     getFormTable(), new ObjectMap()
@@ -284,7 +284,7 @@ public class SystemJobService
     }
     
     public class EventExecute
-            extends AbstractStateAction<SystemJobFormDetail, DynamicStateForm, StateFormEventResultWebSocketViewLink> {
+            extends AbstractStateAction<SystemJobFormDetail, StateFormDynamicForm, StateFormEventResultWebSocketViewLink> {
         
         public EventExecute() {
             super("运行", getStateCodes(STATES.ENABLED), STATES.RUNNING.getCode());
@@ -304,7 +304,7 @@ public class SystemJobService
         
         @Override
         public SystemJobResultView handle(String event,
-                final SystemJobFormDetail originForm, final DynamicStateForm form, final String message)
+                final SystemJobFormDetail originForm, final StateFormDynamicForm form, final String message)
                 throws Exception {
             int maxConcurrentAllowed = CommonUtil.parseMinimalInteger(originForm.getConcurrentAllowed(), 100);
             if (CommonUtil.ifNull(originForm.getRunningTasks(), 0) >= maxConcurrentAllowed) {

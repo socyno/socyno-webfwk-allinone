@@ -74,12 +74,12 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
         return actions;
     }
 
-    public boolean isSubmitAction(String event) throws Exception {
+    public boolean isCreateAction(String event) throws Exception {
         AbstractStateAction<S, ?, ?> action;
         if ((action = getExternalFormAction(event)) == null) {
             return false;
         }
-        return EventType.Submit.equals(action.getEventType());
+        return EventType.Create.equals(action.getEventType());
     }
 
     @SuppressWarnings("unchecked")
@@ -325,7 +325,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
     protected AbstractStateAction<S, ?, ?> getInternalFormAction(@NonNull StateFormEventBaseEnum event) throws Exception {
         return getInternalFormAction(event.getName());
     }
-
+    
     /**
      * 是否支持注释功能
      *
@@ -342,7 +342,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
         }
         return false;
     }
-
+    
     /**
      * 获取表单的外部事件定义
      *
@@ -624,7 +624,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
             }
             if (external) {
                 // 表单创建事件无 source states, 但属于外部事件 
-                if (EventType.Submit.equals(definition.getEventType())) {
+                if (EventType.Create.equals(definition.getEventType())) {
                     targetActions.put(name, definition);
                     if (definition.getSourceStates().length > 0) {
                       throw new StateFormSubmitEventDefinedException(getFormName(), name);
@@ -665,7 +665,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
      */
     public boolean checkAction(String event, S form) throws Exception {
         AbstractStateAction<S, ?, ?> action = null;
-        if ((action = getExternalFormAction(event)) == null || EventType.Submit.equals(action.getEventType())) {
+        if ((action = getExternalFormAction(event)) == null || EventType.Create.equals(action.getEventType())) {
             log.warn("表单({})未定义此外部操作({})。", getFormName(), event);
             return false;
         }
@@ -729,9 +729,9 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
      * 针对表单的创建事件。
      *
      */
-    public boolean checkSubmitAction(String event, AbstractStateForm form) throws Exception {
+    public boolean checkCreateAction(String event, AbstractStateForm form) throws Exception {
         AbstractStateAction<S, ?, ?> action = null;
-        if ((action = getExternalFormAction(event)) == null || !EventType.Submit.equals(action.getEventType())) {
+        if ((action = getExternalFormAction(event)) == null || !EventType.Create.equals(action.getEventType())) {
             log.warn("表单({})未定义此创建操作({})。", getFormName(), event);
             return false;
         }
@@ -801,7 +801,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
      */
     public long[] getFormExternalActionUserIds(String event, S form) throws Exception {
         AbstractStateAction<S, ?, ?> action = null;
-        if ((action = getExternalFormAction(event)) == null || EventType.Submit.equals(action.getEventType())) {
+        if ((action = getExternalFormAction(event)) == null || EventType.Create.equals(action.getEventType())) {
             throw new MessageException(String.format("表单(%s)未定义此创建操作(%s)", getFormName(), event));
         }
         Authority authority;
@@ -874,8 +874,8 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
                                 + ", ensureNoStateChange = {}, stateRevisionChangeIgnored = {}", 
                         event, action.getClass().getName(), action.getEventType(), 
                         action.ensureNoStateChange(), action.getStateRevisionChangeIgnored());
-        if (EventType.Submit.equals(action.getEventType())) {
-            if (!checkSubmitAction(event, form)) {
+        if (EventType.Create.equals(action.getEventType())) {
+            if (!checkCreateAction(event, form)) {
                 throw new StateFormActionDeclinedException(getFormName(), event);
             }
             return null;
@@ -918,18 +918,18 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
     /**
      * 执行指定的表单创建操作，并返回新表单编号。
      */
-    public Long triggerSubmitAction(String event, AbstractStateForm form) throws Exception {
-        return triggerSubmitAction(event, form, "");
+    public AbstractStateCreateView triggerCreateAction(String event, AbstractStateForm form) throws Exception {
+        return triggerCreateAction(event, form, "");
     }
     
     /**
      * 执行指定的表单创建操作，并返回新表单编号。
      */
-    public Long triggerSubmitAction(String event, AbstractStateForm form, String message) throws Exception {
-        if (!isSubmitAction(event)) {
+    public AbstractStateCreateView triggerCreateAction(String event, AbstractStateForm form, String message) throws Exception {
+        if (!isCreateAction(event)) {
             throw new MessageException("给定的事件(%s)非表单创建事件。") ;
         }
-        return triggerAction(event, form, message, Long.class);
+        return triggerAction(event, form, message, AbstractStateCreateView.class);
     }
     
     /**
@@ -943,8 +943,8 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
      * 执行指定的操作，忽略返回值。
      */
     public void triggerAction(String event, AbstractStateForm form, String message) throws Exception {
-        if (isSubmitAction(event)) {
-            triggerAction(event, form, message, Long.class);
+        if (isCreateAction(event)) {
+            triggerAction(event, form, message, AbstractStateCreateView.class);
             return;
         }
         triggerAction(event, form, message, void.class);
@@ -1005,7 +1005,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
             /**
              * 异步任务处理
              */
-            if (AbstractStateAsyncEeventView.class.isAssignableFrom(returnTypeClass)) {
+            if (AbstractStateAsyncView.class.isAssignableFrom(returnTypeClass)) {
                 new Thread(new RunableWithSessionContext() {
                     @Override
                     public void exec() {
@@ -1013,7 +1013,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
                             /* 重要：此处的休眠时为确保操作结束后，线程才开始运行，
                              * 否则该创建异步任务的事务还未提交，导致等待时的异常 */
                             Thread.sleep(1000);
-                            if (((AbstractStateAsyncEeventView)result).waitingForFinished(event, message, originForm, form)) {
+                            if (((AbstractStateAsyncView)result).waitingForFinished(event, message, originForm, form)) {
                                 psotHandleForm(event, message, result, originForm, form);
                             }
                         } catch (Exception e) {
@@ -1048,7 +1048,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
         AbstractStateChoice targetState;
         AbstractStateAction<S, ?, ?> action = getExternalFormAction(event);
         Authority authority = action.getAuthority();
-        boolean isSubmitEvent = EventType.Submit.equals(action.getEventType());
+        boolean isSubmitEvent = EventType.Create.equals(action.getEventType());
         if ((targetState = action.getTargetState()) != null) {
             newState = targetState.getTargetState(form, originForm, this, event);
         }
@@ -1154,7 +1154,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateForm> {
          * 同时调用 post 回调
          */
         AbstractStateAction<S, ?, ?> absAction = getExternalFormAction(event);
-        String originState = EventType.Submit.equals(absAction.getEventType())
+        String originState = EventType.Create.equals(absAction.getEventType())
                                 ? null : originForm.getState();
         if (!StringUtils.equals(originState, form.getState())
                 || !absAction.getStateRevisionChangeIgnored()) {

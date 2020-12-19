@@ -11,7 +11,9 @@ import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.OptionSystemFeature;
 import org.socyno.webfwk.state.module.tenant.SystemTenantBasicService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDbInfo;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -56,7 +58,7 @@ public class SystemTenantService extends
     }
     
     
-    public class EventCreate extends AbstractStateSubmitAction<SystemTenantFormDetail, SystemTenantFormCreation> {
+    public class EventCreate extends AbstractStateCreateAction<SystemTenantFormDetail, SystemTenantFormCreation> {
         
         public EventCreate() {
             super("创建", STATES.ENABLED.getCode());
@@ -69,7 +71,7 @@ public class SystemTenantService extends
         }
         
         @Override
-        public Long handle(String event, SystemTenantFormDetail originForm, SystemTenantFormCreation form, String message) throws Exception {
+        public StateFormEventResultCreateViewBasic handle(String event, SystemTenantFormDetail originForm, SystemTenantFormCreation form, String message) throws Exception {
             final AtomicLong id = new AtomicLong(-1);
             checkSystemTenantChange(form);
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
@@ -85,7 +87,7 @@ public class SystemTenantService extends
                     id.set(r.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -124,7 +126,7 @@ public class SystemTenantService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SystemTenantFormDetail, BasicStateForm, Void> {
+    public class EventDisable extends AbstractStateAction<SystemTenantFormDetail, StateFormBasicForm, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -142,7 +144,7 @@ public class SystemTenantService extends
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SystemTenantFormDetail, BasicStateForm, Void> {
+    public class EventEnable extends AbstractStateAction<SystemTenantFormDetail, StateFormBasicForm, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());

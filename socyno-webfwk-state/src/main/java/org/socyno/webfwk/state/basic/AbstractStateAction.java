@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.NameValuePair;
 import org.socyno.webfwk.state.annotation.Authority;
+import org.socyno.webfwk.state.util.StateFormDynamicForm;
 import org.socyno.webfwk.state.util.StateFormActionDefinition;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormDisplayScheduled;
 import org.socyno.webfwk.state.util.StateFormSimpleChoice;
 import org.socyno.webfwk.util.tool.ClassUtil;
@@ -131,7 +133,7 @@ public abstract class AbstractStateAction<S extends AbstractStateForm, F extends
      * @return
      */
     public boolean isAsyncEvent() {
-        return AbstractStateAsyncEeventView.class.isAssignableFrom(getReturnTypeClass());
+        return AbstractStateAsyncView.class.isAssignableFrom(getReturnTypeClass());
     }
     
     /**
@@ -139,7 +141,7 @@ public abstract class AbstractStateAction<S extends AbstractStateForm, F extends
      * @return
      */
     public boolean isDynamicEvent() {
-        return DynamicStateForm.class.isAssignableFrom(getFormTypeClass());
+        return StateFormDynamicForm.class.isAssignableFrom(getFormTypeClass());
     }
     
     /**
@@ -363,7 +365,7 @@ public abstract class AbstractStateAction<S extends AbstractStateForm, F extends
      * 获取动态表单操作事件输入表单定义
      */
     public String getDynamicFormDefinition(String event, S form) throws Exception {
-        return ClassUtil.classToJson(BasicStateForm.class).toString();
+        return ClassUtil.classToJson(StateFormBasicForm.class).toString();
     }
     
     /**

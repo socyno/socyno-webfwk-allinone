@@ -1,7 +1,7 @@
 package org.socyno.webfwk.state.module.todo;
 
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.FieldSystemUser;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -13,7 +13,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "待办事项关闭")
-public class SystemTodoFormClose extends BasicStateForm {
+public class SystemTodoFormClose extends StateFormBasicForm {
     
     @Attributes(title = "类型", readonly = true)
     private String category;

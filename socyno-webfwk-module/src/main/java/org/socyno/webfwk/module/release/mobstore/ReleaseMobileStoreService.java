@@ -13,10 +13,11 @@ import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.basic.AbstractStateAction;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -125,7 +126,7 @@ public class ReleaseMobileStoreService extends
     }
     
     public class EventCreate
-            extends AbstractStateSubmitAction<ReleaseMobileStoreFormSimple, ReleaseMobileStoreFormCreate> {
+            extends AbstractStateCreateAction<ReleaseMobileStoreFormSimple, ReleaseMobileStoreFormCreate> {
         
         public EventCreate() {
             super("添加", STATES.ENABLED.getCode());
@@ -138,7 +139,7 @@ public class ReleaseMobileStoreService extends
         }
         
         @Override
-        public Long handle(String event, ReleaseMobileStoreFormSimple originForm, ReleaseMobileStoreFormCreate form,
+        public StateFormEventResultCreateViewBasic handle(String event, ReleaseMobileStoreFormSimple originForm, ReleaseMobileStoreFormCreate form,
                 String message) throws Exception {
             
             AtomicLong id = new AtomicLong(0);
@@ -157,7 +158,7 @@ public class ReleaseMobileStoreService extends
                     id.set(resultSet.getLong(1));
                 }
             });
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -188,7 +189,7 @@ public class ReleaseMobileStoreService extends
         
     }
     
-    public class EventEnabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, BasicStateForm, Void> {
+    public class EventEnabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, StateFormBasicForm, Void> {
         
         public EventEnabled() {
             super("启用", getStateCodes(STATES.DISABLED), STATES.ENABLED.getCode());
@@ -201,13 +202,13 @@ public class ReleaseMobileStoreService extends
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, StateFormBasicForm form,
                 String sourceState) throws Exception {
             return null;
         }
     }
     
-    public class EventDisabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, BasicStateForm, Void> {
+    public class EventDisabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, StateFormBasicForm, Void> {
         
         public EventDisabled() {
             super("禁用", getStateCodes(STATES.ENABLED), STATES.DISABLED.getCode());
@@ -220,7 +221,7 @@ public class ReleaseMobileStoreService extends
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, BasicStateForm form,
+        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, StateFormBasicForm form,
                 String sourceState) throws Exception {
             return null;
         }

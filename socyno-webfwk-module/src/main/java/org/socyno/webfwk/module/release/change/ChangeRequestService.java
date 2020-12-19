@@ -26,10 +26,9 @@ import org.socyno.webfwk.state.basic.AbstractStateChoice;
 import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.basic.AbstractStatePrepare;
-import org.socyno.webfwk.state.basic.AbstractStateSubmitAction;
+import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.basic.AbstractStateTodoCloseAction;
 import org.socyno.webfwk.state.basic.AbstractStateTodoCreateAction;
-import org.socyno.webfwk.state.basic.BasicStateForm;
 import org.socyno.webfwk.state.field.OptionDynamicStandard;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.model.CommonFormAttachement;
@@ -37,7 +36,9 @@ import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
 import org.socyno.webfwk.state.sugger.SuggerDefinitionFormAttachment;
+import org.socyno.webfwk.state.util.StateFormBasicForm;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
+import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
 import org.socyno.webfwk.state.util.StateFormStateBaseEnum;
@@ -308,7 +309,7 @@ public class ChangeRequestService extends
         return options.get(0);
     }
     
-    public class EventCkOtherCreate extends AbstractStateSubmitAction<ChangeRequestFormSimple, ChangeRequestFormOtherCreation> {
+    public class EventCkOtherCreate extends AbstractStateCreateAction<ChangeRequestFormSimple, ChangeRequestFormOtherCreation> {
         
         public EventCkOtherCreate() {
             super(ChangeType.CheckListOther.getDisplay(), STATES.SubmitReady.getCode());
@@ -343,7 +344,7 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Long handle(String event, ChangeRequestFormSimple originForm, final ChangeRequestFormOtherCreation form,
+        public StateFormEventResultCreateViewBasic handle(String event, ChangeRequestFormSimple originForm, final ChangeRequestFormOtherCreation form,
                 String message) throws Exception {
             final ChangeType changeType = ChangeType.CheckListOther;
             ensureChangeTypeCategoryExisted(changeType, form.getCategory().getOptionValue());
@@ -373,7 +374,7 @@ public class ChangeRequestService extends
                     });
             handleAttachments(form.getAttachements(), id.get());
             handleApplications(form.getApplications(), id.get());
-            return id.get();
+            return new StateFormEventResultCreateViewBasic(id.get());
         }
     }
     
@@ -434,7 +435,7 @@ public class ChangeRequestService extends
         }
     }
     
-    public class EventChangeSubmit extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
+    public class EventChangeSubmit extends AbstractStateAction<ChangeRequestFormSimple, StateFormBasicForm, Void> {
         
         public EventChangeSubmit() {
             super("提交", getStateCodes(STATES.SubmitReady, STATES.TechRejected, STATES.Cancelled),
@@ -448,7 +449,7 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, StateFormBasicForm form, String message)
                 throws Exception {
             genChangeDeployItemName(form.getId());
             return null;
@@ -475,7 +476,7 @@ public class ChangeRequestService extends
      * 不同类型可能需要做一些变更回滚的操作，或者是权限控制
      * 此时，就必须通过类型自行实现检查以及授权的定义
      */
-    public class EventChangeCanceled extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
+    public class EventChangeCanceled extends AbstractStateAction<ChangeRequestFormSimple, StateFormBasicForm, Void> {
         
         public EventChangeCanceled() {
             super("撤销", getStateCodes(
@@ -495,13 +496,13 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, StateFormBasicForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventMarkDeploySuccess extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
+    public class EventMarkDeploySuccess extends AbstractStateAction<ChangeRequestFormSimple, StateFormBasicForm, Void> {
         
         public EventMarkDeploySuccess() {
             super("标记部署成功", getStateCodes(STATES.Stage02Failure, STATES.Stage02Ready), choiceDeployProduction);
@@ -514,13 +515,13 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, StateFormBasicForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventMarkDeployFailure extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
+    public class EventMarkDeployFailure extends AbstractStateAction<ChangeRequestFormSimple, StateFormBasicForm, Void> {
         
         public EventMarkDeployFailure() {
             super("标记部署失败", getStateCodes(STATES.Stage02Ready, STATES.ReleaseReady), STATES.Stage02Failure.getCode());
@@ -533,7 +534,7 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, StateFormBasicForm form, String message)
                 throws Exception {
             return null;
         }
@@ -571,7 +572,7 @@ public class ChangeRequestService extends
         }
     };
     
-    public class EventTechApprove extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
+    public class EventTechApprove extends AbstractStateAction<ChangeRequestFormSimple, StateFormBasicForm, Void> {
         
         public EventTechApprove() {
             super("技术审批通过", STATES.TechReady.getCode(), choiceApprovalNeedDBA);
@@ -584,13 +585,13 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, StateFormBasicForm form, String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventTechReject extends AbstractStateAction<ChangeRequestFormSimple, BasicStateForm, Void> {
+    public class EventTechReject extends AbstractStateAction<ChangeRequestFormSimple, StateFormBasicForm, Void> {
         
         public EventTechReject() {
             super("技术审批拒绝", STATES.TechReady.getCode(), STATES.TechRejected.getCode());
@@ -603,7 +604,7 @@ public class ChangeRequestService extends
         }
         
         @Override
-        public Void handle(String event, ChangeRequestFormSimple originForm, BasicStateForm form, String message)
+        public Void handle(String event, ChangeRequestFormSimple originForm, StateFormBasicForm form, String message)
                 throws Exception {
             return null;
         }
