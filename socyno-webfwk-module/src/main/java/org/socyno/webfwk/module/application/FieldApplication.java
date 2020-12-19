@@ -5,6 +5,7 @@ import com.github.reinert.jjschema.v1.FieldOptionsFilter;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
 import org.socyno.webfwk.util.state.field.FieldTableView;
 import org.socyno.webfwk.util.tool.ConvertUtil;
@@ -27,20 +28,24 @@ public class FieldApplication extends FieldTableView {
         
         @Override
         public String getOptionGroup() {
-            return getSubsystem().getName();
+            SubsystemFormSimple sys;
+            if ((sys = getSubsystem()) == null) {
+                return "";
+            }
+            return sys.getName();
         }
         
         @Override
         public void setOptionValue(String value) {
             setId(new Long(value));
         }
-
+        
         @Override
         public boolean equals(Object obj) {
-            return obj != null && OptionApplication.class.equals(obj.getClass()) &&
-                    this.getOptionValue().equals(((OptionApplication) obj).getOptionValue());
+            return obj != null && OptionApplication.class.equals(obj.getClass())
+                    && this.getOptionValue().equals(((OptionApplication) obj).getOptionValue());
         }
-
+        
         @Override
         public int hashCode() {
             return getOptionValue().hashCode();

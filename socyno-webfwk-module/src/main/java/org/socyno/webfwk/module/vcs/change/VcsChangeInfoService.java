@@ -24,6 +24,7 @@ import org.socyno.webfwk.state.authority.AuthoriyScopeIdParserFromApplication;
 import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
+import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
 import org.socyno.webfwk.state.util.StateFormQueryBaseEnum;
@@ -779,6 +780,6 @@ public class VcsChangeInfoService extends
     
     @Override
     protected void fillExtraFormFields(Collection<? extends VcsChangeInfoFormSimple> forms) throws Exception {
-        
+        DefaultStateFormSugger.getInstance().apply(forms);
     }
 }
