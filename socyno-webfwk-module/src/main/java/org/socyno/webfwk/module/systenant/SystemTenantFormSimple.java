@@ -1,6 +1,7 @@
 package org.socyno.webfwk.module.systenant;
 
 import org.socyno.webfwk.module.systenant.SystemTenantFormDetail.FieldOptionsState;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -12,13 +13,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "租户信息清单")
-public class SystemTenantFormSimple implements AbstractSystemTenant {
-    
-    @Attributes(title = "编号")
-    private Long id;
-    
-    @Attributes(title = "版本")
-    private Long revision;
+public class SystemTenantFormSimple extends StateFormBasicSaved implements AbstractSystemTenant {
     
     @Attributes(title = "状态", type = FieldOptionsState.class)
     private String state;

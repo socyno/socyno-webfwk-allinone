@@ -1,11 +1,9 @@
 package org.socyno.webfwk.module.deploy.environment;
 
-import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.field.FieldBooleanYesOrNo;
-import org.socyno.webfwk.util.state.field.FieldDateTime;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +16,7 @@ import com.github.reinert.jjschema.v1.FieldType;
 @Getter
 @Setter
 @ToString
-public class DeployEnvironmentFormSimple implements AbstractDeployEnvironmentForm, AbstractStateForm {
+public class DeployEnvironmentFormSimple extends StateFormBasicSaved implements AbstractDeployEnvironmentForm, AbstractStateFormBase {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -32,39 +30,12 @@ public class DeployEnvironmentFormSimple implements AbstractDeployEnvironmentFor
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "代码")
     private String name;
     
     @Attributes(title = "名称")
     private String display;
-    
-    @Attributes(title = "Sars接口地址")
-    private String sarsInterfaze;
-    
-    @Attributes(title = "中控机")
-    private String controlHost;
-    
-    @Attributes(title = "是否支持数据源管理", type = FieldBooleanYesOrNo.class)
-    private boolean dataSourceSupported;
-    
-    @Attributes(title = "创建人")
-    private Long createdBy;
-    
-    @Attributes(title = "创建人")
-    private String createdCodeBy;
-    
-    @Attributes(title = "创建人")
-    private String createdNameBy;
-    
-    @Attributes(title = "创建时间", type = FieldDateTime.class)
-    private Date createdAt;
 }

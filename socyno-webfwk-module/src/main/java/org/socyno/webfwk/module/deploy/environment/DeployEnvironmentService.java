@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.util.*;
 import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -149,7 +149,7 @@ public class DeployEnvironmentService extends
         }
     }
     
-    public class EventEnable extends AbstractStateAction<DeployEnvironmentFormDetail, StateFormBasicForm, Void> {
+    public class EventEnable extends AbstractStateAction<DeployEnvironmentFormDetail, StateFormBasicInput, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -162,7 +162,7 @@ public class DeployEnvironmentService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<DeployEnvironmentFormDetail, StateFormBasicForm, Void> {
+    public class EventDisable extends AbstractStateAction<DeployEnvironmentFormDetail, StateFormBasicInput, Void> {
         
         public EventDisable() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());

@@ -1,8 +1,9 @@
 package org.socyno.webfwk.module.systenant;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
 
-public interface AbstractSystemTenant extends AbstractStateForm {
+public interface AbstractSystemTenant extends AbstractStateFormBase {
+    
     public String getCode();
     
     public String getName();

@@ -13,6 +13,7 @@ import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.MissingUserException;
 import org.socyno.webfwk.util.exception.NoAuthorityException;
+import org.socyno.webfwk.util.tool.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -64,11 +65,11 @@ public class AuthorityAspect {
             int paramIndex = authority.paramIndex();
             if (paramIndex < 0 || paramIndex >= args.length
                     || (scopeId = args[paramIndex]) == null
-                    || ((scopeId = authority.parser().newInstance().getAuthorityScopeId(scopeId)) == null)) {
+                    || StringUtils.isBlank((String)(scopeId = authority.parser().newInstance().getAuthorityScopeId(scopeId)))) {
                 throw new NoAuthorityException("无法获取到授权标的，拒绝访问！");
             }
         }
-        if (PermissionService.hasPermission(systemAuth.getAuth(), scopeType, (Long) scopeId)) {
+        if (PermissionService.hasPermission(systemAuth.getAuth(), scopeType, (String) scopeId)) {
             return;
         }
         throw new NoAuthorityException("授权校验失败，拒绝访问！");

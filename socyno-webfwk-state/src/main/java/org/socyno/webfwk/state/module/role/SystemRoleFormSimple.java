@@ -2,7 +2,8 @@ package org.socyno.webfwk.state.module.role;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -16,7 +17,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class SystemRoleFormSimple implements AbstractStateForm {
+public class SystemRoleFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -30,14 +31,8 @@ public class SystemRoleFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long   revision;
     
     @Attributes(title = "代码")
     private String code;

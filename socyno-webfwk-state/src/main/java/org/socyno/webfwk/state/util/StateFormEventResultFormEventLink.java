@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.util;
 
-import org.socyno.webfwk.state.basic.AbstractStateFormEventResultView;
+import org.socyno.webfwk.state.abs.AbstractStateFormEventResultView;
 
 import com.github.reinert.jjschema.Attributes;
 

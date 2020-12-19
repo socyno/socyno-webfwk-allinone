@@ -4,7 +4,7 @@ import com.google.gson.*;
 
 import java.lang.reflect.Type;
 
-import org.socyno.webfwk.state.basic.AbstractStateFormEventResultView;
+import org.socyno.webfwk.state.abs.AbstractStateFormEventResultView;
 import org.socyno.webfwk.util.context.HttpMessageConverter;
 
 public class StateFormSimpleViewJsonSerializer implements JsonSerializer<AbstractStateFormEventResultView>,

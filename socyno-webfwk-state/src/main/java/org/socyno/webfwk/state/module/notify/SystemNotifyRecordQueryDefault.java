@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
 import org.socyno.webfwk.util.state.field.FieldDateOnly;
 import org.socyno.webfwk.util.tool.StringUtils;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.FieldOptionsResult;
 import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.FieldOptionsState;
 

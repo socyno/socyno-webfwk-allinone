@@ -2,9 +2,9 @@ package org.socyno.webfwk.state.module.role;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.field.FieldSystemFeatureWithTenant;
 import org.socyno.webfwk.state.field.OptionSystemFeature;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -16,26 +16,17 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "编辑系统角色")
-public class SystemRoleFormEdition implements AbstractStateForm, SystemRoleSaved  {
+public class SystemRoleFormEdition extends StateFormBasicInput implements SystemRoleSaved  {
     
-    @Attributes(title = "编号", readonly = true)
-    private Long   id;
-    
-    @Attributes(title = "状态", readonly = true)
-    private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long   revision;
-    
-    @Attributes(title = "代码", position = 1010, readonly = true)
+    @Attributes(title = "代码", readonly = true)
     private String code;
     
-    @Attributes(title = "名称", position = 1020, required = true)
+    @Attributes(title = "名称", required = true)
     private String name;
     
-    @Attributes(title = "描述", position = 1030)
+    @Attributes(title = "描述")
     private String description;
 
-    @Attributes(title = "授权的功能", position = 1040, type = FieldSystemFeatureWithTenant.class)
+    @Attributes(title = "授权的功能", type = FieldSystemFeatureWithTenant.class)
     private List<OptionSystemFeature> features;
 }

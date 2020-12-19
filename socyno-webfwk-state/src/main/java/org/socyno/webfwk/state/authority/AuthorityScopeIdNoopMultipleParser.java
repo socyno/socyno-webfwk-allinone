@@ -3,7 +3,7 @@ package org.socyno.webfwk.state.authority;
 
 public class AuthorityScopeIdNoopMultipleParser implements AuthorityScopeIdMultipleParser {
     @Override
-    public long[] getAuthorityScopeIds(Object scopeSources) {
+    public String[] getAuthorityScopeIds(Object scopeSources) {
         return null;
     }
 }

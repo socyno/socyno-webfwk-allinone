@@ -1,8 +1,8 @@
 package org.socyno.webfwk.module.subsystem;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
 
-public interface SubsystemAbstractForm extends AbstractStateForm {
+public interface SubsystemAbstractForm extends AbstractStateFormBase {
     
     public String getCode();
     

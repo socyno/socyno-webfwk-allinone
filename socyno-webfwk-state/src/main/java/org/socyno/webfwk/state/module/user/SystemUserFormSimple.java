@@ -2,9 +2,10 @@ package org.socyno.webfwk.state.module.user;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.model.AbstractUser;
 
 import com.github.reinert.jjschema.Attributes;
@@ -19,10 +20,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "系统用户基本信息")
-public class SystemUserFormSimple implements AbstractUser, AbstractStateForm {
-    
-    @Attributes(title = "编号")
-    private Long  id;
+public class SystemUserFormSimple extends StateFormBasicSaved implements AbstractUser, AbstractStateFormBase {
     
     @Attributes(title = "状态", type = SystemUserFormDetail.FieldOptionsState.class)
     private String  state;
@@ -44,9 +42,6 @@ public class SystemUserFormSimple implements AbstractUser, AbstractStateForm {
     
     @Attributes(title = "直属领导", type = FieldSystemUser.class)
     private OptionSystemUser manager;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long  revision;
     
     public static class FieldOptionsState extends FieldType {
         @Override

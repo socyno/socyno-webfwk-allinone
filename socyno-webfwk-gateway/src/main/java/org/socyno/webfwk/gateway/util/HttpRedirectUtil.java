@@ -5,9 +5,9 @@ import java.net.URI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.socyno.webfwk.state.basic.AbstractStateFormService;
 import org.socyno.webfwk.state.service.StateFormService;
 import org.socyno.webfwk.state.service.StateFormService.StateFormRegister;
+import org.socyno.webfwk.state.abs.AbstractStateFormService;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.exception.PageNotFoundException;

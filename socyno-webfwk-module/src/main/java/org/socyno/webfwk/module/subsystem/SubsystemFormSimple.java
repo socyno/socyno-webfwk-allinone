@@ -3,14 +3,19 @@ package org.socyno.webfwk.module.subsystem;
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldType;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
 
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
-@Data
-public class SubsystemFormSimple implements SubsystemAbstractForm, FieldOption {
+@Getter
+@Setter
+@ToString
+public class SubsystemFormSimple extends StateFormBasicSaved  implements SubsystemAbstractForm, FieldOption {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -24,14 +29,8 @@ public class SubsystemFormSimple implements SubsystemAbstractForm, FieldOption {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "代码")
     private String code;

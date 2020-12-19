@@ -6,9 +6,9 @@ import lombok.ToString;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateChoice;
-import org.socyno.webfwk.state.util.StateFormRevision;
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateChoice;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
 
@@ -48,7 +48,7 @@ public class StateFlowChartNodeData {
         current = false;
     }
     
-    public StateFlowChartNodeData(String state, String display, StateFormRevision stateRevision) {
+    public StateFlowChartNodeData(String state, String display, AbstractStateFormBase stateRevision) {
         if (StringUtils.isBlank(state)) {
             category = Category.UNCHANGED;
             key = category.name();
@@ -62,8 +62,8 @@ public class StateFlowChartNodeData {
         name = state;
         category = Category.STATE;
         text = CommonUtil.ifNull(display, state);
-        current = stateRevision != null && stateRevision.getStateFormStatus() != null
-                && stateRevision.getStateFormStatus().equals(state);
+        current = stateRevision != null && stateRevision.getState() != null
+                && stateRevision.getState().equals(state);
         key = String.format("%s:%s", category, state);
     }
     

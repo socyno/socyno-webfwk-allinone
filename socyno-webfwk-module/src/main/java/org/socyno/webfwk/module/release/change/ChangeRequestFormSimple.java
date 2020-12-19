@@ -5,8 +5,9 @@ import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import com.github.reinert.jjschema.v1.FieldType;
 
-import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -15,14 +16,15 @@ import java.util.List;
 import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestCategory.OptionChangeCategory;
 import org.socyno.webfwk.module.release.change.FieldChangeRequestReleaseId.OptionReleaseId;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.field.FieldSystemUser;
-import org.socyno.webfwk.state.field.OptionSystemUser;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;          
 import org.socyno.webfwk.state.model.CommonFormAttachement;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldFormAttachements;
 
-@Data
-public class ChangeRequestFormSimple implements AbstractStateForm {
+@Getter
+@Setter
+@ToString
+public class ChangeRequestFormSimple extends StateFormBasicSaved  implements AbstractStateFormBase {
     
     @Getter
     public enum ChangeType {
@@ -179,12 +181,6 @@ public class ChangeRequestFormSimple implements AbstractStateForm {
                 , requiredTags = { "ckother_create", "kafka_create" })
     private String scopeType;
     
-    @Attributes(title = "创建人", type = FieldSystemUser.class)
-    private OptionSystemUser createdBy;
-    
-    @Attributes(title = "创建时间")
-    private String createdAt;
-    
     @Attributes(title = "变更描述"
             , visibleTags = { "ckother_create", "kafka_create" }
             , editableTags = { "ckother_create", "kafka_create" }
@@ -214,9 +210,6 @@ public class ChangeRequestFormSimple implements AbstractStateForm {
     
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     public static class FieldOptionsState extends FieldType {
         @Override

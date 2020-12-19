@@ -14,16 +14,16 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.StringUtils;
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
+import org.socyno.webfwk.state.abs.AbstractStateDeleteAction;
+import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemFeatureWithTenant;
 import org.socyno.webfwk.state.field.OptionSystemFeature;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -175,7 +175,7 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         }
         
         @Override
-        public Void handle(String event, SystemRoleFormSimple originForm, StateFormBasicForm form, String message)
+        public Void handle(String event, SystemRoleFormSimple originForm, StateFormBasicInput form, String message)
                         throws Exception {
             if (InternalRoles.contains(originForm.getCode())) {
                 throw new MessageException("系统内建角色，禁止删除");
@@ -361,13 +361,13 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
         if (forms == null || forms.size() <= 0) {
             return;
         }
-        Map<Long, SubsystemRoleWithFeatures> withFeatures = new HashMap<>();
+        Map<Long, SystemRoleWithFeatures> withFeatures = new HashMap<>();
         for (SystemRoleFormSimple role : forms) {
             if (role == null) {
                 continue;
             }
-            if (role.getId() != null && SubsystemRoleWithFeatures.class.isAssignableFrom(role.getClass())) {
-                withFeatures.put(role.getId(), (SubsystemRoleWithFeatures)role);
+            if (role.getId() != null && SystemRoleWithFeatures.class.isAssignableFrom(role.getClass())) {
+                withFeatures.put(role.getId(), (SystemRoleWithFeatures)role);
             }
         }
         if (withFeatures.size() > 0) {
@@ -394,9 +394,9 @@ public class SystemRoleService extends AbstractStateFormServiceWithBaseDao<Syste
                 for (OptionSystemFeature option : optionFeatures) {
                     mappedOptionFeatures.put(option.getId(), option);
                 }
-                for (Map.Entry<Long, SubsystemRoleWithFeatures> entry : withFeatures.entrySet()) {
+                for (Map.Entry<Long, SystemRoleWithFeatures> entry : withFeatures.entrySet()) {
                     Long roleId = entry.getKey();
-                    SubsystemRoleWithFeatures role = entry.getValue();
+                    SystemRoleWithFeatures role = entry.getValue();
                     List<OptionSystemFeature> roleFeatures;
                     if ((roleFeatures = role.getFeatures()) == null) {
                         role.setFeatures(roleFeatures = new ArrayList<>());

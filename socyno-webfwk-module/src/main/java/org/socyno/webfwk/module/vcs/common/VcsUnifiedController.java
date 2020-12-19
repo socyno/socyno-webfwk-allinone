@@ -106,7 +106,6 @@ public class VcsUnifiedController {
                 return;
             }
             refsCreate.setId(app.getId());
-            refsCreate.setState(app.getState());
             refsCreate.setRevision(app.getRevision());
             ClassUtil.checkFormRequiredAndOpValue(refsCreate);
         }
@@ -118,7 +117,6 @@ public class VcsUnifiedController {
         if (applicationId != null && refsDelete != null) {
             if ((app = ApplicationService.getInstance().getSimple(applicationId)) != null) {
                 refsDelete.setId(app.getId());
-                refsDelete.setState(app.getState());
                 refsDelete.setRevision(app.getRevision());
                 ClassUtil.checkFormRequiredAndOpValue(refsDelete);
             }

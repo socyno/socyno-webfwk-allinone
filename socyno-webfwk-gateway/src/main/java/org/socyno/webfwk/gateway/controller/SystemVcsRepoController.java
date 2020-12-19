@@ -6,12 +6,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.socyno.webfwk.gateway.util.HttpRedirectUtil;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.authority.AuthoriyScopeIdParserFromApplication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.socyno.webfwk.modutil.authoriy.AuthoriyScopeIdParserFromApplication;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -35,7 +35,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "查询应用变更集")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/changes/application/{applicationId}", method = RequestMethod.GET)
     public void queryApplicationChanges(@PathVariable long applicationId, String vcsRefsName, String vcsRevision,
             Long createdBy, HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -90,7 +90,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "查询应用文件目录")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/file/dirs/get/{applicationId}", method = RequestMethod.GET)
     public void listFileDirs(@PathVariable("applicationId") Long applicationId,
             @RequestParam("dirPath") String dirPath, @RequestParam("revision") String revision, HttpServletRequest req,
@@ -100,7 +100,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "获取应用指定文件内容")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/file/content/get/{applicationId}", method = RequestMethod.GET)
     public void getFileContent(@PathVariable("applicationId") Long applicationId,
             @RequestParam("filePath") String filePath, @RequestParam("revision") String revision,
@@ -110,7 +110,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "查询应用所有分支信息")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/branch/list/{applicationId}", method = RequestMethod.GET)
     public void queryBranches(@PathVariable("applicationId") Long applicationId, String keyword, Integer page,
             Integer limit, HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -119,7 +119,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "创建项目分支")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/branch/create/{applicationId}", method = RequestMethod.POST)
     public void createBranch(@PathVariable("applicationId") Long applicationId, HttpServletRequest req,
             HttpServletResponse res) throws Exception {
@@ -128,7 +128,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "查询应用所有补丁信息")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/patch/list/{applicationId}", method = RequestMethod.GET)
     public void queryPatches(@PathVariable("applicationId") Long applicationId, String keyword, Integer page,
             Integer limit, HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -137,7 +137,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "创建项目补丁")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/patch/create/{applicationId}", method = RequestMethod.POST)
     public void createPatch(@PathVariable("applicationId") Long applicationId, HttpServletRequest req,
             HttpServletResponse res) throws Exception {
@@ -146,7 +146,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "查询应用所有标签信息")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/tag/list/{applicationId}", method = RequestMethod.GET)
     public void queryTags(@PathVariable("applicationId") Long applicationId, String keyword, Integer page,
             Integer limit, HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -155,7 +155,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "创建应用标签")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/tag/create/{applicationId}", method = RequestMethod.POST)
     public void createTags(@PathVariable("applicationId") Long applicationId, HttpServletRequest req,
             HttpServletResponse res) throws Exception {
@@ -164,7 +164,7 @@ public class SystemVcsRepoController {
     }
     
     @Attributes(title = "删除分支、补丁、标签")
-    @Authority(value = AuthorityScopeType.Subsystem, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
+    @Authority(value = AuthorityScopeType.Business, paramIndex = 0, parser = AuthoriyScopeIdParserFromApplication.class)
     @RequestMapping(value = "/unified/ref/delete/{applicationId}", method = RequestMethod.POST)
     public void deleteVcsRefsName(@PathVariable("applicationId") Long applicationId, HttpServletRequest req,
             HttpServletResponse res) throws Exception {

@@ -24,8 +24,8 @@ public class FilterSystemUserAuth implements FieldOptionsFilter {
         @SuppressWarnings("serial")
         private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {
             {
-                add(FieldSimpleOption.create(AuthorityScopeType.Subsystem.name(),
-                        AuthorityScopeType.Subsystem.getDisplay()));
+                add(FieldSimpleOption.create(AuthorityScopeType.Business.name(),
+                        AuthorityScopeType.Business.getDisplay()));
                 add(FieldSimpleOption.create(AuthorityScopeType.System.name(), AuthorityScopeType.System.getDisplay()));
             }
         };

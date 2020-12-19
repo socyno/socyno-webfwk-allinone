@@ -4,16 +4,20 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.ArrayUtils;
+import org.socyno.webfwk.state.abs.AbstractStateFormService;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.AbstractStateFormService;
+import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemRole;
+import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.module.feature.SystemFeatureService;
+import org.socyno.webfwk.state.module.role.SystemRoleService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantBasicService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.AbstractMethodUnimplimentedException;
 import org.socyno.webfwk.util.sql.AbstractDao;
+import org.socyno.webfwk.util.tool.ClassUtil;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.ConvertUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
@@ -42,10 +46,10 @@ public class PermissionService {
     }
     
     /**
-     * 获取用户在业务级别的角色清单
+     * 获取用户在指定业务内的角色清单
      */
-    public static Map<Long, String> getMySubsystemRoles(Long subsystemId) throws Exception {
-        return getMyScopeRoles(AuthorityScopeType.Subsystem, subsystemId);
+    public static Map<Long, String> getMyBusinessRoles(String businessId) throws Exception {
+        return getMyScopeRoles(AuthorityScopeType.Business, businessId);
     }
     
     /**
@@ -110,7 +114,7 @@ public class PermissionService {
      * @return
      * @throws Exception
      */
-    public static Map<AuthorityScopeType, List<Long>> queryAuthScopeByKey(String authKey) throws Exception {
+    public static Map<AuthorityScopeType, List<String>> queryAuthScopeByKey(String authKey) throws Exception {
         if (!SessionContext.hasUserSession()) {
             return Collections.emptyMap();
         }
@@ -120,20 +124,20 @@ public class PermissionService {
             return Collections.emptyMap();
         }
         
-        List<Long> scopeTargetIds;
+        List<String> scopeTargetIds;
         AuthorityScopeType scopeTargetType;
         List<Map<String, Object>> scopeTargetList = getDao().queryAsList(
                 String.format(SQL_QUERY_AUTH_SCOPE_WITH_FEATURES, CommonUtil.join("?", featureIds.size(), ",")),
                 ArrayUtils.addAll(new Object[] { SessionContext.getUserId() }, featureIds.toArray()));
-        Map<AuthorityScopeType, List<Long>> result = new HashMap<>();
+        Map<AuthorityScopeType, List<String>> result = new HashMap<>();
         for (Map<String, Object> s : scopeTargetList) {
             if ((scopeTargetType = AuthorityScopeType.forName((String) s.get("scope_type"))) == null) {
                 continue;
             }
             if ((scopeTargetIds = result.get(scopeTargetType)) == null) {
-                result.put(scopeTargetType, scopeTargetIds = new ArrayList<Long>());
+                result.put(scopeTargetType, scopeTargetIds = new ArrayList<String>());
             }
-            scopeTargetIds.add((Long) s.get("scope_id"));
+            scopeTargetIds.add((String) s.get("scope_id"));
         }
         return result;
     }
@@ -145,18 +149,18 @@ public class PermissionService {
      * 
      * 如果当前用户为管理员，则不用进行相关的授权查询，被允许访问所有数据，此时返回 null 值。
      * 
-     * 等同于 queryFormEventScopeTargetIds(AuthorityScopeType.Subsystem, authKey)
+     * 等同于 queryFormEventScopeTargetIds(AuthorityScopeType.Business, authKey)
      * 
      * @param authKey
      * 
      * @return 注意： *null* - 表示有所有业务系统；*empty* - 表示在任何业务系均无此授权。
      */
-    public static Long[] queryMySubsystemByAuthKey(String authKey) throws Exception {
-        return queryMyScopeTargetIdsByAuthKey(AuthorityScopeType.Subsystem, authKey);
+    public static String[] queryMyBusinessByAuthKey(String authKey) throws Exception {
+        return queryMyScopeTargetIdsByAuthKey(AuthorityScopeType.Business, authKey);
     }
     
     /**
-     * 查询当前用户环境下，用户在再定授权范围的哪些授权标的中拥有指定的授权。
+     * 查询当前用户环境下，用户在指定授权范围的哪些授权标的中拥有给定的授权。
      * 
      * 授权码代表着某项操作权限，那该函数查询的即为当前用户具有此操作的业务系统清单。
      * 
@@ -168,34 +172,34 @@ public class PermissionService {
      * 
      * @return 注意： *null* - 表示有所有业务系统；*empty* - 表示在任何业务系均无此授权。
      */
-    public static Long[] queryFormEventScopeTargetIds(@NonNull AuthorityScopeType scopeType, String formName,
+    public static String[] queryFormEventScopeTargetIds(@NonNull AuthorityScopeType scopeType, String formName,
             String eventKey) throws Exception {
         return queryMyScopeTargetIdsByAuthKey(scopeType, AbstractStateFormService.getFormEventKey(formName, eventKey));
     }
     
-    public static Long[] queryMyScopeTargetIdsByAuthKey(@NonNull AuthorityScopeType scopeType, String authKey) throws Exception {
+    public static String[] queryMyScopeTargetIdsByAuthKey(@NonNull AuthorityScopeType scopeType, String authKey) throws Exception {
         /* 确认用户信息是否存在，以及当前租户是否被授予该授权码 */
         if (!SessionContext.hasUserSession() || StringUtils.isBlank(authKey)
                 || !SystemFeatureService.getInstance().checkTenantAuth(SessionContext.getTenant(), authKey)) {
-            return new Long[0];
+            return new String[0];
         }
         /* 针对管理员(无论租户管理员，还是超级管理员) */
         if (SessionContext.isAdmin()) {
             return null;
         }
-        Map<AuthorityScopeType, List<Long>> authScope;
+        Map<AuthorityScopeType, List<String>> authScope;
         if ((authScope = queryAuthScopeByKey(authKey)) == null) {
-            return new Long[0];
+            return new String[0];
         }
         /* 如果在全局系统层面拥有该授权码，则意味着对租户下的所有业务系统拥有该授权 */
         if (authScope.containsKey(AuthorityScopeType.System)) {
             return null;
         }
-        List<Long> scopeTargetIds;
+        List<String> scopeTargetIds;
         if ((scopeTargetIds = authScope.get(scopeType)) == null) {
-            return new Long[0];
+            return new String[0];
         }
-        return scopeTargetIds.toArray(new Long[0]);
+        return scopeTargetIds.toArray(new String[0]);
     }
     
     /**
@@ -223,15 +227,15 @@ public class PermissionService {
             s.user_id = ? 
             AND r.id = s.role_id 
             AND s.scope_id = ?
-            AND s.scope_type = 'Subsystem'
+            AND s.scope_type = 'Business'
     **/
     @Multiline
-    private static final String SQL_QUERY_USER_SUBSYSTEM_ROLES = "X";
+    private static final String SQL_QUERY_USER_BUSINESS_ROLES = "X";
     
     /**
      * 获取用户指定范围的角色清单
      */
-    public static Map<Long, String> getMyScopeRoles(AuthorityScopeType scopeType, Long scopeTargetId) throws Exception {
+    public static Map<Long, String> getMyScopeRoles(AuthorityScopeType scopeType, String scopeTargetId) throws Exception {
         Map<Long, OptionSystemRole> optionSystemRoleMap = getMyScopeRoleEntities(scopeType, scopeTargetId);
         if(optionSystemRoleMap == null){
             return Collections.emptyMap();
@@ -250,7 +254,7 @@ public class PermissionService {
     /**
      * 获取用户指定范围的角色清单
      */
-    public static Map<Long, OptionSystemRole> getMyScopeRoleEntities(AuthorityScopeType scopeType, Long scopeTargetId) throws Exception {
+    public static Map<Long, OptionSystemRole> getMyScopeRoleEntities(AuthorityScopeType scopeType, String scopeTargetId) throws Exception {
         Long userId;
         if ((userId = SessionContext.getUserId()) == null || scopeType == null) {
             return Collections.emptyMap();
@@ -258,9 +262,9 @@ public class PermissionService {
         List<OptionSystemRole> userRoles = null;
         if (AuthorityScopeType.System.equals(scopeType)) {
             userRoles = getDao().queryAsList(OptionSystemRole.class, SQL_QUERY_USER_SYSTEM_ROLES, new Object[] { userId });
-        } else if (AuthorityScopeType.Subsystem.equals(scopeType)) {
+        } else if (AuthorityScopeType.Business.equals(scopeType)) {
             userRoles = getDao().queryAsList(OptionSystemRole.class,
-                    String.format("%s UNION %s", SQL_QUERY_USER_SYSTEM_ROLES, SQL_QUERY_USER_SUBSYSTEM_ROLES),
+                    String.format("%s UNION %s", SQL_QUERY_USER_SYSTEM_ROLES, SQL_QUERY_USER_BUSINESS_ROLES),
                     new Object[] { userId, userId, scopeTargetId });
         }
         if (userRoles == null || userRoles.size() <= 0) {
@@ -300,7 +304,7 @@ public class PermissionService {
      *  
      */
     @Multiline
-    private static final String SQL_CHECK_USER_SUBSYSTEM_TMPL = "X";
+    private static final String SQL_CHECK_USER_BUSINESS_TMPL = "X";
     
     /**
      * 检查用户是否有接口的访问授权。
@@ -311,7 +315,7 @@ public class PermissionService {
      * 
      * </pre>
      */
-    public static boolean hasPermission(String authKey, AuthorityScopeType scopeType, Long scopeTargetId)
+    public static boolean hasPermission(String authKey, AuthorityScopeType scopeType, String scopeTargetId)
             throws Exception {
         /* 确认用户信息是否存在，以及授权码是否为空 */
         if (!SessionContext.hasUserSession() || StringUtils.isBlank(authKey) || scopeType == null) {
@@ -342,7 +346,7 @@ public class PermissionService {
                                         featureIds.toArray())) != null;
                     } else {
                         result = getDao().queryAsMap(
-                                String.format(SQL_CHECK_USER_SCOPE_PERMISSION, SQL_CHECK_USER_SUBSYSTEM_TMPL,
+                                String.format(SQL_CHECK_USER_SCOPE_PERMISSION, SQL_CHECK_USER_BUSINESS_TMPL,
                                         CommonUtil.join("?", featureIds.size(), ",")),
                                 ArrayUtils.addAll(
                                         new Object[] { SessionContext.getUserId(), scopeType.name(), scopeTargetId },
@@ -392,24 +396,24 @@ public class PermissionService {
             system_user_scope_role s 
         WHERE
              r.id = s.role_id 
-            AND s.scope_type = 'Subsystem'
+            AND s.scope_type = 'Business'
             AND (s.role_id = ? OR  r.code = ?)
             AND s.scope_id IN (%s)
     **/
     @Multiline
-    private static final String SQL_QUERY_ROLE_SUBSYSTEM_USERS = "X";
+    private static final String SQL_QUERY_ROLE_BUSINESS_USERS = "X";
     
     /**
      * 获取角色在指定范围的用户清单
      */
-    private static Long[] getRoleScopeUserIds(Object roleIdOrCode, AuthorityScopeType scopeType, Long scopeTargetId,
+    private static Long[] getRoleScopeUserIds(Object roleIdOrCode, AuthorityScopeType scopeType, String scopeTargetId,
             boolean includeInherited) throws Exception {
-        Map<Long, Set<Long>> scopeUsers;
-        if ((scopeUsers = getRoleScopeUserIds(roleIdOrCode, scopeType, new Long[] { scopeTargetId },
+        Map<String, Set<Long>> scopeUsers;
+        if ((scopeUsers = getRoleScopeUserIds(roleIdOrCode, scopeType, new String[] { scopeTargetId },
                 includeInherited)) == null || scopeUsers.isEmpty()) {
             return null;
         }
-        Set<Long> caseUsers = scopeType.checkScopeId() ? scopeUsers.get(scopeTargetId) : scopeUsers.get(0L);
+        Set<Long> caseUsers = scopeType.checkScopeId() ? scopeUsers.get(scopeTargetId) : scopeUsers.get("");
         return caseUsers == null ? null : caseUsers.toArray(new Long[0]);
     }
     
@@ -419,29 +423,29 @@ public class PermissionService {
      * @param roleIdOrCode 角色的编号或代码
      * @param scopeType 授权范围类型
      * @param scopeTargetIds 授权标的编号列表
-     * @param includeInherited 是否包含继承的。从授权系统的设计上，授权当前分全局系统（System）和业务系统（Subsystem）两个
+     * @param includeInherited 是否包含继承的。从授权系统的设计上，授权当前分全局系统（System）和业务系统（Business）两个
      *                           级别，当给用户在全局系统层面授予某个角色，意味着对所有业务系统都授予了该角色。这个参数的意义
      *                           就在于查询结果是否需要包含通过继承方式获得业务系统角色授权的用户。
      * @return
      * @throws Exception
      */
-    private static Map<Long, Set<Long>> getRoleScopeUserIds(Object roleIdOrCode,
-            AuthorityScopeType scopeType, Long[] scopeTargetIds, boolean includeInherited) throws Exception {
+    private static Map<String, Set<Long>> getRoleScopeUserIds(Object roleIdOrCode,
+            AuthorityScopeType scopeType, String[] scopeTargetIds, boolean includeInherited) throws Exception {
         if (roleIdOrCode == null || StringUtils.isBlank(roleIdOrCode.toString()) || scopeType == null) {
             return Collections.emptyMap();
         }
-        Map<Long, Set<Long>> result = new HashMap<>();
-        if (AuthorityScopeType.Subsystem.equals(scopeType)) {
+        Map<String, Set<Long>> result = new HashMap<>();
+        if (AuthorityScopeType.Business.equals(scopeType)) {
             if(scopeTargetIds == null || scopeTargetIds.length <= 0) {
                 return result;
             }
             Set<Long> tmpUsers;
             List<Map<String, Object>> scopeUsers = getDao().queryAsList(
-                    String.format(SQL_QUERY_ROLE_SUBSYSTEM_USERS, CommonUtil.join("?", scopeTargetIds.length, ",")),
+                    String.format(SQL_QUERY_ROLE_BUSINESS_USERS, CommonUtil.join("?", scopeTargetIds.length, ",")),
                     ArrayUtils.addAll(new Object[] { roleIdOrCode, roleIdOrCode }, (Object[]) scopeTargetIds));
             for (Map<String, Object> su : scopeUsers) {
                 Long userId = (Long)su.get("user_id");
-                Long scopeId = (Long)su.get("scope_id");
+                String scopeId = (String)su.get("scope_id");
                 if ((tmpUsers = result.get(scopeId)) == null) {
                     result.put(scopeId, tmpUsers = new HashSet<>());
                 }
@@ -453,12 +457,12 @@ public class PermissionService {
             systemUsers = getDao()
                     .queryAsList(Long.class, SQL_QUERY_ROLE_SYSTEM_USERS, new Object[] { roleIdOrCode, roleIdOrCode });
             if (AuthorityScopeType.System.equals(scopeType)) {
-                result.put(0L, new HashSet<>(systemUsers));
+                result.put("", new HashSet<>(systemUsers));
                 return result;
             }
         }
         if (systemUsers != null && systemUsers.size() > 0 && scopeTargetIds != null) {
-            for (Long scopeTargetId : scopeTargetIds) {
+            for (String scopeTargetId : scopeTargetIds) {
                 if (scopeTargetId == null || result.containsKey(scopeTargetId)) {
                     continue;
                 }
@@ -474,59 +478,43 @@ public class PermissionService {
     /**
      * 获取指定业务系统中的角色用户清单, 包括从全局系统继承的用户
      */
-    public static Long[] getRoleSubsystemUserIds(Object roleIdOrCode, Long subsystemId) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Subsystem, subsystemId, true);
+    public static Long[] getBusinessRoleUserIds(Object roleIdOrCode, String businessId) throws Exception {
+        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Business, businessId, true);
     }
     
     /**
      * 获取指定业务系统中的角色用户清单, 不包括从全局系统继承的用户
      */
-    public static Long[] getRoleSubsystemUserIdsNoInherited(Object roleIdOrCode, Long subsystemId) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Subsystem, subsystemId, false);
+    public static Long[] getBusinessRoleUserIdsNoInherited(Object roleIdOrCode, String businessId) throws Exception {
+        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Business, businessId, false);
     }
     
     /**
      * 获取指定业务系统中的角色用户清单, 包括从全局系统继承的用户
      */
-    public static Map<Long, Set<Long>> getRoleSubsystemUserIds(Object roleIdOrCode, Long[] subsystemIds) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Subsystem, subsystemIds, true);
+    public static Map<String, Set<Long>> getScopedRoleUserIds(Object roleIdOrCode, String[] businessIds) throws Exception {
+        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Business, businessIds, true);
     }
     
     /**
      * 获取指定业务系统中的角色用户清单, 不包括从全局系统继承的用户
      */
-    public static Map<Long, Set<Long>> getRoleSubsystemUserIdsNoInherited(Object roleIdOrCode, Long[] subsystemIds) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Subsystem, subsystemIds, false);
-    }
-    
-    /**
-     * 获取指定业务系统中的角色用户清单, 包括从全局系统继承的用户
-     */
-    public static  Long[] getRoleSubsystemUserIds(Object roleIdOrCode, String subsystemCode) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Subsystem, getDao().queryAsObject(Long.class,
-                "SELECT id FROM subsystem WHERE code = ?", new Object[] { subsystemCode }), true);
-    }
-    
-    /**
-     * 获取指定业务系统中的角色用户清单, 不包括从全局系统继承的用户
-     */
-    public static  Long[] getRoleSubsystemUserIdsNoInherited(Object roleIdOrCode, String subsystemCode) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Subsystem, getDao().queryAsObject(Long.class,
-                "SELECT id FROM subsystem WHERE code = ?", new Object[] { subsystemCode }), false);
+    public static Map<String, Set<Long>> getBusinessRoleUserIdsNoInherited(Object roleIdOrCode, String[] businessIds) throws Exception {
+        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.Business, businessIds, false);
     }
     
     /**
      * 获取全局系统范围内指定角色的用户清单
      */
     public static  Long[] getRoleSystemUserIds(Object roleIdOrCode) throws Exception {
-        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.System, (Long)null, true);
+        return getRoleScopeUserIds(roleIdOrCode, AuthorityScopeType.System, (String)null, true);
     }
     
     /**
      * 检查当前用户是否有指定的操作授权
      * 
      */
-    public static boolean hasFormEventPermission(AuthorityScopeType scopeType, String formName, String eventKey, Long scopeTargetId) throws Exception {
+    public static boolean hasFormEventPermission(AuthorityScopeType scopeType, String formName, String eventKey, String scopeTargetId) throws Exception {
         if (StringUtils.isBlank(formName) || StringUtils.isBlank(eventKey)) {
             return false;
         }
@@ -558,28 +546,16 @@ public class PermissionService {
     
     /**
      * 查询指定业务系统下, 拥有任一授权操作的用户清单。
-     * @param subsystemId    业务系统
+     * @param businessId    业务系统
      * @param systemIncluded 是否包括系统全局继承而拥有这些授权的用户
      * @param authKeys       授权清单
      * @return
      * @throws Exception
      */
-    public static List<Long> querySubsystemUsersByAuthKey(@NonNull Long subsystemId, boolean systemIncluded, String... authKeys)
-            throws Exception {
-        return querySubsystemUsersByAuthKeys(subsystemId, systemIncluded, authKeys);
-    }
-    
-    /**
-     * 查询指定业务下, 拥有任一授权的用户清单。
-     * @param subsystemIds   业务系统
-     * @param systemIncluded 是否包括系统全局继承而拥有这些授权的用户
-     * @param authKeys       授权清单
-     * @return
-     * @throws Exception
-     */
-    private static List<Long> querySubsystemUsersByAuthKeys(long subsystemId, boolean systemIncluded, String... authKeys)
-            throws Exception {
-        if ((authKeys = ConvertUtil.asNonBlankUniqueTrimedStringArray((Object[]) authKeys)).length <= 0) {
+    public static List<Long> queryBusinessUsersByAuthKey(@NonNull String businessId, boolean systemIncluded,
+            String... authKeys) throws Exception {
+        if (StringUtils.isBlank(businessId)
+                || (authKeys = ConvertUtil.asNonBlankUniqueTrimedStringArray((Object[]) authKeys)).length <= 0) {
             return Collections.emptyList();
         }
         List<Long> featureIds;
@@ -587,12 +563,12 @@ public class PermissionService {
                 authKeys)) == null || featureIds.isEmpty()) {
             return Collections.emptyList();
         }
-        String subsystemsSql = String.format("s.scope_type = 'Subsystem' AND s.scope_id = ?", subsystemId);
+        String businessSql = String.format("s.scope_type = 'Businiess' AND s.scope_id = ?", businessId);
         return getDao().queryAsList(Long.class,
                 String.format(SQL_QUERY_SCOPE_TARGET_USERS_BY_FEATURES, StringUtils.join(featureIds, ','),
                         systemIncluded
-                                ? String.format(" AND ((%s) OR (s.scope_type = 'System'))", subsystemsSql)
-                                : String.format(" AND %s", subsystemsSql)));
+                                ? String.format(" AND ((%s) OR (s.scope_type = 'System'))", businessSql)
+                                : String.format(" AND %s", businessSql)));
     }
     
     /**
@@ -600,12 +576,12 @@ public class PermissionService {
      * @param authKey        授权操作
      * @param systemIncluded 是否包括系统全局继承而拥有这些授权的用户
      * @param matchAll       匹配所有还是任一业务系统（System 授权视为匹配所有）
-     * @param subsystemIds   业务系统
+     * @param businessIds   业务系统
      * @return 具有授权的用户标识列表
      */
-    private static List<Long> querySubsystemUsersByAuthKey(String authKey, boolean systemIncluded, boolean matchAll, long ...subsystemIds)
+    private static List<Long> queryBusinessUsersByAuthKey(String authKey, boolean systemIncluded, boolean matchAll, String ...businessIds)
             throws Exception {
-        if (subsystemIds == null || subsystemIds.length <= 0 || StringUtils.isBlank(authKey)) {
+        if (businessIds == null || businessIds.length <= 0 || StringUtils.isBlank(authKey)) {
             return Collections.emptyList();
         }
         List<Long> featureIds;
@@ -613,15 +589,16 @@ public class PermissionService {
                 authKey)) == null || featureIds.isEmpty()) {
             return Collections.emptyList();
         }
-        String subsystemsSql = matchAll ? CommonUtil.join(
-                "EXISTS(SELECT 1 FROM system_user_scope_role WHERE s.id = id AND scope_type = 'Subsystem' AND scope_id = ?)",
-                subsystemIds.length, " AND "
-            ) : String.format("s.scope_type = 'Subsystem' AND s.scope_id IN (%s)", CommonUtil.join("?", subsystemIds.length, ","));
+        String businessSql = matchAll ? CommonUtil.join(
+                "EXISTS(SELECT 1 FROM system_user_scope_role WHERE s.id = id AND scope_type = 'Business' AND scope_id = ?)",
+                businessIds.length, " AND "
+            ) : String.format("s.scope_type = 'Business' AND s.scope_id IN (%s)", CommonUtil.join("?", businessIds.length, ","));
         return getDao().queryAsList(Long.class,
                 String.format(SQL_QUERY_SCOPE_TARGET_USERS_BY_FEATURES, StringUtils.join(featureIds, ','),
                         systemIncluded
-                                ? String.format(" AND ((%s) OR (s.scope_type = 'System'))", subsystemsSql)
-                                : String.format(" AND %s", subsystemsSql)), ArrayUtils.toObject(subsystemIds));
+                                ? String.format(" AND ((%s) OR (s.scope_type = 'System'))", businessSql)
+                                : String.format(" AND %s", businessSql)),
+                 businessIds);
     }
     
     /**
@@ -646,19 +623,66 @@ public class PermissionService {
      * @param formName
      * @param eventKey
      * @param matchAllScopeIds
-     * @param subsystemIds
+     * @param scopeTargetIds
      * @return
      * @throws Exception
      */
     public static List<Long> queryFormEventUsers(AuthorityScopeType scopeType, String formName, String eventKey,
-            boolean matchAllScopeIds, long... scopeTargetIds) throws Exception {
+            boolean matchAllScopeIds, String... scopeTargetIds) throws Exception {
         String authKey = AbstractStateFormService.getFormEventKey(formName, eventKey);
         if (AuthorityScopeType.System.equals(scopeType)) {
             return querySystemUsersByAuthKey(new String[] { authKey });
         }
-        if (AuthorityScopeType.Subsystem.equals(scopeType)) {
-            return querySubsystemUsersByAuthKey(authKey, true /* systemIncluded */, matchAllScopeIds /* matchAll */, scopeTargetIds);
+        if (AuthorityScopeType.Business.equals(scopeType)) {
+            return queryBusinessUsersByAuthKey(authKey, true /* systemIncluded */, matchAllScopeIds /* matchAll */, scopeTargetIds);
         }
         throw new AbstractMethodUnimplimentedException();
+    }
+    
+    /**
+     * 获取业务系统的负责人信息
+     */
+    
+    public static List<OptionSystemUser> getBusinessOwners(String businessId) throws Exception {
+        if (StringUtils.isBlank(businessId)) {
+            return null;
+        }
+        return getBusinessOwners(new String[] { businessId }).get(businessId);
+    }
+    
+    public static Map<String, List<OptionSystemUser>> getBusinessOwners(String[] businessIds) throws Exception {
+        if (businessIds == null || businessIds.length <= 0) {
+            return Collections.emptyMap();
+        }
+        Map<String, Set<Long>> subsysUsers;
+        if ((subsysUsers = getBusinessRoleUserIdsNoInherited(SystemRoleService.InternalRoles.Owner.getCode(),
+                businessIds)) == null || subsysUsers.size() <= 0) {
+            return Collections.emptyMap();
+        }
+        Set<Long> allUsers = new HashSet<>();
+        for (Set<Long> v : subsysUsers.values()) {
+            allUsers.addAll(v);
+        }
+        List<OptionSystemUser> allOptionUsers;
+        if ((allOptionUsers = ClassUtil.getSingltonInstance(FieldSystemUser.class)
+                .queryDynamicValues(allUsers.toArray(new Long[0]))) == null || allOptionUsers.size() <= 0) {
+            return Collections.emptyMap();
+        }
+        Map<Long, OptionSystemUser> mapOptionUsers = new HashMap<>();
+        for (OptionSystemUser aou : allOptionUsers) {
+            mapOptionUsers.put(aou.getId(), aou);
+        }
+        OptionSystemUser foundOptionUser;
+        List<OptionSystemUser> sysOptionUsers;
+        Map<String, List<OptionSystemUser>> result = new HashMap<>();
+        for (Map.Entry<String, Set<Long>> e : subsysUsers.entrySet()) {
+            result.put(e.getKey(), sysOptionUsers = new ArrayList<>());
+            for (Long uid : e.getValue()) {
+                if ((foundOptionUser = mapOptionUsers.get(uid)) != null) {
+                    sysOptionUsers.add(foundOptionUser);
+                }
+            }
+        }
+        return result;
     }
 }

@@ -20,7 +20,7 @@ public enum AuthorityScopeType implements Serializable {
             return false;
         }
     },
-    Subsystem("业务系统") {
+    Business("业务系统") {
         @Override
         public boolean checkScopeId() {
             return true;

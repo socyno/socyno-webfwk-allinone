@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.util;
 
-import org.socyno.webfwk.state.basic.AbstractStateCreateView;
+import org.socyno.webfwk.state.abs.AbstractStateCreateView;
 
 import com.github.reinert.jjschema.Attributes;
 

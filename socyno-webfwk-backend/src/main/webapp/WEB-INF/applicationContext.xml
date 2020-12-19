@@ -61,7 +61,7 @@
         <constructor-arg name="typeAdapters">
             <map>
                 <entry key="org.socyno.webfwk.state.annotation.Authority" value ="" />
-                <entry key="*org.socyno.webfwk.state.basic.AbstractStateFormEventResultView" value ="org.socyno.webfwk.state.util.StateFormSimpleViewJsonSerializer" />
+                <entry key="*org.socyno.webfwk.state.abs.AbstractStateFormEventResultView" value ="org.socyno.webfwk.state.util.StateFormSimpleViewJsonSerializer" />
             </map>
         </constructor-arg>
         <property name="supportedMediaTypes">

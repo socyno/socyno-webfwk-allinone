@@ -6,13 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
+import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemUserAuth;
 import org.socyno.webfwk.state.field.OptionSystemUserAuth;
 import org.socyno.webfwk.state.module.role.SystemRoleFormSimple;
@@ -276,7 +276,7 @@ public class SystemUserService extends
         
     }
     
-    public class EventMarkDisabled extends AbstractStateAction<SystemUserFormDetail, StateFormBasicForm, Void> {
+    public class EventMarkDisabled extends AbstractStateAction<SystemUserFormDetail, StateFormBasicInput, Void> {
         
         public EventMarkDisabled() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());
@@ -295,7 +295,7 @@ public class SystemUserService extends
         
     }
     
-    public class EventMarkEnabled extends AbstractStateAction<SystemUserFormDetail, StateFormBasicForm, Void> {
+    public class EventMarkEnabled extends AbstractStateAction<SystemUserFormDetail, StateFormBasicInput, Void> {
         
         public EventMarkEnabled() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());

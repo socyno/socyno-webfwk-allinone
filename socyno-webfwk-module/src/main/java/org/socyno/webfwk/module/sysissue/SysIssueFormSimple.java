@@ -11,14 +11,15 @@ import lombok.ToString;
 import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.*;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.field.*;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.*;
 
 @Getter
 @Setter
 @ToString
-public class SysIssueFormSimple implements AbstractStateForm {
+public class SysIssueFormSimple extends StateFormBasicSaved  implements AbstractStateFormBase {
     
     public static class FieldOptionsState extends FieldType {
         
@@ -40,12 +41,6 @@ public class SysIssueFormSimple implements AbstractStateForm {
     public static class FieldOptionsCloseResult extends AbstractFieldDynamicStandard {
         
     }
-    
-    @Attributes(title = "编号")
-    private Long id;
-    
-    @Attributes(title = "版本")
-    private Long revision;
     
     @Attributes(title = "状态", type = FieldOptionsState.class)
     private String state;
@@ -91,10 +86,4 @@ public class SysIssueFormSimple implements AbstractStateForm {
                     requiredTags= {"event_close"},
                     editableTags= {"event_close"})
     private String resolution;
-    
-    @Attributes(title = "创建人", type = FieldSystemUser.class)
-    private OptionSystemUser createdBy;
-    
-    @Attributes(title = "创建时间", type = FieldDateTime.class)
-    private Date createdAt;
 }

@@ -2,16 +2,21 @@ package org.socyno.webfwk.module.productline;
 
 import java.util.List;
 
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldType;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
-public class ProductlineFormSimple implements ProductlineFormAbstract {
+@Getter
+@Setter
+@ToString
+public class ProductlineFormSimple extends StateFormBasicSaved implements ProductlineFormAbstract {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -25,14 +30,8 @@ public class ProductlineFormSimple implements ProductlineFormAbstract {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "代码")
     private String code;

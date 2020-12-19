@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.socyno.webfwk.module.sysjob.SystemJobFormDetail.FieldOptionsState;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
 import org.socyno.webfwk.util.tool.StringUtils;
@@ -21,16 +21,16 @@ import org.socyno.webfwk.util.tool.StringUtils;
 @Accessors(chain = true)
 public class SystemJobQueryDefault extends AbstractStateFormQuery {
     
-    @Attributes(title = "关键字", position = 1100)
+    @Attributes(title = "关键字")
     private String keyword;
     
-    @Attributes(title = "状态", position = 1200, type = FieldOptionsState.class)
+    @Attributes(title = "状态", type = FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "只查询未禁止的任务", position = 1300)
+    @Attributes(title = "只查询未禁止的任务")
     private boolean onlyNonDisabled = false;
     
-    @Attributes(title = "只查询计划执行的任务", position = 1400)
+    @Attributes(title = "只查询计划执行的任务")
     private boolean onlyScheduled = false;
     
     public SystemJobQueryDefault() {

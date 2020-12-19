@@ -1,8 +1,7 @@
 package org.socyno.webfwk.state.module.notify;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.util.state.field.FieldText;
-import org.socyno.webfwk.state.module.notify.SystemNotifyTemplateFormSimple.FieldOptionsState;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -14,15 +13,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "创建通知模板")
-public class SystemNotifyTemplateFormCreation implements AbstractStateForm {
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
-    @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
-    private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
+public class SystemNotifyTemplateFormCreation extends StateFormBasicInput {
     
     @Attributes(title = "代码", required = true, description = "模板的唯一标识，必须确保唯一性")
     private String code;

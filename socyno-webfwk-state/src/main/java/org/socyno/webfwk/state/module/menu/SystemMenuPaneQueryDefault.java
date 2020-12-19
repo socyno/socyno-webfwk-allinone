@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
 import org.socyno.webfwk.util.tool.StringUtils;
@@ -20,7 +20,7 @@ import lombok.experimental.Accessors;
 @Getter
 @ToString
 @Accessors(chain = true)
-@Attributes(title = "菜单面板查询")
+@Attributes(title = "菜单导航查询")
 public class SystemMenuPaneQueryDefault extends AbstractStateFormQuery {
     
     /**

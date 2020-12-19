@@ -10,22 +10,23 @@ import java.util.Set;
 import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.application.ApplicationFormSimple;
 import org.socyno.webfwk.module.application.ApplicationService;
+import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
 import org.socyno.webfwk.module.vcs.common.VcsRevisionEntry;
 import org.socyno.webfwk.module.vcs.common.VcsType;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedService;
+import org.socyno.webfwk.modutil.authoriy.AuthoriyScopeIdParserFromApplication;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
-import org.socyno.webfwk.state.authority.AuthoriyScopeIdParserFromApplication;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -98,9 +99,12 @@ public class VcsChangeInfoService extends
     public static class VcsChangeInfoSubsystemParser implements AuthorityScopeIdParser {
         
         @Override
-        public Long getAuthorityScopeId(Object form) {
-            return new AuthoriyScopeIdParserFromApplication()
-                    .getAuthorityScopeId(((VcsChangeInfoFormSimple) form).getApplication().getId());
+        public String getAuthorityScopeId(Object form) {
+            OptionApplication application;
+            if ((application = ((VcsChangeInfoFormSimple) form).getApplication()) == null) {
+                return null;
+            }
+            return new AuthoriyScopeIdParserFromApplication().getAuthorityScopeId(application.getId());
         }
     }
     
@@ -142,20 +146,20 @@ public class VcsChangeInfoService extends
         }
     }
     
-    public class EventFixRevision extends AbstractStateAction<VcsChangeInfoFormDetail, StateFormBasicForm, Void> {
+    public class EventFixRevision extends AbstractStateAction<VcsChangeInfoFormDetail, StateFormBasicInput, Void> {
         
         public EventFixRevision() {
             super("确认", STATES.DRAFT.getCode(), STATES.CREATED.getCode());
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = VcsChangeInfoSubsystemParser.class, checker = VcsChangeInfoSubsystemChecker.class)
+        @Authority(value = AuthorityScopeType.Business, parser = VcsChangeInfoSubsystemParser.class, checker = VcsChangeInfoSubsystemChecker.class)
         public void check(String event, VcsChangeInfoFormDetail form, String sourceState) {
             
         }
         
         @Override
-        public Void handle(String event, VcsChangeInfoFormDetail originForm, final StateFormBasicForm form,
+        public Void handle(String event, VcsChangeInfoFormDetail originForm, final StateFormBasicInput form,
                 final String message) throws Exception {
             if (!VcsType.Subversion.equals(VcsType.forName(originForm.getVcsType()))) {
                 return null;
@@ -706,7 +710,7 @@ public class VcsChangeInfoService extends
                             || !StringUtils.equals(((VcsChangeInfoFormSimple) entry).getVcsRefsName(), vcsRefsName)) {
                         continue;
                     }
-                    StateFormBasicForm eventForm = new StateFormBasicForm();
+                    StateFormBasicInput eventForm = new StateFormBasicInput();
                     eventForm.setId(((VcsChangeInfoFormSimple) entry).getId());
                     eventForm.setRevision(((VcsChangeInfoFormSimple) entry).getRevision());
                     triggerAction(EVENTS.FixRevision.getName(), eventForm);

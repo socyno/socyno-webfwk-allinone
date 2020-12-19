@@ -12,10 +12,10 @@ import org.socyno.webfwk.executor.abs.AbstractJobStatus;
 import org.socyno.webfwk.executor.abs.AbstractStatusCallbackCreater;
 import org.socyno.webfwk.executor.model.JobBasicStatus;
 import org.socyno.webfwk.executor.model.JobStatusWebsocketLink;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantBasicService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
@@ -222,7 +222,7 @@ public class SystemJobService
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SystemJobFormDetail, StateFormBasicForm, Void> {
+    public class EventEnable extends AbstractStateAction<SystemJobFormDetail, StateFormBasicInput, Void> {
         
         public EventEnable() {
             super("置空闲", getStateCodesEx(STATES.ENABLED), STATES.ENABLED.getCode());
@@ -235,13 +235,13 @@ public class SystemJobService
         }
         
         @Override
-        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicForm form, final String message)
+        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicInput form, final String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SystemJobFormDetail, StateFormBasicForm, Void> {
+    public class EventDisable extends AbstractStateAction<SystemJobFormDetail, StateFormBasicInput, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -254,13 +254,13 @@ public class SystemJobService
         }
         
         @Override
-        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicForm form, final String message)
+        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicInput form, final String message)
                 throws Exception {
             return null;
         }
     }
     
-    public class EventResetRunnings extends AbstractStateAction<SystemJobFormDetail, StateFormBasicForm, Void> {
+    public class EventResetRunnings extends AbstractStateAction<SystemJobFormDetail, StateFormBasicInput, Void> {
         
         public EventResetRunnings() {
             super("重置运行任务数", getStateCodesEx(STATES.RUNNING), "");
@@ -273,7 +273,7 @@ public class SystemJobService
         }
 
         @Override
-        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicForm form,
+        public Void handle(String event, SystemJobFormDetail originForm, StateFormBasicInput form,
                 final String message) throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
                     getFormTable(), new ObjectMap()
@@ -303,7 +303,7 @@ public class SystemJobService
         }
         
         @Override
-        public SystemJobResultView handle(String event,
+        public SystemJobResultView handle(final String event,
                 final SystemJobFormDetail originForm, final StateFormDynamicForm form, final String message)
                 throws Exception {
             int maxConcurrentAllowed = CommonUtil.parseMinimalInteger(originForm.getConcurrentAllowed(), 100);
@@ -348,7 +348,7 @@ public class SystemJobService
                                         .executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
                                                 new ObjectMap().put("=id", originForm.getId()).put("#running_tasks",
                                                         "running_tasks - 1")));
-                                saveStateRevision(originForm.getId(), STATES.ENABLED.getCode(),
+                                saveStateRevision(event, originForm.getId(), STATES.ENABLED.getCode(),
                                         new ObjectMap().put("<=running_tasks", 0), STATES.RUNNING.getCode());
                             } catch (Exception e) {
                                 log.error(e.toString(), e);

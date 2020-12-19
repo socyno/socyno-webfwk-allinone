@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.exec;
 
-import org.socyno.webfwk.state.basic.AbstractStateChoice;
+import org.socyno.webfwk.state.abs.AbstractStateChoice;
 import org.socyno.webfwk.util.exception.MessageException;
 
 public class StateFormChoiceTooDeepException extends MessageException {

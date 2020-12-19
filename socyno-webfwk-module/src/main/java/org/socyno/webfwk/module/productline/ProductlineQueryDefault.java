@@ -8,11 +8,11 @@ import lombok.experimental.Accessors;
 import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.application.FieldApplicationOfflineIncluded;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
 import org.socyno.webfwk.util.tool.CommonUtil;
 import org.socyno.webfwk.util.tool.StringUtils;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.field.*;
 
 import java.util.ArrayList;

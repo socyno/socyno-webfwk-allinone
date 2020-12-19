@@ -56,10 +56,10 @@ public class FieldSystemUserAuth extends FieldTableView {
         FROM
             system_user_scope_role s
             INNER JOIN system_role r ON r.id = s.role_id
-            INNER JOIN subsystem l ON s.scope_id = l.id 
+            INNER JOIN system_business l ON s.scope_id = l.id 
         WHERE
             s.user_id IN (%s)
-        AND s.scope_type = 'Subsystem'
+        AND s.scope_type = 'Business'
      */
     @Multiline
     private static final String SQL_QUERY_USER_AUTHS_BYUSERIDS = "X";
@@ -82,20 +82,20 @@ public class FieldSystemUserAuth extends FieldTableView {
     
     /**
         SELECT DISTINCT
-            'Subsystem' AS scope_type,
+            'Business' AS scope_type,
             s.id        AS scope_id,
-            '业务系统'  AS scope_type_name,
+            '系统业务'  AS scope_type_name,
             s.name      AS scope_name,
             r.id        AS role_id,
             r.name      AS role_name 
         FROM
-            subsystem s
+            system_business s
             INNER JOIN system_role r
         WHERE
             r.id = ?
      */
     @Multiline
-    private final static String SQL_QUERY_USER_SUBSYSTEM_AUTHS = "X";
+    private final static String SQL_QUERY_USER_BUSINESS_AUTHS = "X";
     
     /**
         AND 
@@ -123,11 +123,11 @@ public class FieldSystemUserAuth extends FieldTableView {
         List<Object> args = new ArrayList<>();
         if (AuthorityScopeType.System.equals(scopeType)) {
             sql = SQL_QUERY_USER_SYSTEM_AUTHS;
-        } else if (AuthorityScopeType.Subsystem.equals(scopeType)) {
-            sql = SQL_QUERY_USER_SUBSYSTEM_AUTHS;
+        } else if (AuthorityScopeType.Business.equals(scopeType)) {
+            sql = SQL_QUERY_USER_BUSINESS_AUTHS;
             if (StringUtils.isNotBlank(keyword.getScopeTargetKeyword())) {
                 args.add(keyword.getScopeTargetKeyword());
-                sql = String.format("%s %s", SQL_QUERY_USER_SUBSYSTEM_AUTHS, SQL_QUERY_USER_SCOPE_KEYWORD_AUTHS);
+                sql = String.format("%s %s", SQL_QUERY_USER_BUSINESS_AUTHS, SQL_QUERY_USER_SCOPE_KEYWORD_AUTHS);
             }
         }
         args.add(0, keyword.getRoleId());

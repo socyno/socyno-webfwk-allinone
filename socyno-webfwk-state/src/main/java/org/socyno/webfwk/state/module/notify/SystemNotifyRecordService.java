@@ -12,14 +12,14 @@ import java.util.regex.Pattern;
 
 import javax.mail.internet.MimeUtility;
 
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
+import org.socyno.webfwk.state.abs.AbstractStateEnterAction;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
+import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateEnterAction;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.MessageType;
 import org.socyno.webfwk.state.module.notify.SystemNotifyRecordFormSimple.SendResult;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
@@ -146,7 +146,7 @@ public class SystemNotifyRecordService extends
         }
         
         @Override
-        public Void handle(String event, SystemNotifyRecordFormSimple originForm, AbstractStateForm form, String message) throws Exception {
+        public Void handle(String event, SystemNotifyRecordFormSimple originForm, AbstractStateFormInput form, String message) throws Exception {
             if (form == null || form.getId() == null) {
                 return null;
             }
@@ -156,7 +156,7 @@ public class SystemNotifyRecordService extends
                     try {
                         Thread.sleep(5000);
                         SystemNotifyRecordFormSimple originForm = getForm(form.getId());
-                        StateFormBasicForm triggerForm = new StateFormBasicForm();
+                        StateFormBasicInput triggerForm = new StateFormBasicInput();
                         triggerForm.setId(originForm.getId());
                         triggerForm.setRevision(originForm.getRevision());
                         triggerAction(EVENTS.SendNow.getName(), triggerForm);
@@ -201,7 +201,7 @@ public class SystemNotifyRecordService extends
         }
     }
     
-    public class EventCancel extends AbstractStateAction<SystemNotifyRecordFormSimple, StateFormBasicForm, Void> {
+    public class EventCancel extends AbstractStateAction<SystemNotifyRecordFormSimple, StateFormBasicInput, Void> {
         
         public EventCancel() {
             super("取消", STATES.CREATED.getCode(), STATES.CANCELLED.getCode());
@@ -219,7 +219,7 @@ public class SystemNotifyRecordService extends
         }
     }
     
-    public class EventResend extends AbstractStateAction<SystemNotifyRecordFormSimple, StateFormBasicForm, Void> {
+    public class EventResend extends AbstractStateAction<SystemNotifyRecordFormSimple, StateFormBasicInput, Void> {
 
         public EventResend() {
             super("重发", getStateCodesEx(STATES.CREATED), STATES.CREATED.getCode());
@@ -245,7 +245,7 @@ public class SystemNotifyRecordService extends
         }
     }
     
-    public class EventSendNow extends AbstractStateAction<SystemNotifyRecordFormSimple, StateFormBasicForm, StateFormEventResultMessageView> {
+    public class EventSendNow extends AbstractStateAction<SystemNotifyRecordFormSimple, StateFormBasicInput, StateFormEventResultMessageView> {
 
         public EventSendNow() {
             super("立即发送", STATES.CREATED.getCode(), STATES.FINISHED.getCode());
@@ -258,7 +258,7 @@ public class SystemNotifyRecordService extends
         }
         
         @Override
-        public StateFormEventResultMessageView handle(String event, SystemNotifyRecordFormSimple originForm, StateFormBasicForm form, String message) {
+        public StateFormEventResultMessageView handle(String event, SystemNotifyRecordFormSimple originForm, StateFormBasicInput form, String message) {
             try {
                 if (MessageType.Email.getValue().equalsIgnoreCase(originForm.getType())) {
                     String fromAddress;

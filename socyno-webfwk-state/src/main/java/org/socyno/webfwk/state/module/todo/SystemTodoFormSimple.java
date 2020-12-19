@@ -3,10 +3,12 @@ package org.socyno.webfwk.state.module.todo;
 import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldType;
+
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.*;
 
 import lombok.Getter;
@@ -17,7 +19,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "待办事项基本信息")
-public class SystemTodoFormSimple implements AbstractStateForm {
+public class SystemTodoFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -31,14 +33,8 @@ public class SystemTodoFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "标题", type = FieldTextLine.class)
     private String title;

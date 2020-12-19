@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController 
 @RequestMapping(value="/api/sys")
-public class SubsystemController extends org.socyno.webfwk.module.basic.SubsystemController {
+public class SubsystemController extends org.socyno.webfwk.module.basic.controller.SubsystemController {
 
 }

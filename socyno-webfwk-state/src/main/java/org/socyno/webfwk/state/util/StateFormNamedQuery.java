@@ -1,15 +1,15 @@
 package org.socyno.webfwk.state.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.exec.StateFormNamedQueryNameInvalidException;
 
 import lombok.Getter;
 import lombok.NonNull;
 
 @Getter
-public class StateFormNamedQuery<R extends AbstractStateForm> {
+public class StateFormNamedQuery<R extends AbstractStateFormBase> {
     
     /**
      * 查询名称, 在同一个表单中必须确保其唯一性

@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>org.socyno.webfwk</groupId>
-            <artifactId>socyno-webfwk-state</artifactId>
+            <artifactId>socyno-webfwk-modutil</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

@@ -8,7 +8,7 @@ import java.util.List;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.model.CommonAttachementItem;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.util.state.field.FieldFormAttachements;
 import org.socyno.webfwk.util.state.field.FieldText;
 
@@ -16,7 +16,7 @@ import org.socyno.webfwk.util.state.field.FieldText;
 @Setter
 @ToString
 @Attributes(title = "移动端应用发布申请")
-public class ReleaseMobileOnlineFormCreate extends StateFormBasicForm implements ReleaseMobileOnlineWithAttachements{
+public class ReleaseMobileOnlineFormCreate extends StateFormBasicInput implements ReleaseMobileOnlineWithAttachements{
 
     @Attributes(title = "应用" , type = FieldReleaseMobileOnlineApplication.class , required = true , position = 1001)
     private String applicationName ;

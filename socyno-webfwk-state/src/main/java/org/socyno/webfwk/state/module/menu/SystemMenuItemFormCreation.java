@@ -5,7 +5,7 @@ import java.util.List;
 import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.state.field.FieldSystemMenuDir;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -17,7 +17,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "添加系统菜单")
-public class SystemMenuItemFormCreation extends StateFormBasicForm {
+public class SystemMenuItemFormCreation extends StateFormBasicInput {
     
     @Attributes(title = "名称", required = true)
     private String name;

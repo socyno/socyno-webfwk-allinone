@@ -8,14 +8,14 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
+import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialChecker;
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -189,7 +189,7 @@ public class ReleaseMobileStoreService extends
         
     }
     
-    public class EventEnabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, StateFormBasicForm, Void> {
+    public class EventEnabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, StateFormBasicInput, Void> {
         
         public EventEnabled() {
             super("启用", getStateCodes(STATES.DISABLED), STATES.ENABLED.getCode());
@@ -202,13 +202,13 @@ public class ReleaseMobileStoreService extends
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, StateFormBasicForm form,
+        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, StateFormBasicInput form,
                 String sourceState) throws Exception {
             return null;
         }
     }
     
-    public class EventDisabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, StateFormBasicForm, Void> {
+    public class EventDisabled extends AbstractStateAction<ReleaseMobileStoreFormSimple, StateFormBasicInput, Void> {
         
         public EventDisabled() {
             super("禁用", getStateCodes(STATES.ENABLED), STATES.DISABLED.getCode());
@@ -221,7 +221,7 @@ public class ReleaseMobileStoreService extends
         }
         
         @Override
-        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, StateFormBasicForm form,
+        public Void handle(String event, ReleaseMobileStoreFormSimple originForm, StateFormBasicInput form,
                 String sourceState) throws Exception {
             return null;
         }

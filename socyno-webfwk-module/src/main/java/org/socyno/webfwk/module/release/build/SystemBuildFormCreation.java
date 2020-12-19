@@ -5,7 +5,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -14,7 +14,7 @@ import com.github.reinert.jjschema.Attributes;
 @Setter
 @ToString
 @Attributes(title = "构建服务申请")
-public class SystemBuildFormCreation extends StateFormBasicForm {
+public class SystemBuildFormCreation extends StateFormBasicInput {
     
     @Attributes(title = "名称", required = true)
     private String code;

@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.module.user;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -12,17 +12,8 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "添加域用户")
-public class SystemUserFormCreationDomain implements AbstractStateForm {
-    
-    @Attributes(title = "编号", readonly = true)
-    private Long  id;
-    
-    @Attributes(title = "状态", readonly = true)
-    private String  state;
+public class SystemUserFormCreationDomain extends StateFormBasicInput {
 
-    @Attributes(title = "版本", readonly = true)
-    private Long  revision;
-
-    @Attributes(title = "用户", position = 1010, required = true)
+    @Attributes(title = "用户", required = true)
     private String  username;
 }

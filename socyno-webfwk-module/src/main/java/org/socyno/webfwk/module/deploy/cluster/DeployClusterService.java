@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.*;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -158,7 +158,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
         }
     }
     
-    public class EventEnable extends AbstractStateAction<DeployClusterFormDetail, StateFormBasicForm, Void> {
+    public class EventEnable extends AbstractStateAction<DeployClusterFormDetail, StateFormBasicInput, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -171,7 +171,7 @@ public class DeployClusterService extends AbstractStateFormServiceWithBaseDao<De
         }
     }
     
-    public class EventDisable extends AbstractStateAction<DeployClusterFormDetail, StateFormBasicForm, Void> {
+    public class EventDisable extends AbstractStateAction<DeployClusterFormDetail, StateFormBasicInput, Void> {
         
         public EventDisable() {
             super("禁用", STATES.ENABLED.getCode(), STATES.DISABLED.getCode());

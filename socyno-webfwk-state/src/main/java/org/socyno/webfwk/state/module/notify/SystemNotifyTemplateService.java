@@ -8,11 +8,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
+import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.util.*;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -134,7 +134,7 @@ public class SystemNotifyTemplateService extends
         }
     }
     
-    public class EventDisabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, StateFormBasicForm, Void> {
+    public class EventDisabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, StateFormBasicInput, Void> {
         
         public EventDisabled() {
             super("禁用", getStateCodesEx(), STATES.DISABLED.getCode());
@@ -152,7 +152,7 @@ public class SystemNotifyTemplateService extends
         }
     }
     
-    public class EventEnabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, StateFormBasicForm, Void> {
+    public class EventEnabled extends AbstractStateAction<SystemNotifyTemplateFormSimple, StateFormBasicInput, Void> {
         
         public EventEnabled() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());

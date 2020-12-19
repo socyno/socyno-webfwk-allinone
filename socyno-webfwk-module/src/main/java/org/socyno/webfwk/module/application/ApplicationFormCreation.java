@@ -5,6 +5,7 @@ import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsCo
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemManagement;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -17,16 +18,7 @@ import lombok.AccessLevel;
 @Setter
 @ToString
 @Attributes(title = "创建新的应用")
-public class ApplicationFormCreation implements ApplicationFormAbstract {
-    
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
-    @Attributes(title = "状态", readonly = true)
-    private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
+public class ApplicationFormCreation extends StateFormBasicInput implements ApplicationFormAbstract {
     
     @Setter(AccessLevel.NONE)
     @Attributes(title = "发布分支(接口需要，页面无需显示)", readonly = true)

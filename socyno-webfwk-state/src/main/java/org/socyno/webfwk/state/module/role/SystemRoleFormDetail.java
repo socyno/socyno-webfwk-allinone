@@ -15,7 +15,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "系统角色详情")
-public class SystemRoleFormDetail extends SystemRoleFormDefault implements SubsystemRoleWithFeatures {
+public class SystemRoleFormDetail extends SystemRoleFormDefault implements SystemRoleWithFeatures {
     @Attributes(title = "授权的功能", type = FieldSystemFeatureWithTenant.class)
     private List<OptionSystemFeature> features;
 }

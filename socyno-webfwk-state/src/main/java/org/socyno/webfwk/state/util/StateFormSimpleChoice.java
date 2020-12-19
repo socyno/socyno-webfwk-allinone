@@ -1,8 +1,8 @@
 package org.socyno.webfwk.state.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.socyno.webfwk.state.basic.AbstractStateChoice;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateChoice;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
 
 public class StateFormSimpleChoice extends AbstractStateChoice {
     
@@ -23,7 +23,7 @@ public class StateFormSimpleChoice extends AbstractStateChoice {
     }
     
     @Override
-    protected boolean select(AbstractStateForm form) {
+    protected boolean select(AbstractStateFormInput form) {
         return true;
     }
 }

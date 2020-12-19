@@ -1,6 +1,6 @@
 package org.socyno.webfwk.module.release.mobonline;
 
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.util.state.field.FieldDateOnly;
 import org.socyno.webfwk.util.state.field.FieldText;
 
@@ -13,7 +13,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "移动端应用发布状态")
-public class ReleaseMobileOnlineFormStatus extends StateFormBasicForm {
+public class ReleaseMobileOnlineFormStatus extends StateFormBasicInput {
     
     @Attributes(title = "申请单号", position = 1001, readonly = true)
     private Long releaseAppStoreId;

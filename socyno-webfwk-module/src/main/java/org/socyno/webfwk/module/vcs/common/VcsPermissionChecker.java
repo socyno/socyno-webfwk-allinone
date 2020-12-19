@@ -6,6 +6,7 @@ import java.util.Map;
 import org.socyno.webfwk.module.application.ApplicationFormAbstract;
 import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.vcs.change.VcsRefsNameOperation.RefsOpType;
+import org.socyno.webfwk.modutil.SubsystemBasicUtil;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.context.SessionContext;
@@ -83,7 +84,8 @@ public class VcsPermissionChecker {
         if (subsysAuthCached != null && (result = subsysAuthCached.get(cacheKey)) != null) {
             return result;
         }
-        result = PermissionService.hasPermission(authKey, AuthorityScopeType.Subsystem, subsystemId);
+        result = PermissionService.hasPermission(authKey, AuthorityScopeType.Business,
+                SubsystemBasicUtil.subsytemIdToBusinessId(subsystemId));
         if (subsysAuthCached != null) {
             subsysAuthCached.put(cacheKey, result);
         }

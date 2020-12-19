@@ -1,9 +1,9 @@
 package org.socyno.webfwk.state.module.notify;
 
-import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -18,7 +18,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "通知模板详情")
-public class SystemNotifyTemplateFormSimple implements AbstractStateForm {
+public class SystemNotifyTemplateFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
     
     public static class FieldOptionsState extends FieldType {
         
@@ -33,14 +33,8 @@ public class SystemNotifyTemplateFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "代码")
     private String code;
@@ -62,17 +56,5 @@ public class SystemNotifyTemplateFormSimple implements AbstractStateForm {
     
     @Attributes(title = "短消息模板", type = FieldText.class)
     private String messageContent;
-    
-    @Attributes(title = "创建时间")
-    private Date createdAt;
-    
-    @Attributes(title = "创建人编号")
-    private Long createdBy;
-    
-    @Attributes(title = "创建人帐户")
-    private String createdCodeBy;
-
-    @Attributes(title = "创建人姓名")
-    private String createdNameBy;
     
 }

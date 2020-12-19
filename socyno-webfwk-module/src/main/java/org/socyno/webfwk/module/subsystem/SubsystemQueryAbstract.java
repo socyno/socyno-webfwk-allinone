@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+
+import org.socyno.webfwk.modutil.SubsystemBasicUtil;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
@@ -54,18 +56,24 @@ public abstract class SubsystemQueryAbstract extends AbstractStateFormQuery {
         super();
     }
     
-    public AbstractSqlStatement buildWhereSql() throws Exception {
+    private long[] getMyAccesableSubsystemIds() throws Exception {
         String authKey;
-        Long[] authSubsys;
+        if (StringUtils.isBlank(authKey = requiredAccessEventKey())) {
+            return null;
+        }
+        return SubsystemBasicUtil.subsytemIdFromBusinessId(PermissionService.queryMyBusinessByAuthKey(authKey), true);
+    }
+    
+    private AbstractSqlStatement buildWhereSql() throws Exception {
         List<Object> sqlArgs = new ArrayList<>();
         StringBuilder sqlwhere = new StringBuilder();
-        if (StringUtils.isNotBlank(authKey = requiredAccessEventKey())
-                && (authSubsys = PermissionService.queryMySubsystemByAuthKey(authKey)) != null) {
-            if (authSubsys.length <= 0) {
+        long[] subsystemIds;
+        if ((subsystemIds = getMyAccesableSubsystemIds()) != null) {
+            if (subsystemIds.length <= 0) {
                 return new BasicSqlStatement().setSql("WHERE 1 = 0");
             }
             StringUtils.appendIfNotEmpty(sqlwhere, " AND ")
-                    .append(String.format(" s.id IN (%s)", StringUtils.join(authSubsys, ',')));
+                    .append(String.format(" s.id IN (%s)", StringUtils.join(subsystemIds, ',')));
         }
         if (StringUtils.isNotBlank(getIdsIn())) {
             String[] subsysIds = CommonUtil.split(getIdsIn(), "[,;\\s]+",

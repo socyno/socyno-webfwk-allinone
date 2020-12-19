@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-@Attributes(title = "系统菜单面板")
+@Attributes(title = "系统菜单导航")
 public class SystemMenuPaneFormDefault extends SystemMenuPaneFormSimple {
     
 }

@@ -1,6 +1,6 @@
 package org.socyno.webfwk.state.util;
 
-import org.socyno.webfwk.state.basic.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateAction;
 
 public interface StateFormEventBaseEnum {
     

@@ -14,23 +14,23 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.lang3.StringUtils;
+import org.socyno.webfwk.state.abs.AbstractStateAction;
+import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
+import org.socyno.webfwk.state.abs.AbstractStateDeleteAction;
+import org.socyno.webfwk.state.abs.AbstractStateEnterAction;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
+import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
+import org.socyno.webfwk.state.abs.AbstractStateLeaveAction;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityEveryoneChecker;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.AbstractStateAction;
-import org.socyno.webfwk.state.basic.AbstractStateDeleteAction;
-import org.socyno.webfwk.state.basic.AbstractStateEnterAction;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.state.basic.AbstractStateFormServiceWithBaseDao;
-import org.socyno.webfwk.state.basic.AbstractStateLeaveAction;
-import org.socyno.webfwk.state.basic.AbstractStateCreateAction;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
 import org.socyno.webfwk.state.module.notify.SystemNotifyService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.module.user.SystemUserFormWithSecurity;
 import org.socyno.webfwk.state.module.user.SystemUserService;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -169,7 +169,7 @@ public class SystemTodoService extends
         }
         
         @Override
-        public Void handle(String event, SystemTodoFormDetail originForm, AbstractStateForm form, String message) throws Exception {
+        public Void handle(String event, SystemTodoFormDetail originForm, AbstractStateFormInput form, String message) throws Exception {
             SystemTodoFormDetail closedForm = getForm(form.getId());
             SystemNotifyService.sendAsync(
                     "system.todo.notify.standard.created", 
@@ -190,7 +190,7 @@ public class SystemTodoService extends
         }
         
         @Override
-        public Void handle(String event, SystemTodoFormDetail originForm, AbstractStateForm form, String message) throws Exception {
+        public Void handle(String event, SystemTodoFormDetail originForm, AbstractStateFormInput form, String message) throws Exception {
             SystemTodoFormDetail closedForm = getForm(form.getId());
             SystemNotifyService.sendAsync(
                     "system.todo.notify.standard.closed", 
@@ -294,7 +294,7 @@ public class SystemTodoService extends
         }
     }
     
-    public class EventReopen extends AbstractStateAction<SystemTodoFormDetail, StateFormBasicForm, Void> {
+    public class EventReopen extends AbstractStateAction<SystemTodoFormDetail, StateFormBasicInput, Void> {
         
         public EventReopen() {
             super("恢复", STATES.CLOSED.getCode(), STATES.OPENED.getCode());
@@ -320,7 +320,7 @@ public class SystemTodoService extends
         }
         
         @Override
-        public Void handle(String event, SystemTodoFormDetail originForm, StateFormBasicForm form, String message)
+        public Void handle(String event, SystemTodoFormDetail originForm, StateFormBasicInput form, String message)
                         throws Exception {
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
                     getFormTable(), new ObjectMap()

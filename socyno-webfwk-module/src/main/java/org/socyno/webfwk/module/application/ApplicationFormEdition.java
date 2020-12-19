@@ -4,6 +4,7 @@ import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsAp
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsCodeLevel;
 import org.socyno.webfwk.module.release.build.FieldBuildService;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -16,16 +17,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ApplicationFormEdition implements ApplicationFormAbstract {
-    
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
-    @Attributes(title = "状态", readonly = true)
-    private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
+public class ApplicationFormEdition extends StateFormBasicInput implements ApplicationFormAbstract {
     
     @Attributes(title = "名称", readonly = true)
     private String name;

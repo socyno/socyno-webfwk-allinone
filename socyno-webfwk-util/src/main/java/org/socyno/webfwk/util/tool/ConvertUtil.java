@@ -2,6 +2,7 @@ package org.socyno.webfwk.util.tool;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,8 +34,6 @@ public class ConvertUtil<T> {
     
     /**
      * 将对象数组强制转换为 long[]。非数字将被丢弃，结果将被去重。
-     * @param values
-     * @return
      */
     public static long[] asNonNullUniquePrimitiveLongArray(Object ...values){
         Long[] longArray = asNonNullUniqueLongArray(values);
@@ -45,14 +44,26 @@ public class ConvertUtil<T> {
         return result ;
     }
     
+    /**
+     * 将对象数组强制转换为 long[]。非数字将被丢弃，结果将被去重。
+     */
+    public static long[] asNonNullUniquePrimitiveLongArray(Collection<?> values) {
+        if (values == null || values.size() < 0) {
+            return new long[0];
+        }
+        return asNonNullUniquePrimitiveLongArray(values.toArray());
+    }
+    
+    
+    /**
+     * 将对象数组强制转换为 long[]。非数字将被丢弃，结果将被去重。
+     */
     public static long[] asNonNullUniquePrimitiveLongArray(Long ...values) {
         return asNonNullUniquePrimitiveLongArray((Object[]) values);
     }
     
     /**
      * 将对象数组强制转换为 String[]。空白字串被丢弃，结果将去除首尾的空白且去重。
-     * @param values
-     * @return
      */
     public static String[] asNonBlankUniqueTrimedStringArray(Object ...values) {
         if (values == null || values.length < 0) {
@@ -67,5 +78,15 @@ public class ConvertUtil<T> {
             result.add(str);
         }
         return result.toArray(new String[0]);
+    }
+    
+    /**
+     * 将对象数组强制转换为 String[]。空白字串被丢弃，结果将去除首尾的空白且去重。
+     */
+    public static String[] asNonBlankUniqueTrimedStringArray(Collection<?> values) {
+        if (values == null || values.size() < 0) {
+            return new String[0];
+        }
+        return asNonBlankUniqueTrimedStringArray(values.toArray());
     }
 }

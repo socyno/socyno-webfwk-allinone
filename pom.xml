@@ -16,6 +16,7 @@
         <module>socyno-webfwk-executor</module>
         <module>socyno-webfwk-schedule</module>
     <module>socyno-webfwk-jjschema</module>
+    <module>socyno-webfwk-modutil</module>
   </modules>
     
    <properties>
@@ -42,6 +43,11 @@
             <dependency>
                 <groupId>org.socyno.webfwk</groupId>
                 <artifactId>socyno-webfwk-state</artifactId>
+                <version>${version.socyno.webfwk}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.socyno.webfwk</groupId>
+                <artifactId>socyno-webfwk-modutil</artifactId>
                 <version>${version.socyno.webfwk}</version>
             </dependency>
             <dependency>

@@ -7,7 +7,7 @@ import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.sysissue.SysIssueFormSimple.FieldOptionsCategory;
 import org.socyno.webfwk.module.sysissue.SysIssueFormSimple.FieldOptionsCloseResult;
 import org.socyno.webfwk.module.sysissue.SysIssueFormSimple.FieldOptionsState;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.field.*;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;
@@ -26,22 +26,22 @@ import lombok.experimental.Accessors;
 @Accessors(chain=true)
 @Attributes(title = "系统故障或需求申请单查询")
 public class SysIssueQueryDefault extends AbstractStateFormQuery {
-    @Attributes(title = "状态", position = 1010, type = FieldOptionsState.class)
+    @Attributes(title = "状态", type = FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "分类", position = 1011, type = FieldOptionsCategory.class)
+    @Attributes(title = "分类", type = FieldOptionsCategory.class)
     private String category;
     
-    @Attributes(title = "处理人", position = 1020, type = FieldSystemUser.class)
+    @Attributes(title = "处理人", type = FieldSystemUser.class)
     private Long assignee;
     
-    @Attributes(title = "创建人", position = 1021, type = FieldSystemUser.class)
+    @Attributes(title = "创建人", type = FieldSystemUser.class)
     private Long submitter;
     
-    @Attributes(title = "处理结果", position = 1030, type = FieldOptionsCloseResult.class)
+    @Attributes(title = "处理结果", type = FieldOptionsCloseResult.class)
     private String result;
     
-    @Attributes(title = "标题", position = 1031)
+    @Attributes(title = "标题")
     private String title;
     
     /**

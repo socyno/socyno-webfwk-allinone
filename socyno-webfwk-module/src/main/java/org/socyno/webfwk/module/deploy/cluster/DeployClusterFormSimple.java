@@ -2,12 +2,11 @@ package org.socyno.webfwk.module.deploy.cluster;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import org.socyno.webfwk.module.deploy.environment.FieldDeployEnvironment;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
-import org.socyno.webfwk.util.state.field.FieldDateTime;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import lombok.Getter;
@@ -22,7 +21,7 @@ import com.github.reinert.jjschema.v1.FieldType;
 @Getter
 @Setter
 @ToString
-public class DeployClusterFormSimple implements AbstractStateForm {
+public class DeployClusterFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
 
     @Getter
     public enum ClusterType {
@@ -71,14 +70,8 @@ public class DeployClusterFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "代码")
     private String code;
@@ -100,18 +93,6 @@ public class DeployClusterFormSimple implements AbstractStateForm {
     
     @Attributes(title = "接口Token")
     private String apiClientToken;
-    
-    @Attributes(title = "创建人")
-    private Long createdBy;
-    
-    @Attributes(title = "创建人")
-    private String createdCodeBy;
-    
-    @Attributes(title = "创建人")
-    private String createdNameBy;
-    
-    @Attributes(title = "创建时间", type = FieldDateTime.class)
-    private Date createdAt;
     
     @Attributes(title = "集群说明", type = FieldText.class)
     private String description;

@@ -5,13 +5,13 @@ import lombok.NonNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.socyno.webfwk.module.deploy.cluster.FieldDeployNamespace;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.OptionSystemFeature;
 import org.socyno.webfwk.state.module.tenant.SystemTenantBasicService;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDbInfo;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -126,7 +126,7 @@ public class SystemTenantService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SystemTenantFormDetail, StateFormBasicForm, Void> {
+    public class EventDisable extends AbstractStateAction<SystemTenantFormDetail, StateFormBasicInput, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -144,7 +144,7 @@ public class SystemTenantService extends
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SystemTenantFormDetail, StateFormBasicForm, Void> {
+    public class EventEnable extends AbstractStateAction<SystemTenantFormDetail, StateFormBasicInput, Void> {
         
         public EventEnable() {
             super("启用", STATES.DISABLED.getCode(), STATES.ENABLED.getCode());
@@ -224,7 +224,7 @@ public class SystemTenantService extends
         return SystemTenantBasicService.getDao();
     }
     
-    private void checkSystemTenantChange(AbstractSystemTenant changed) throws Exception {
+    private void checkSystemTenantChange(AbstractSystemTenantInput changed) throws Exception {
         if (StringUtils.isBlank(changed.getCode()) || changed.getCode().matches("^\\d+$")
                             || !changed.getCode().matches("^[a-z0-9][a-z0-9\\-\\.]+[a-z0-9]$")) {
             throw new NamingFormatInvalidException("租户代码命名不规范 ：只能包含数字、小写字母或短横线(-), 且不能为纯数字，不能以短横线开头或结尾");

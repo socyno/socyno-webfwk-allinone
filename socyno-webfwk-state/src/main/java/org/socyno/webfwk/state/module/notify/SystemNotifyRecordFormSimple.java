@@ -2,10 +2,10 @@ package org.socyno.webfwk.state.module.notify;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -21,7 +21,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "通知记录内容")
-public class SystemNotifyRecordFormSimple implements AbstractStateForm {
+public class SystemNotifyRecordFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
     
     @Getter
     public enum MessageType {
@@ -104,14 +104,8 @@ public class SystemNotifyRecordFormSimple implements AbstractStateForm {
         }
     }
     
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "类型", type = FieldOptionsType.class)
     private String type;
@@ -127,16 +121,4 @@ public class SystemNotifyRecordFormSimple implements AbstractStateForm {
     
     @Attributes(title = "发送结果", type = FieldOptionsResult.class)
     private String result;
-    
-    @Attributes(title = "创建时间")
-    private Date createdAt;
-    
-    @Attributes(title = "创建人编号")
-    private Long createdBy;
-    
-    @Attributes(title = "创建人帐户")
-    private String createdCodeBy;
-    
-    @Attributes(title = "创建人姓名")
-    private String createdNameBy;
 }

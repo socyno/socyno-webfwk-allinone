@@ -8,16 +8,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
 
-import org.socyno.webfwk.module.application.ApplicationFormDetail;
 import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.application.FieldApplication;
 import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
-import org.socyno.webfwk.state.authority.AuthorityScopeIdParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -143,7 +141,7 @@ public class SystemBuildService extends
         }
     }
     
-    public class EventDisable extends AbstractStateAction<SystemBuildFormDetail, StateFormBasicForm, Void> {
+    public class EventDisable extends AbstractStateAction<SystemBuildFormDetail, StateFormBasicInput, Void> {
         
         public EventDisable() {
             super("禁用", getStateCodesEx(STATES.DISABLED), STATES.DISABLED.getCode());
@@ -161,7 +159,7 @@ public class SystemBuildService extends
         }
     }
     
-    public class EventEnable extends AbstractStateAction<SystemBuildFormDetail, StateFormBasicForm, Void> {
+    public class EventEnable extends AbstractStateAction<SystemBuildFormDetail, StateFormBasicInput, Void> {
         
         public EventEnable() {
             super("启用", STATES.ENABLED.getCode(), STATES.ENABLED.getCode());
@@ -229,17 +227,6 @@ public class SystemBuildService extends
         private final Class<? extends AbstractStateAction<SystemBuildFormDetail, ?, ?>> eventClass;
         EVENTS(Class<? extends AbstractStateAction<SystemBuildFormDetail, ?, ?>> eventClass) {
             this.eventClass = eventClass;
-        }
-    }
-
-    public class SysBuildSubsystemParser implements AuthorityScopeIdParser {
-        @Override
-        public Long getAuthorityScopeId(Object originForm) {
-            ApplicationFormDetail manageForm = (ApplicationFormDetail) originForm;
-            if (manageForm == null || manageForm.getId() == null) {
-                return null;
-            }
-            return manageForm.getSubsystem().getId();
         }
     }
     

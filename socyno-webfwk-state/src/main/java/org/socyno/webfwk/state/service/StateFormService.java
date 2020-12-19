@@ -13,9 +13,9 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.http.NameValuePair;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.exec.StateFormCustomFieldFormNotFoundException;
 import org.socyno.webfwk.state.field.FilterAbstractFrom;
 import org.socyno.webfwk.state.field.FilterBasicKeyword;
@@ -660,7 +660,7 @@ public class StateFormService {
     /**
      * 获取表单事件的请求数据类型
      */
-    public static Class<AbstractStateForm> getActionFormTypeClass(String formName, String event) throws Exception {
+    public static Class<AbstractStateFormBase> getActionFormTypeClass(String formName, String event) throws Exception {
         StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getActionFormTypeClass(event);
     }
@@ -668,7 +668,7 @@ public class StateFormService {
     /**
      * 获取表单事件的原始数据类型
      */
-    public static Class<AbstractStateForm> getActionOriginTypeClass(String formName, String event) throws Exception {
+    public static Class<AbstractStateFormBase> getActionOriginTypeClass(String formName, String event) throws Exception {
         StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getActionOriginTypeClass(event);
     }
@@ -730,7 +730,7 @@ public class StateFormService {
     /**
      * 获取指定表单的详情
      */
-    public static AbstractStateForm getForm(String formName, long formId) throws Exception {
+    public static AbstractStateFormBase getForm(String formName, long formId) throws Exception {
         return getStateFormInstance(formName).getServiceInstance().getForm(formId);
     }
     
@@ -784,7 +784,7 @@ public class StateFormService {
      * 执行指定的表单操作
      */
     public static Object triggerAction(String formName, String formAction,
-                                    AbstractStateForm formData, String message, Class<?> actionResult) throws Exception  {
+                                    AbstractStateFormBase formData, String message, Class<?> actionResult) throws Exception  {
         return getStateFormInstance(formName).getServiceInstance().triggerAction(formAction, formData, message, actionResult);
     }
     
@@ -800,7 +800,7 @@ public class StateFormService {
      * 执行指定的表单创建操作
      */
     public static AbstractStateCreateView triggerCreateAction(String formName, String formAction,
-            AbstractStateForm formData) throws Exception {
+            AbstractStateFormBase formData) throws Exception {
         return getStateFormInstance(formName).getServiceInstance().triggerCreateAction(formAction, formData);
     }
     
@@ -1036,7 +1036,7 @@ public class StateFormService {
      */
     public static StateFlowChartDefinition parseFormFlowDefinition(String formName, boolean keepUnChanged, Long formId) throws Exception {
         StateFormInstance instance = getStateFormInstance(formName);
-        AbstractStateForm currentForm = null;
+        AbstractStateFormBase currentForm = null;
         if (formId != null) {
             currentForm = instance.getServiceInstance().getForm(formId);
         }

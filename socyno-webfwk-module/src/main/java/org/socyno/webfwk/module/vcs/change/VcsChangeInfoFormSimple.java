@@ -1,12 +1,12 @@
 package org.socyno.webfwk.module.vcs.change;
 
-import java.util.Date;
 import java.util.List;
 
 import org.socyno.webfwk.module.application.FieldApplication;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -20,7 +20,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class VcsChangeInfoFormSimple implements AbstractStateForm {
+public class VcsChangeInfoFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -32,12 +32,6 @@ public class VcsChangeInfoFormSimple implements AbstractStateForm {
             return FieldOptionsType.STATIC;
         }
     }
-    
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
@@ -65,16 +59,4 @@ public class VcsChangeInfoFormSimple implements AbstractStateForm {
     
     @Attributes(title = "变更描述详情", type = FieldText.class)
     private String vcsMessage;
-    
-    @Attributes(title = "创建时间")
-    private Date createdAt;
-    
-    @Attributes(title = "创建人编号")
-    private Long createdBy;
-    
-    @Attributes(title = "创建人账户")
-    private String createdCodeBy;
-    
-    @Attributes(title = "创建人姓名")
-    private String createdNameBy;
 }

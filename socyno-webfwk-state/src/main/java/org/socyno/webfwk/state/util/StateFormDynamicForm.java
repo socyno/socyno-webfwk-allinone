@@ -10,7 +10,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class StateFormDynamicForm extends StateFormBasicForm {
+public class StateFormDynamicForm extends StateFormBasicInput {
     @SchemaIgnore
     private JsonElement jsonData;
 }

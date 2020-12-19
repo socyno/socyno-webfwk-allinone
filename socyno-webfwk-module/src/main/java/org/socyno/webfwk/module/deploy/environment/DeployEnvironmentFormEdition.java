@@ -4,14 +4,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 
 import com.github.reinert.jjschema.Attributes;
 
 @Getter
 @Setter
 @ToString
-public class DeployEnvironmentFormEdition extends StateFormBasicForm implements AbstractDeployEnvironmentForm {
+public class DeployEnvironmentFormEdition extends StateFormBasicInput implements AbstractDeployEnvironmentForm {
     
     @Attributes(title = "代码", required = true)
     private String name;

@@ -5,21 +5,25 @@ import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import com.github.reinert.jjschema.v1.FieldType;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import org.socyno.webfwk.module.application.FieldApplicationName;
-import org.socyno.webfwk.state.basic.*;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.field.*;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.*;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Attributes(title = "移动端应用发布申请")
-public class ReleaseMobileOnlineFormSimple implements AbstractStateForm, ReleaseMobileOnlineWithAppStore {
+public class ReleaseMobileOnlineFormSimple extends StateFormBasicSaved  implements AbstractStateFormBase, ReleaseMobileOnlineWithAppStore {
     
     public static class FieldOptionsState extends FieldType {
         @Override
@@ -56,26 +60,8 @@ public class ReleaseMobileOnlineFormSimple implements AbstractStateForm, Release
         }
     }
     
-    @Attributes(title = "单号", readonly = true)
-    private Long id;
-    
     @Attributes(title = "状态", readonly = true, type = ReleaseMobileOnlineFormDetail.FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
-    
-    @Attributes(title = "创建人编号")
-    private Long createdBy;
-    
-    @Attributes(title = "创建时间", type = FieldDateTime.class)
-    private Date createdAt;
-    
-    @Attributes(title = "创建人账户")
-    private String createdCodeBy;
-    
-    @Attributes(title = "创建人姓名")
-    private String createdNameBy;
     
     @Attributes(title = "应用", type = FieldApplicationName.class)
     private String applicationName;

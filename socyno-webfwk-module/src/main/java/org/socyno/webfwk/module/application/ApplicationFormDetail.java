@@ -7,6 +7,6 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ApplicationFormDetail extends ApplicationFormDefault implements ApplicationFormAbstract {
+public class ApplicationFormDetail extends ApplicationFormDefault {
     
 }

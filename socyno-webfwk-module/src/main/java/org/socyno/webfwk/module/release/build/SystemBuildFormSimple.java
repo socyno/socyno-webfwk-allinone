@@ -7,7 +7,8 @@ import lombok.ToString;
 import java.util.List;
 
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
@@ -17,7 +18,7 @@ import com.github.reinert.jjschema.v1.FieldType;
 @Setter
 @ToString
 @Attributes(title = "构建服务清单")
-public class SystemBuildFormSimple implements AbstractStateForm {
+public class SystemBuildFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
     
     public static class FieldSysBuildOptionsState extends FieldType {
         @Override
@@ -30,9 +31,6 @@ public class SystemBuildFormSimple implements AbstractStateForm {
             return FieldOptionsType.STATIC;
         }
     }
-
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
 
     @Attributes(title = "名称")
     private String code;
@@ -48,7 +46,4 @@ public class SystemBuildFormSimple implements AbstractStateForm {
 
     @Attributes(title = "状态", readonly = true, type = FieldSysBuildOptionsState.class)
     private String state;
-
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
 }

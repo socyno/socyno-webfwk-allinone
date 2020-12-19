@@ -7,9 +7,9 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.*;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.field.*;
 import org.socyno.webfwk.state.model.CommonAttachementItem;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
@@ -53,10 +53,9 @@ public class SysIssueService
             if (originForm == null || SessionContext.getUserId() != null) {
                 return false;
             }
-            OptionSystemUser createdBy;
+            Long createdBy;
             if ((createdBy = ((SysIssueFormSimple) originForm).getCreatedBy()) != null
-                    && createdBy.getId() != null 
-                    && createdBy.getId().equals(SessionContext.getUserId())) {
+                    && createdBy.equals(SessionContext.getUserId())) {
                 return true;
             }
             return false;
@@ -211,7 +210,7 @@ public class SysIssueService
         return StringUtils.join(ConvertUtil.asNonBlankUniqueTrimedStringArray((Object[])values), ',');
     }
     
-    public class EventAccept extends AbstractStateAction<SysIssueFormSimple, StateFormBasicForm, Void> {
+    public class EventAccept extends AbstractStateAction<SysIssueFormSimple, StateFormBasicInput, Void> {
         public EventAccept() {
             super("接收", STATES.SUBMITTED.getCode(), STATES.ACCEPTED.getCode());
         }
@@ -223,7 +222,7 @@ public class SysIssueService
         }
     }
     
-    public class EventReject extends AbstractStateAction<SysIssueFormSimple, StateFormBasicForm, Void> {
+    public class EventReject extends AbstractStateAction<SysIssueFormSimple, StateFormBasicInput, Void> {
         public EventReject() {
             super("拒绝", getStateCodes(STATES.SUBMITTED, STATES.ACCEPTED), STATES.REJECTED.getCode());
         }
@@ -268,7 +267,7 @@ public class SysIssueService
         }
     }
     
-    public class EventPause extends AbstractStateAction<SysIssueFormSimple, StateFormBasicForm, Void> {
+    public class EventPause extends AbstractStateAction<SysIssueFormSimple, StateFormBasicInput, Void> {
         
         @Override
         @Authority(value = AuthorityScopeType.System, checker = IsAssigneeChecker.class)
@@ -334,12 +333,12 @@ public class SysIssueService
         }
         
         @Override
-        protected String getTodoTitle(String event, SysIssueFormSimple originForm, AbstractStateForm form) {
+        protected String getTodoTitle(String event, SysIssueFormSimple originForm, AbstractStateFormBase form) {
             return String.format("系统报章待处理任务:%s - %s", originForm.getId(), originForm.getTitle());
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, SysIssueFormSimple originForm, AbstractStateForm form) {
+        protected long[] getTodoAssignees(String event, SysIssueFormSimple originForm, AbstractStateFormBase form) {
             return new long[] {((SysIssueFormAssign)form).getAssignee().getId()};
         }
     }
@@ -361,7 +360,7 @@ public class SysIssueService
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, SysIssueFormSimple originForm, AbstractStateForm form)
+        protected String getClosedTodoEvent(String event, SysIssueFormSimple originForm, AbstractStateFormBase form)
                 throws Exception {
             return EVENTS.AssigneeTodoCreate.getName();
         }

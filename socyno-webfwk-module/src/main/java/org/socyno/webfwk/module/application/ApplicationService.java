@@ -20,14 +20,15 @@ import org.socyno.webfwk.module.vcs.common.VcsType;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedAppInitInfo;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedAppRepoEntity;
 import org.socyno.webfwk.module.vcs.common.VcsUnifiedService;
+import org.socyno.webfwk.modutil.SubsystemBasicUtil;
+import org.socyno.webfwk.state.abs.*;
 import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeIdParser;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
-import org.socyno.webfwk.state.basic.*;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.sugger.DefaultStateFormSugger;
-import org.socyno.webfwk.state.util.StateFormBasicForm;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 import org.socyno.webfwk.state.util.StateFormEventClassEnum;
 import org.socyno.webfwk.state.util.StateFormEventResultCreateViewBasic;
 import org.socyno.webfwk.state.util.StateFormNamedQuery;
@@ -148,7 +149,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class)
         public void check(String event, ApplicationFormDetail form, String sourceState) {
 
         }
@@ -204,7 +205,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class)
         public void check(String event, ApplicationFormDetail form, String sourceState) {
             
         }
@@ -236,7 +237,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class)
         public void check(String event, ApplicationFormDetail form, String sourceState) {
         }
 
@@ -259,7 +260,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, rejecter = ToMasterReleaseRejecter.class, parser = AppSubsystemParser.class)
+        @Authority(value = AuthorityScopeType.Business, rejecter = ToMasterReleaseRejecter.class, parser = AppSubsystemParser.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
 
@@ -283,7 +284,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, rejecter = ToBranchReleaseRejecter.class, parser = AppSubsystemParser.class)
+        @Authority(value = AuthorityScopeType.Business, rejecter = ToBranchReleaseRejecter.class, parser = AppSubsystemParser.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         
         }
@@ -302,19 +303,19 @@ public class ApplicationService extends
         }
     }
     
-    public class EventResetVcsPermission extends AbstractStateAction<ApplicationFormDetail, StateFormBasicForm, Void> {
+    public class EventResetVcsPermission extends AbstractStateAction<ApplicationFormDetail, StateFormBasicInput, Void> {
         
         public EventResetVcsPermission() {
             super("重置仓库授权组", getStateCodesEx(), "");
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
 
         @Override
-        public Void handle(String event, ApplicationFormDetail originForm, StateFormBasicForm form, String message)
+        public Void handle(String event, ApplicationFormDetail originForm, StateFormBasicInput form, String message)
                 throws Exception {
             VcsUnifiedService.CommonCloud.createOrResetAppRepo(originForm.getId());
             return null;
@@ -329,7 +330,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppBranchCreateRejector.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class, rejecter = AppBranchCreateRejector.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
         
@@ -354,7 +355,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppPatchCreateRejector.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class, rejecter = AppPatchCreateRejector.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
         
@@ -380,7 +381,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppTagCreateRejector.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class, rejecter = AppTagCreateRejector.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
         
@@ -405,7 +406,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppBranchDeleteRejector.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class, rejecter = AppBranchDeleteRejector.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
         
@@ -429,7 +430,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppPatchDeleteRejector.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class, rejecter = AppPatchDeleteRejector.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
         }
         
@@ -453,7 +454,7 @@ public class ApplicationService extends
         }
         
         @Override
-        @Authority(value = AuthorityScopeType.Subsystem, parser = AppSubsystemParser.class, rejecter = AppTagDeleteRejector.class)
+        @Authority(value = AuthorityScopeType.Business, parser = AppSubsystemParser.class, rejecter = AppTagDeleteRejector.class)
         public void check(String event, ApplicationFormDetail originForm, String sourceState) {
             
         }
@@ -529,12 +530,12 @@ public class ApplicationService extends
     
     public class AppSubsystemParser implements AuthorityScopeIdParser {
         @Override
-        public Long getAuthorityScopeId(Object originForm) {
-            ApplicationFormAbstract manageForm = (ApplicationFormAbstract) originForm;
-            if (manageForm == null) {
+        public String getAuthorityScopeId(Object originForm) {
+            SubsystemFormSimple subsystem = null;
+            if (originForm == null || (subsystem = ((ApplicationFormAbstract) originForm).getSubsystem()) == null) {
                 return null;
             }
-            return manageForm.getSubsystem().getId();
+            return SubsystemBasicUtil.subsytemIdToBusinessId(subsystem.getId());
         }
     }
     
@@ -543,7 +544,7 @@ public class ApplicationService extends
         @Override
         public boolean check(Object originForm) throws Exception {
             return !VcsPermissionChecker.NOCACHED.check(RefsOpType.Create, VcsRefsType.Branch,
-                    ((AbstractStateForm) originForm).getId());
+                    ((AbstractStateFormBase) originForm).getId());
         }
         
     }
@@ -553,7 +554,7 @@ public class ApplicationService extends
         @Override
         public boolean check(Object originForm) throws Exception {
             return !VcsPermissionChecker.NOCACHED.check(RefsOpType.Delete, VcsRefsType.Branch,
-                    ((AbstractStateForm) originForm).getId());
+                    ((AbstractStateFormBase) originForm).getId());
         }
     }
     
@@ -562,7 +563,7 @@ public class ApplicationService extends
         @Override
         public boolean check(Object originForm) throws Exception {
             return !VcsPermissionChecker.NOCACHED.check(RefsOpType.Create, VcsRefsType.Patch,
-                    ((AbstractStateForm) originForm).getId());
+                    ((AbstractStateFormBase) originForm).getId());
         }
         
     }
@@ -572,7 +573,7 @@ public class ApplicationService extends
         @Override
         public boolean check(Object originForm) throws Exception {
             return !VcsPermissionChecker.NOCACHED.check(RefsOpType.Delete, VcsRefsType.Patch,
-                    ((AbstractStateForm) originForm).getId());
+                    ((AbstractStateFormBase) originForm).getId());
         }
     }
     
@@ -581,7 +582,7 @@ public class ApplicationService extends
         @Override
         public boolean check(Object originForm) throws Exception {
             return !VcsPermissionChecker.NOCACHED.check(RefsOpType.Create, VcsRefsType.Tag,
-                    ((AbstractStateForm) originForm).getId());
+                    ((AbstractStateFormBase) originForm).getId());
         }
         
     }
@@ -591,7 +592,7 @@ public class ApplicationService extends
         @Override
         public boolean check(Object originForm) throws Exception {
             return !VcsPermissionChecker.NOCACHED.check(RefsOpType.Delete, VcsRefsType.Tag,
-                    ((AbstractStateForm) originForm).getId());
+                    ((AbstractStateFormBase) originForm).getId());
         }
     }
     

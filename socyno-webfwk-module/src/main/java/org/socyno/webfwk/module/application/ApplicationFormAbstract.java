@@ -4,14 +4,14 @@ import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.systenant.AbstractSystemTenant;
 import org.socyno.webfwk.module.systenant.SystemTenantService;
 import org.socyno.webfwk.module.vcs.common.VcsType;
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.MessageException;
 import org.socyno.webfwk.util.tool.StringUtils;
 
 import com.github.reinert.jjschema.SchemaIgnore;
 
-public interface ApplicationFormAbstract extends AbstractStateForm {
+public interface ApplicationFormAbstract extends AbstractStateFormInput {
     
     public String getName();
     

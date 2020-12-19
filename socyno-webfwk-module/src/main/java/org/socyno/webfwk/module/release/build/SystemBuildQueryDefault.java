@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsApplicationType;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.module.user.SystemUserService;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
 import org.socyno.webfwk.util.sql.BasicSqlStatement;

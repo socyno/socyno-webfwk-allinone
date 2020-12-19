@@ -21,10 +21,10 @@ import org.socyno.webfwk.state.authority.AuthoritySpecialRejecter;
 @Target(ElementType.METHOD)
 public @interface Authority {
     /**
-     * 授权范围：目前分为 Guest(匿名)，System(全局)和 Subsystem(业务系统)三个范围。Guest 即无需任何授权，通常仅限系统
+     * 授权范围：目前分为 Guest(匿名)，System(全局)和 Business(业务)三个范围。Guest 即无需任何授权，通常仅限系统
      * 登陆、或常量数据访问等操作； System 即授权只跟用户的角色相关，不存在具体授权标的对象，只要拥有角色即拥有被赋予的
-     * 操作授权； Subsystem，该授权范围相对特殊，授权同时与角色和业务系统绑定，即在授权时需针对不同的业务系统授予不同的
-     * 角色，这样即可达到统一用户在不同业务系统具有不同的操作授权的目标，实现授权控制的精细化。
+     * 操作授权； Business，该授权范围相对特殊，授权同时与角色和系统业务绑定，即在授权时需针对不同的系统业务授予不同的
+     * 角色，这样即可达到统一用户在不同系统业务具有不同的操作授权的目标，实现授权控制的精细化。
      */
     AuthorityScopeType value() ;
     

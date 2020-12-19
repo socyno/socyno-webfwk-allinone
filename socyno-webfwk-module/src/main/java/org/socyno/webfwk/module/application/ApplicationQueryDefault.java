@@ -12,7 +12,8 @@ import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsSt
 import org.socyno.webfwk.module.application.ApplicationFormSimple.FieldOptionsVcsType;
 import org.socyno.webfwk.module.release.build.FieldBuildService;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
-import org.socyno.webfwk.state.basic.AbstractStateFormQuery;
+import org.socyno.webfwk.modutil.SubsystemBasicUtil;
+import org.socyno.webfwk.state.abs.AbstractStateFormQuery;
 import org.socyno.webfwk.state.service.PermissionService;
 import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
@@ -85,6 +86,12 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
         return true;
     }
     
+    private long[] getMyAccesableSubsystemIds() throws Exception {
+        return SubsystemBasicUtil.subsytemIdFromBusinessId(
+                PermissionService.queryMyBusinessByAuthKey(ApplicationService.getInstance().getFormAccessEventKey()),
+                true);
+    }
+    
     /**
         SELECT DISTINCT
             a.*,
@@ -107,13 +114,12 @@ public class ApplicationQueryDefault extends AbstractStateFormQuery {
          * 如在部分场景必须跳过该限制时，可使用 ApplicationListAllQuery, 请谨慎使用！！！
          * 
          */
-        if (onlyMyVisibles()) {
-            Long[] mySubsystems;
-            if ((mySubsystems = PermissionService
-                    .queryMySubsystemByAuthKey(ApplicationService.getInstance().getFormAccessEventKey())) != null) {
-                StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append(mySubsystems.length <= 0 ? "1 = 0"
-                        : String.format("a.subsystem IN (%s)", StringUtils.join(mySubsystems, ',')));
-            }
+        long[] mySubsystems;
+        if (onlyMyVisibles() && (mySubsystems = getMyAccesableSubsystemIds()) != null) {
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append(
+                    mySubsystems.length <= 0 ? "1 = 0"
+                            : String.format("a.subsystem IN (%s)", StringUtils.join(mySubsystems, ','))
+                        );
         }
         sqlargs.add(SessionContext.getUserId());
         if (getSubsystemId() != null) {

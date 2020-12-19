@@ -2,11 +2,11 @@ package org.socyno.webfwk.state.module.feature;
 
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
 import org.socyno.webfwk.state.field.FieldSystemAuths;
 import org.socyno.webfwk.util.state.field.FieldText;
 import org.socyno.webfwk.state.field.OptionSystemAuth;
 import org.socyno.webfwk.state.module.feature.SystemFeatureFormSimple.FieldOptionsState;
+import org.socyno.webfwk.state.util.StateFormBasicInput;
 
 import com.github.reinert.jjschema.Attributes;
 
@@ -18,16 +18,10 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "编辑系统功能")
-public class SystemFeatureFormEdition implements AbstractStateForm {
-    
-    @Attributes(title = "编号", readonly = true)
-    private Long   id;
+public class SystemFeatureFormEdition extends StateFormBasicInput {
     
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long   revision;
     
     @Attributes(title = "代码", readonly = true)
     private String code;

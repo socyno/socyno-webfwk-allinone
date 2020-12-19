@@ -8,6 +8,8 @@ import org.socyno.webfwk.module.release.build.FieldBuildService;
 import org.socyno.webfwk.module.subsystem.FieldSubsystemAccessable;
 import org.socyno.webfwk.module.subsystem.SubsystemFormSimple;
 import org.socyno.webfwk.module.vcs.common.VcsType;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 import org.socyno.webfwk.util.state.field.FieldText;
 
 import com.github.reinert.jjschema.Attributes;
@@ -22,15 +24,10 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ApplicationFormSimple implements ApplicationFormAbstract {
-    @Attributes(title = "编号", readonly = true)
-    private Long id;
+public class ApplicationFormSimple extends StateFormBasicSaved implements AbstractStateFormBase, ApplicationFormAbstract {
     
     @Attributes(title = "状态", readonly = true, type = FieldOptionsState.class)
     private String state;
-    
-    @Attributes(title = "版本", readonly = true)
-    private Long revision;
     
     @Attributes(title = "名称")
     private String name;

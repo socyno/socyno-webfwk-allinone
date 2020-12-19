@@ -5,22 +5,25 @@ import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldSimpleOption;
 import com.github.reinert.jjschema.v1.FieldType;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-import org.socyno.webfwk.state.basic.AbstractStateForm;
+import org.socyno.webfwk.state.abs.AbstractStateFormBase;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
-import org.socyno.webfwk.util.state.field.FieldDateTime;
+import org.socyno.webfwk.state.util.StateFormBasicSaved;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Attributes(title = "移动端应用配置")
-public class ReleaseMobileAppFormSimple implements AbstractStateForm {
-
+public class ReleaseMobileAppFormSimple extends StateFormBasicSaved implements AbstractStateFormBase {
+    
     public static class FieldOptionsState extends FieldType {
         @Override
         public List<? extends FieldOption> getStaticOptions() {
@@ -32,7 +35,7 @@ public class ReleaseMobileAppFormSimple implements AbstractStateForm {
             return FieldOptionsType.STATIC;
         }
     }
-
+    
     public static class FieldOptionsAppStoreType extends FieldType {
         @SuppressWarnings("serial")
         private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {
@@ -52,35 +55,17 @@ public class ReleaseMobileAppFormSimple implements AbstractStateForm {
             return Collections.unmodifiableList(options);
         }
     }
-
-    @Attributes(title = "单号", readonly = true)
-    private Long  id;
-
+    
     @Attributes(title = "状态", readonly = true, type = ReleaseMobileAppFormDetail.FieldOptionsState.class)
-    private String  state;
-
-    @Attributes(title = "版本", readonly = true)
-    private Long  revision;
-
-    @Attributes(title = "创建人编号")
-    private Long createdBy ;
-
-    @Attributes(title = "创建时间", type = FieldDateTime.class)
-    private Date createdAt ;
-
-    @Attributes(title = "创建人账户")
-    private String createdCodeBy;
-
-    @Attributes(title = "创建人姓名")
-    private String createdNameBy;
-
+    private String state;
+    
     @Attributes(title = "应用名", required = true, position = 1001)
-    private String applicationName ;
-
+    private String applicationName;
+    
     @Attributes(title = "系统类型", required = true, position = 1002, type = ReleaseMobileAppFormDetail.FieldOptionsAppStoreType.class)
-    private String storeType ;
-
+    private String storeType;
+    
     @Attributes(title = "审批人", required = true, position = 1003, type = FieldSystemUser.class)
-    private OptionSystemUser approver ;
-
+    private OptionSystemUser approver;
+    
 }
