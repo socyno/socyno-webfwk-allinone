@@ -6,7 +6,6 @@ import org.adrianwalker.multilinestring.Multiline;
 import org.socyno.webfwk.state.abs.AbstractStateAction;
 import org.socyno.webfwk.state.abs.AbstractStateChoice;
 import org.socyno.webfwk.state.abs.AbstractStateCreateAction;
-import org.socyno.webfwk.state.abs.AbstractStateFormBase;
 import org.socyno.webfwk.state.abs.AbstractStateFormInput;
 import org.socyno.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import org.socyno.webfwk.state.abs.AbstractStateTodoApprovalAction;
@@ -617,13 +616,13 @@ public class ReleaseMobileOnlineService extends
         }
         
         @Override
-        protected String getTodoTitle(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form)
+        protected String getTodoTitle(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return String.format("%s:%s - %s", getFormDisplay(), getForm(form.getId()).getApplicationName(), "应用上架审批");
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form)
+        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             SystemUserFormSimple systemUserSimple = SystemUserService.getInstance()
                     .getSimple(getForm(form.getId()).getApprover().getId());
@@ -638,12 +637,12 @@ public class ReleaseMobileOnlineService extends
         }
         
         @Override
-        protected String getNextRejectEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form) {
+        protected String getNextRejectEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form) {
             return EVENTS.ApprovalReject.getName();
         }
         
         @Override
-        protected String getNextApproveEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form) {
+        protected String getNextApproveEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form) {
             return EVENTS.ApprovalPassed.getName();
         }
     }
@@ -655,7 +654,7 @@ public class ReleaseMobileOnlineService extends
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form)
+        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return EVENTS.ApprovalCreate.getName();
         }
@@ -668,14 +667,14 @@ public class ReleaseMobileOnlineService extends
         }
         
         @Override
-        protected String getTodoTitle(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form)
+        protected String getTodoTitle(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return String.format("%s:%s - %s", getFormDisplay(), getForm(form.getId()).getApplicationName(),
                     "应用上架审批-额外审批人");
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form)
+        protected long[] getTodoAssignees(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.getInstance()
                     .getSimple(getForm(form.getId()).getSpecialApprover().getId());
@@ -683,12 +682,12 @@ public class ReleaseMobileOnlineService extends
         }
         
         @Override
-        protected String getNextRejectEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form) {
+        protected String getNextRejectEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form) {
             return EVENTS.SpecialApprovalReject.getName();
         }
         
         @Override
-        protected String getNextApproveEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form) {
+        protected String getNextApproveEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form) {
             return EVENTS.SpecialApprovalPassed.getName();
         }
     }
@@ -700,7 +699,7 @@ public class ReleaseMobileOnlineService extends
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormBase form)
+        protected String getClosedTodoEvent(String event, ReleaseMobileOnlineFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return EVENTS.SpecialApprovalCreate.getName();
         }

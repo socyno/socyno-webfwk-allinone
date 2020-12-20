@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
 import org.socyno.webfwk.state.model.CommonFormAttachement;
 import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.Definition;
@@ -94,11 +94,11 @@ public class SuggerDefinitionFormAttachment extends Definition {
         protected Object parseOriginValue(Object form, Field field, OptionWrapper wrapper, Attributes fieldAttrs)
                 throws Exception {
             String formName;
-            if (!(form instanceof AbstractStateFormBase) || StringUtils.isBlank(formName = getFormName(field))) {
+            if (!(form instanceof AbstractStateFormInput) || StringUtils.isBlank(formName = getFormName(field))) {
                 return null;
             }
             CommonFormAttachement formAtt = new CommonFormAttachement();
-            formAtt.setFormId(((AbstractStateFormBase) form).getId());
+            formAtt.setFormId(((AbstractStateFormInput) form).getId());
             formAtt.setFormName(formName);
             formAtt.setField(field.getName());
             return wrapper.fromFieldFlatValues(CommonFormAttachement.class,

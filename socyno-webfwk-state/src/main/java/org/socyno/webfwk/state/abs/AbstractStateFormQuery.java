@@ -1,6 +1,5 @@
 package org.socyno.webfwk.state.abs;
 
-import java.util.List;
 import java.util.Map;
 
 import org.socyno.webfwk.util.sql.AbstractSqlStatement;
@@ -59,9 +58,5 @@ public abstract class AbstractStateFormQuery {
     @SchemaIgnore
     public Map<String, String> getFieldMapper() {
         return null;
-    }
-    
-    public <T extends AbstractStateFormBase> List<T> processResultSet(Class<T> itemClazz, List<T> resultSet) throws Exception {
-        return resultSet;
     }
 }

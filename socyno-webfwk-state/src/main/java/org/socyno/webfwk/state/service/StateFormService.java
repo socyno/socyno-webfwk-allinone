@@ -660,7 +660,7 @@ public class StateFormService {
     /**
      * 获取表单事件的请求数据类型
      */
-    public static Class<AbstractStateFormBase> getActionFormTypeClass(String formName, String event) throws Exception {
+    public static Class<AbstractStateFormInput> getActionFormTypeClass(String formName, String event) throws Exception {
         StateFormInstance instance = getStateFormInstance(formName);
         return instance.getServiceInstance().getActionFormTypeClass(event);
     }
@@ -784,7 +784,7 @@ public class StateFormService {
      * 执行指定的表单操作
      */
     public static Object triggerAction(String formName, String formAction,
-                                    AbstractStateFormBase formData, String message, Class<?> actionResult) throws Exception  {
+                                    AbstractStateFormInput formData, String message, Class<?> actionResult) throws Exception  {
         return getStateFormInstance(formName).getServiceInstance().triggerAction(formAction, formData, message, actionResult);
     }
     
@@ -800,7 +800,7 @@ public class StateFormService {
      * 执行指定的表单创建操作
      */
     public static AbstractStateCreateView triggerCreateAction(String formName, String formAction,
-            AbstractStateFormBase formData) throws Exception {
+            AbstractStateFormInput formData) throws Exception {
         return getStateFormInstance(formName).getServiceInstance().triggerCreateAction(formAction, formData);
     }
     

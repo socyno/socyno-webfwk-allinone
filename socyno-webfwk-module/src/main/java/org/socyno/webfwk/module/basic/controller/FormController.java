@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
 import org.socyno.webfwk.state.service.AttachmentService;
 import org.socyno.webfwk.state.service.StateFormService;
 import org.socyno.webfwk.state.util.StateFormDynamicForm;
@@ -140,8 +140,8 @@ public class FormController {
             throw new MessageException("请求数据不可识别.");
         }
         Class<?> actionResult = StateFormService.getActionReturnTypeClass(formName, formAction);
-        Class<AbstractStateFormBase> actionClass = StateFormService.getActionFormTypeClass(formName, formAction);
-        AbstractStateFormBase formData = HttpMessageConverter.toInstance(actionClass, jsonForm);
+        Class<AbstractStateFormInput> actionClass = StateFormService.getActionFormTypeClass(formName, formAction);
+        AbstractStateFormInput formData = HttpMessageConverter.toInstance(actionClass, jsonForm);
         if (formData instanceof StateFormDynamicForm) {
             ((StateFormDynamicForm) formData).setJsonData(jsonForm);
         }
@@ -167,7 +167,7 @@ public class FormController {
     public R triggerSubmitAction(@PathVariable("formName") String formName,
             @PathVariable("formAction") String formAction, HttpServletRequest req) throws Exception {
         String bodyJson = new String(IOUtils.toByteArray(req.getInputStream()), "UTF-8");
-        Class<AbstractStateFormBase> actionClass = StateFormService.getActionFormTypeClass(formName, formAction);
+        Class<AbstractStateFormInput> actionClass = StateFormService.getActionFormTypeClass(formName, formAction);
         return R.ok().setData(StateFormService.triggerCreateAction(formName, formAction,
                 HttpMessageConverter.toInstance(actionClass, bodyJson)));
     }

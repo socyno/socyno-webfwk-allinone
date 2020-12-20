@@ -344,12 +344,14 @@ public class SystemJobService
                         @Override
                         public void completed(AbstractJobStatus status, Throwable exception) {
                             try {
-                                getFormBaseDao()
-                                        .executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
-                                                new ObjectMap().put("=id", originForm.getId()).put("#running_tasks",
-                                                        "running_tasks - 1")));
-                                saveStateRevision(event, originForm.getId(), STATES.ENABLED.getCode(),
-                                        new ObjectMap().put("<=running_tasks", 0), STATES.RUNNING.getCode());
+                                getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(),
+                                        new ObjectMap().put("=id", originForm.getId()).put("#running_tasks",
+                                                "running_tasks - 1")));
+                                saveStateRevision(event, originForm.getId(), 
+                                        STATES.ENABLED.getCode(),
+                                        STATES.RUNNING.getCode(), 
+                                        new ObjectMap().put("<=running_tasks", 0),
+                                        STATES.RUNNING.getCode());
                             } catch (Exception e) {
                                 log.error(e.toString(), e);
                             }

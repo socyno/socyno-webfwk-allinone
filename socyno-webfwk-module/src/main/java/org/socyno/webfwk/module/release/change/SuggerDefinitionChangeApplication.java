@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.socyno.webfwk.module.application.FieldApplication;
 import org.socyno.webfwk.module.application.FieldApplication.OptionApplication;
-import org.socyno.webfwk.state.abs.AbstractStateFormBase;
+import org.socyno.webfwk.state.abs.AbstractStateFormInput;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.Definition;
 import org.socyno.webfwk.state.sugger.AbstractStateFormSugger.OptionClass;
 import org.socyno.webfwk.util.tool.CommonUtil;
@@ -84,7 +84,7 @@ public class SuggerDefinitionChangeApplication extends Definition {
         protected Object parseOriginValue(Object form, Field field, OptionWrapper wrapper, Attributes fieldAttrs)
                 throws Exception {
             Long formId;
-            if (!(form instanceof AbstractStateFormBase) || (formId = ((AbstractStateFormBase) form).getId()) == null) {
+            if (!(form instanceof AbstractStateFormInput) || (formId = ((AbstractStateFormInput) form).getId()) == null) {
                 return null;
             }
             OptionApplication formApp = new OptionApplication();
@@ -105,7 +105,7 @@ public class SuggerDefinitionChangeApplication extends Definition {
                 throws Exception {
             Long formId;
             List<ChangeApplication> changeApps;
-            if ((changeApps = threadChangeApps.get()) == null || (formId = ((AbstractStateFormBase) form).getId()) == null
+            if ((changeApps = threadChangeApps.get()) == null || (formId = ((AbstractStateFormInput) form).getId()) == null
                         || mappedFinalValues == null) {
                 return;
             }

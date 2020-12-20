@@ -282,7 +282,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
     }
     
     public String getFormCreatedNameByField() {
-        return "state_form_created_code_by";
+        return "state_form_created_name_by";
     }
     
     public String getFormUpdatedAtField() {
@@ -298,7 +298,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
     }
     
     public String getFormUpdatedNameByField() {
-        return "state_form_updated_code_by";
+        return "state_form_updated_name_by";
     }
     
     /**
@@ -310,15 +310,11 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
     }
     
     @Override
-    protected void saveStateRevision(String event, long id, String state) throws Exception {
-        saveStateRevision(event, id, state, new String[0]);
+    protected void saveStateRevision(String event, long id, @NonNull String finalNewState, String originState) throws Exception {
+        saveStateRevision(event, id, finalNewState, originState, null, new String[0]);
     }
     
-    protected void saveStateRevision(String event, long id, String state, String... stateWhens) throws Exception {
-        saveStateRevision(event, id, state, null, stateWhens);
-    }
-    
-    protected void saveStateRevision(String event, long id, String state, ObjectMap customQueries, String... stateWhens)
+    protected void saveStateRevision(String event, long id, @NonNull String finalNewState, String originState, ObjectMap customQueries, String... stateWhens)
             throws Exception {
         ObjectMap query = new ObjectMap();
         if (customQueries != null) {
@@ -331,7 +327,10 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
                     .put(getFormCreatedCodeByField(), SessionContext.getUsername())
                     .put(getFormCreatedNameByField(), SessionContext.getDisplay());
         }
-        if (action == null || !action.getStateRevisionChangeIgnored()) {
+        if (finalNewState.equals(originState)) {
+            finalNewState = "";
+        }
+        if (action == null || StringUtils.isNotBlank(finalNewState) || !action.getStateRevisionChangeIgnored()) {
             query.put("#".concat(getFormUpdatedAtField()), "NOW()")
                     .put(getFormUpdatedByField(), SessionContext.getUserId())
                     .put(getFormUpdatedCodeByField(), SessionContext.getUsername())
@@ -340,25 +339,25 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
         if (stateWhens != null && stateWhens.length > 0) {
             query.put("=" + getFormStateField(), stateWhens);
         }
-        if (StringUtils.isNotBlank(state)) {
+        if (StringUtils.isNotBlank(finalNewState)) {
             boolean found = false;
             List<? extends FieldOption> stateOptions = getStates();
             if ((stateOptions = getStates()) == null || stateOptions.isEmpty()) {
-                throw new StateFormInvalidStatesException(getFormName(), state);
+                throw new StateFormInvalidStatesException(getFormName(), finalNewState);
             }
             for (FieldOption option : stateOptions) {
                 if (option == null) {
                     continue;
                 }
-                if (StringUtils.equals(state, option.getOptionValue())) {
+                if (StringUtils.equals(finalNewState, option.getOptionValue())) {
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                throw new StateFormInvalidStatesException(getFormName(), state);
+                throw new StateFormInvalidStatesException(getFormName(), finalNewState);
             }
-            query.put(getFormStateField(), state);
+            query.put(getFormStateField(), finalNewState);
         }
         query.put("=" + getFormIdField(), id).put("#".concat(getFormRevisionField()), getFormRevisionField() + " + 1");
         getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(), query));
@@ -445,7 +444,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
             throws Exception {
         List<T> resutSet = listForm(resultClazz, queryToFilter(resultClazz, query));
         return new PagedList<T>().setPage(query.getPage()).setLimit(query.getLimit())
-                .setList(query.processResultSet(resultClazz, resutSet));
+                .setList(resutSet);
     }
     
     public PagedList<? extends F> listForm(@NonNull StateFormNamedQuery<? extends F> namedQuery,
@@ -503,7 +502,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
                 ? getListFormTotal(query)
                 : (query.getOffset() + resutSet.size());
         return new PagedListWithTotal<T>().setPage(query.getPage()).setLimit(query.getLimit()).setTotal(total)
-                .setList(query.processResultSet(resultClazz, resutSet));
+                .setList(resutSet);
     }
     
     public PagedListWithTotal<? extends F> listFormWithTotal(@NonNull StateFormNamedQuery<? extends F> namedQuery,
@@ -730,7 +729,7 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
         return super.triggerAction(event, form, message, clazz);
     }
     
-    public void triggerAction(String event, AbstractStateFormBase form, String message) throws Exception {
+    public void triggerAction(String event, AbstractStateFormInput form, String message) throws Exception {
         triggerAction(event, form, message, void.class);
     }
     

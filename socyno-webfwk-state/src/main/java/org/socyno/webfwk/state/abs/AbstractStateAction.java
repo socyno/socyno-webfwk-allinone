@@ -391,8 +391,8 @@ public abstract class AbstractStateAction<S extends AbstractStateFormBase, F ext
      * 获取事件编辑表单类型
      */
     @SuppressWarnings("unchecked")
-    public Class<AbstractStateFormBase> getFormTypeClass() {
-        return (Class<AbstractStateFormBase>)ClassUtil.getActualParameterizedType(this.getClass(), AbstractStateAction.class, 1);
+    public Class<AbstractStateFormInput> getFormTypeClass() {
+        return (Class<AbstractStateFormInput>)ClassUtil.getActualParameterizedType(this.getClass(), AbstractStateAction.class, 1);
     }
     
     /**

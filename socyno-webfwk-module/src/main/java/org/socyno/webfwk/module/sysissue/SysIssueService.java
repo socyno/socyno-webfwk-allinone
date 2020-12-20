@@ -333,12 +333,12 @@ public class SysIssueService
         }
         
         @Override
-        protected String getTodoTitle(String event, SysIssueFormSimple originForm, AbstractStateFormBase form) {
+        protected String getTodoTitle(String event, SysIssueFormSimple originForm, AbstractStateFormInput form) {
             return String.format("系统报章待处理任务:%s - %s", originForm.getId(), originForm.getTitle());
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, SysIssueFormSimple originForm, AbstractStateFormBase form) {
+        protected long[] getTodoAssignees(String event, SysIssueFormSimple originForm, AbstractStateFormInput form) {
             return new long[] {((SysIssueFormAssign)form).getAssignee().getId()};
         }
     }
@@ -360,7 +360,7 @@ public class SysIssueService
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, SysIssueFormSimple originForm, AbstractStateFormBase form)
+        protected String getClosedTodoEvent(String event, SysIssueFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return EVENTS.AssigneeTodoCreate.getName();
         }

@@ -22,7 +22,7 @@ public abstract class AbstractStateTodoCloseAction<S extends AbstractStateFormBa
     /**
      * 构建代办事项关闭的原因说明，如果未提供(返回空白)，则不关闭此代办事项。
      */
-    protected String getClosedTodoReason(String event, S originForm, AbstractStateFormBase form) throws Exception {
+    protected String getClosedTodoReason(String event, S originForm, AbstractStateFormInput form) throws Exception {
         StringBuilder reason = new StringBuilder(
                 getContextFormService().getExternalFormAction(getContextFormEvent()).getDisplay());
         if (StringUtils.isNotBlank(getContextFormEventMessage())) {
@@ -31,10 +31,10 @@ public abstract class AbstractStateTodoCloseAction<S extends AbstractStateFormBa
         return reason.toString();
     }
     
-    protected abstract String getClosedTodoEvent(String event, S originForm, AbstractStateFormBase form) throws Exception;
+    protected abstract String getClosedTodoEvent(String event, S originForm, AbstractStateFormInput form) throws Exception;
     
     @SuppressWarnings("unchecked")
-    protected final String getClosedTodoTargetKey(String event, S originForm, AbstractStateFormBase form) throws Exception {
+    protected final String getClosedTodoTargetKey(String event, S originForm, AbstractStateFormInput form) throws Exception {
         String createdEvent = getClosedTodoEvent(event, originForm, form);
         AbstractStateAction<S, ?, ?> created = getContextFormService().getInternalFormAction(createdEvent);
         if (created == null || !(created instanceof AbstractStateTodoCreateAction)) {
@@ -43,7 +43,7 @@ public abstract class AbstractStateTodoCloseAction<S extends AbstractStateFormBa
         return ((AbstractStateTodoCreateAction<S>)created).getTodoTargetKey(createdEvent, originForm, form);
     }
     
-    public final Void handle(String event, S originForm, AbstractStateFormBase form, String message) throws Exception {
+    public final Void handle(String event, S originForm, AbstractStateFormInput form, String message) throws Exception {
         String closeTodoReason = getClosedTodoReason(event, originForm, form);
         if (StringUtils.isBlank(closeTodoReason = getClosedTodoReason(event, originForm, form))) {
             return null;

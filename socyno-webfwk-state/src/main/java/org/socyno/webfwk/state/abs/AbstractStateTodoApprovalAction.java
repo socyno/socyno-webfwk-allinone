@@ -18,7 +18,7 @@ public abstract class AbstractStateTodoApprovalAction<S extends AbstractStateFor
         super(display, targetState);
     }
     
-    protected final String getTodoCategory(String event, S originForm, AbstractStateFormBase form) {
+    protected final String getTodoCategory(String event, S originForm, AbstractStateFormInput form) {
         return String.format("system.state.form:approval?%s",
                 HttpUtil.toQueryString(new ObjectMap()
                     .put("formName", getContextFormService().getFormName())
@@ -28,7 +28,7 @@ public abstract class AbstractStateTodoApprovalAction<S extends AbstractStateFor
                 ));
     }
     
-    protected abstract String getNextRejectEvent(String event, S originForm, AbstractStateFormBase form);
+    protected abstract String getNextRejectEvent(String event, S originForm, AbstractStateFormInput form);
     
-    protected abstract String getNextApproveEvent(String event, S originForm, AbstractStateFormBase form);
+    protected abstract String getNextApproveEvent(String event, S originForm, AbstractStateFormInput form);
 }

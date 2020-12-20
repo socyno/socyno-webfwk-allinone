@@ -616,14 +616,14 @@ public class ChangeRequestService extends
         }
         
         @Override
-        protected String getTodoTitle(String event, ChangeRequestFormSimple originForm, AbstractStateFormBase form)
+        protected String getTodoTitle(String event, ChangeRequestFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return String.format("变更申请：%s - %s - %s", originForm.getReleaseId().getReleaseId(), "技术经理审批",
                     originForm.getTitle());
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, ChangeRequestFormSimple originForm, AbstractStateFormBase form)
+        protected long[] getTodoAssignees(String event, ChangeRequestFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return ConvertUtil
                     .asNonNullUniquePrimitiveLongArray(getActionUserIds(EVENTS.TechApprove.getName(), originForm));
@@ -637,7 +637,7 @@ public class ChangeRequestService extends
         }
         
         @Override
-        protected String getClosedTodoEvent(String event, ChangeRequestFormSimple originForm, AbstractStateFormBase form)
+        protected String getClosedTodoEvent(String event, ChangeRequestFormSimple originForm, AbstractStateFormInput form)
                 throws Exception {
             return EVENTS.TechReadyCreate.getName();
         }

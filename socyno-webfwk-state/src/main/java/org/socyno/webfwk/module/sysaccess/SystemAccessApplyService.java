@@ -493,13 +493,13 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        protected String getTodoTitle(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormBase form)
+        protected String getTodoTitle(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormInput form)
                 throws Exception {
             return String.format("%s:%s - %s", originForm.getTitle(), getFormDisplay(), "申请人领导审批");
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormBase form)
+        protected long[] getTodoAssignees(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormInput form)
                 throws Exception {
             SystemUserFormSimple systemUserSimple = (SystemUserFormSimple) SystemUserService.getInstance()
                     .getSimple(SessionContext.getUserId());
@@ -514,13 +514,13 @@ public class SystemAccessApplyService extends
         
         @Override
         protected String getNextRejectEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) {
+                AbstractStateFormInput form) {
             return EVENTS.LeaderReject.getName();
         }
         
         @Override
         protected String getNextApproveEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) {
+                AbstractStateFormInput form) {
             return EVENTS.LeaderPass.getName();
         }
     }
@@ -533,7 +533,7 @@ public class SystemAccessApplyService extends
         
         @Override
         protected String getClosedTodoEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) throws Exception {
+                AbstractStateFormInput form) throws Exception {
             return EVENTS.TodoCreateForLeader.getName();
         }
     }
@@ -545,14 +545,14 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        protected String getTodoTitle(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormBase form)
+        protected String getTodoTitle(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormInput form)
                 throws Exception {
             return String.format("%s:%s - %s", originForm.getTitle(), getFormDisplay(), "业务负责人审批");
         }
         
         @Override
         protected long[] getTodoAssignees(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) throws Exception {
+                AbstractStateFormInput form) throws Exception {
             
             List<String> businessIds = new ArrayList<>();
             if (originForm.getBusinessEntities() != null) {
@@ -583,13 +583,13 @@ public class SystemAccessApplyService extends
         
         @Override
         protected String getNextRejectEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) {
+                AbstractStateFormInput form) {
             return EVENTS.OwnerReject.getName();
         }
         
         @Override
         protected String getNextApproveEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) {
+                AbstractStateFormInput form) {
             return EVENTS.OwnerPass.getName();
         }
     }
@@ -602,7 +602,7 @@ public class SystemAccessApplyService extends
         
         @Override
         protected String getClosedTodoEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) throws Exception {
+                AbstractStateFormInput form) throws Exception {
             return EVENTS.TodoCreateForOwner.getName();
         }
     }
@@ -614,13 +614,13 @@ public class SystemAccessApplyService extends
         }
         
         @Override
-        protected String getTodoTitle(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormBase form)
+        protected String getTodoTitle(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormInput form)
                 throws Exception {
             return String.format("%s:%s - %s", originForm.getTitle(), getFormDisplay(), "SCM审批");
         }
         
         @Override
-        protected long[] getTodoAssignees(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormBase form)
+        protected long[] getTodoAssignees(String event, SystemAccessApplyFormDetail originForm, AbstractStateFormInput form)
                 throws Exception {
             
             return ConvertUtil.asNonNullUniquePrimitiveLongArray(
@@ -629,13 +629,13 @@ public class SystemAccessApplyService extends
         
         @Override
         protected String getNextRejectEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) {
+                AbstractStateFormInput form) {
             return EVENTS.AdminReject.getName();
         }
         
         @Override
         protected String getNextApproveEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) {
+                AbstractStateFormInput form) {
             return EVENTS.AdminPass.getName();
         }
     }
@@ -648,7 +648,7 @@ public class SystemAccessApplyService extends
         
         @Override
         protected String getClosedTodoEvent(String event, SystemAccessApplyFormDetail originForm,
-                AbstractStateFormBase form) throws Exception {
+                AbstractStateFormInput form) throws Exception {
             return EVENTS.TodoCreateForAdmin.getName();
         }
     }

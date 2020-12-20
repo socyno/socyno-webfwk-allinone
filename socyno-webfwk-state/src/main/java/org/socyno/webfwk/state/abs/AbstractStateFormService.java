@@ -55,7 +55,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateFormBase> 
     
     public abstract String getFormDisplay();
 
-    protected abstract void saveStateRevision(String event, long formId, String state) throws Exception;
+    protected abstract void saveStateRevision(String event, long formId, String finalNewState, String originState) throws Exception;
 
     protected abstract Map<Long, StateFormRevision> loadStateRevision(Long[] formIds) throws Exception;
 
@@ -1163,8 +1163,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateFormBase> 
                                 ? null : originForm.getState();
         if (!StringUtils.equals(originState, finalNewState) || !absAction.getStateRevisionChangeIgnored()) {
             if (!EventType.Delete.equals(absAction.getEventType()) && form.getId() != null) {
-                saveStateRevision(event, form.getId(),
-                        StringUtils.equals(originState, finalNewState) ? "" : finalNewState);
+                saveStateRevision(event, form.getId(), finalNewState, originState);
             }
         }
         try {
@@ -1186,7 +1185,7 @@ public abstract class AbstractStateFormService<S extends AbstractStateFormBase> 
         return sr.values().iterator().next();
     }
 
-    public final Class<AbstractStateFormBase> getActionFormTypeClass(String event) throws Exception {
+    public final Class<AbstractStateFormInput> getActionFormTypeClass(String event) throws Exception {
         AbstractStateAction<? extends S, ?, ?> action;
         if((action = getFormAction(event)) == null) {
             throw new StateFormActionNotFoundException(getFormName(), event);

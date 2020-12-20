@@ -25,21 +25,21 @@ public abstract class AbstractStateTodoCreateAction<S extends AbstractStateFormB
         super(display, targetState);
     }
     
-    protected String getTodoCategory(String event, S originForm, AbstractStateFormBase form) {
+    protected String getTodoCategory(String event, S originForm, AbstractStateFormInput form) {
         return String.format("system.state.form:normal?formName=%s", getContextFormService().getFormName());
     }
     
     /**
      * 构建代办事项的标题，如果未提供(返回空白)，则不创建此代办事项。
      */
-    public final String getTodoTargetKey(String event, S originForm, AbstractStateFormBase form) {
+    public final String getTodoTargetKey(String event, S originForm, AbstractStateFormInput form) {
         return String.format("system.state.form:%s::%s", getContextFormService().getFormName(), event);
     }
     
     /**
      * 获取代办事项的发起人. 默认通过查询首条操作日志的创建者,或者是当前操作者, 如此无法满足需求,请自行重写该方法.
      */
-    protected long getTodoApplier(String event, S originForm, AbstractStateFormBase form) throws Exception {
+    protected long getTodoApplier(String event, S originForm, AbstractStateFormInput form) throws Exception {
         AbstractStateFormService<S> formService;
         if (!((formService = getContextFormService()) instanceof AbstractStateFormServiceWithBaseDao)) {
             throw new AbstractMethodUnimplimentedException();
@@ -53,11 +53,11 @@ public abstract class AbstractStateTodoCreateAction<S extends AbstractStateFormB
         return firstLog.getOperateUserId();
     }
     
-    protected abstract String getTodoTitle(String event, S originForm, AbstractStateFormBase form) throws Exception;
+    protected abstract String getTodoTitle(String event, S originForm, AbstractStateFormInput form) throws Exception;
     
-    protected abstract long[] getTodoAssignees(String event, S originForm, AbstractStateFormBase form) throws Exception;
+    protected abstract long[] getTodoAssignees(String event, S originForm, AbstractStateFormInput form) throws Exception;
     
-    public final Void handle(String event, S originForm, AbstractStateFormBase form, String message) throws Exception {
+    public final Void handle(String event, S originForm, AbstractStateFormInput form, String message) throws Exception {
         String todoTitle;
         /* 当代办事项的标题为空白,视为不创建该代办事项 */
         if (StringUtils.isBlank(todoTitle = getTodoTitle(event, originForm, form))) {
