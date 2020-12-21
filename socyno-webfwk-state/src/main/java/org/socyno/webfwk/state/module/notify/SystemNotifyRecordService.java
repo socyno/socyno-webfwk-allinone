@@ -118,10 +118,6 @@ public class SystemNotifyRecordService extends
                         .put("content",         form.getContent())
                         .put("message_to",      form.getMessageTo())
                         .put("message_cc",      form.getMessageCc())
-                        .put("created_at",      new Date())
-                        .put("created_by",      SessionContext.getTokenUserId())
-                        .put("created_code_by", SessionContext.getTokenUsername())
-                        .put("created_name_by", SessionContext.getTokenDisplay())
             ), new ResultSetProcessor () {
                 @Override
                 public void process(ResultSet r, Connection c) throws Exception {

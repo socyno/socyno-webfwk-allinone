@@ -1,6 +1,6 @@
 package org.socyno.webfwk.backend.controller;
 
-import org.socyno.webfwk.module.basic.controller.InternalController;
+import org.socyno.webfwk.state.controller.InternalController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

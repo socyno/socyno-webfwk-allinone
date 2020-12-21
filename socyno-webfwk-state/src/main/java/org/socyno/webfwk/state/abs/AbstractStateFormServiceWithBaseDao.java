@@ -754,7 +754,9 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
             lockObjectId = -1000000L;
         }
         final Object[] result = new Object[] { null };
-        SimpleLockService.DEFAULT.lockAndRun(getFormName(), lockObjectId, event, new CommonLockExecutor() {
+        SimpleLockService.getInstance().lockAndRun(
+                String.format("system.state.form:%s", getFormName()), 
+                lockObjectId, String.format("system.state.event:%s", event), new CommonLockExecutor() {
             @Override
             public void execute() throws Exception {
                 result[0] = superTriggerActionWithTransactional(event, form, message, clazz);

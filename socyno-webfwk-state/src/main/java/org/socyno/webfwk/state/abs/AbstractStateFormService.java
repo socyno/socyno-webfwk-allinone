@@ -19,7 +19,6 @@ import org.socyno.webfwk.state.exec.StateFormNotFoundException;
 import org.socyno.webfwk.state.exec.StateFormRevisionChangedException;
 import org.socyno.webfwk.state.exec.StateFormRevisionNotFoundException;
 import org.socyno.webfwk.state.exec.StateFormSubmitEventDefinedException;
-import org.socyno.webfwk.state.exec.StateFormSubmitEventResultException;
 import org.socyno.webfwk.state.exec.StateFormSubmitEventTargetException;
 import org.socyno.webfwk.state.field.FieldSystemUser;
 import org.socyno.webfwk.state.field.OptionSystemUser;
@@ -1065,11 +1064,11 @@ public abstract class AbstractStateFormService<S extends AbstractStateFormBase> 
                 throw new StateFormSubmitEventTargetException(getFormName(), event);
             }
             if (result != null) {
-                if (!(result instanceof Long) || ((Long)result) <= 0) {
-                    throw new StateFormSubmitEventResultException(getFormName(), event);
-                }
+//                if (!(result instanceof Long) || ((Long)result) <= 0) {
+//                    throw new StateFormSubmitEventResultException(getFormName(), event);
+//                }
+                form.setId(((AbstractStateCreateView)result).getId());
             }
-            form.setId((Long)result);
             form.setRevision(1L);
         } else {
             finalNewState = CommonUtil.ifBlank(finalNewState, originForm.getState());

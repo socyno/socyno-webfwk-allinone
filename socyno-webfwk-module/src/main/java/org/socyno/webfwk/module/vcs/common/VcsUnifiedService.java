@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.socyno.webfwk.module.application.ApplicationService;
 import org.socyno.webfwk.module.subsystem.SubsystemService;
-import org.socyno.webfwk.module.systenant.SystemTenantService;
+import org.socyno.webfwk.state.module.tenant.SystemTenantService;
 import org.socyno.webfwk.state.module.user.WindowsAdService;
 import org.socyno.webfwk.util.context.ContextUtil;
 import org.socyno.webfwk.util.context.SessionContext;

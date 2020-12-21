@@ -186,7 +186,7 @@ public class StateFormService {
         private String formService;
         private String formDisplay;
         private String formBackend;
-        private String rowsExpand;
+        private String properties;
         private Integer disabled;
         private Long revision;
         private String visibleActions;
@@ -255,7 +255,7 @@ public class StateFormService {
                     .put("form_backend", register.getFormBackend().trim())
                     .put("form_display", register.getFormDisplay().trim())
                     .put("form_service", register.getFormService().trim())
-                    .put("rows_expand", register.getRowsExpand())
+                    .put("properties", register.getProperties())
                     .put("disabled", CommonUtil.ifNull(register.getDisabled(), 0) == 0 ? 0 : 1)
                     .put("visible_actions", StringUtils.trimToEmpty(register.getVisibleActions()))
                     .put("#revision", "revision + 1")
@@ -584,7 +584,7 @@ public class StateFormService {
                     .setStates(service.getStates())
                     .setName(instance.getForm().getFormName())
                     .setTitle(instance.getForm().getFormDisplay())
-                    .setRowsExpand(instance.getForm().getRowsExpand())
+                    .setProperties(instance.getForm().getProperties())
                     .setQueries(service.getFormQueryDefinition())
                     .setAllownActions(allownActions.toArray(new String[0]))
                     ;
@@ -983,52 +983,6 @@ public class StateFormService {
          SimpleLogService.createLog("state.form.custom.definition", "edit", 
                          formClassPath, null, currentDefinition, new CustomFormViewConfig(formClassPath, definition, revision));
          return revision;
-    }
-    
-    /**
-     * 添加或更新表单的自定义属性
-     */
-    public static void saveFieldCustomAttribute(@NonNull StateFormFieldCustomAttribute attr) throws Exception {
-        if (StringUtils.isAnyBlank(attr.getName(), attr.getDisplay(), attr.getDescription())) {
-            throw new MessageException("自定义的通用流程表单或字段属性的名称、显示及描述字段均不可为空值");
-        }
-        if (attr.getId() == null) {
-            if (getDao().queryAsObject(Long.class, "SELECT id FROM name = ?", 
-                                            new Object[] {attr.getName()}) != null) {
-                throw new MessageException(String.format(
-                    "自定义的通用流程表单或字段属性(%s)已存在",
-                    CommonUtil.ifNull(attr.getName(), "")
-                ));
-            }
-            getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-                    "system_form_fieldattrs", new ObjectMap()
-                        .put("name", attr.getName())
-                        .put("display", attr.getDisplay())
-                        .put("description", attr.getDescription())));
-            return;
-        }
-        getDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(
-                "system_form_fieldattrs", new ObjectMap()
-                    .put("id", attr.getId())
-                    .put("=name", attr.getName())
-                    .put("=display", attr.getDisplay())
-                    .put("=description", attr.getDescription())));
-    }
-    
-    /**
-     * 删除表单的自定义属性
-     */
-    public static void removeFieldCustomAttribute(long id) throws Exception {
-        getDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
-                "system_form_fieldattrs", new ObjectMap().put("=id", id)));
-    }
-    
-    /**
-     * 列举表单的自定义属性
-     */
-    public static List<StateFormFieldCustomAttribute> listFieldCustomAttribute() throws Exception {
-        return getDao().queryAsList(StateFormFieldCustomAttribute.class,
-                "SELECT * FROM system_form_fieldattrs ORDER BY name DESC");
     }
     
     /**

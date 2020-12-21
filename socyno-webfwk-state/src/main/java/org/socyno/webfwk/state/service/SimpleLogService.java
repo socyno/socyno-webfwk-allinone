@@ -29,8 +29,16 @@ import org.socyno.webfwk.util.tool.StringUtils;
 @Slf4j
 public class SimpleLogService {
     
-    private static AbstractDao getDao() {
+    public static AbstractDao getDao() {
         return SystemTenantDataSource.getMain();
+    }
+    
+    public static String getFormTable() {
+        return "system_log";
+    }
+    
+    public static String getDetailTable() {
+        return "system_log_detail";
     }
 	
 	public static boolean createLog(
@@ -47,7 +55,7 @@ public class SimpleLogService {
             if (StringUtils.isNotBlank((String)operateBefore) || StringUtils.isNotBlank((String)operateAfter)) {
                 try {
                     getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-                        "system_common_log_detail", new ObjectMap()
+                            getDetailTable(), new ObjectMap()
                                 .put("operate_after", operateAfter)
                                 .put("operate_before", operateBefore)
                     ), new ResultSetProcessor() {
@@ -62,7 +70,7 @@ public class SimpleLogService {
                 }
             }
             getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-                "system_common_log", new ObjectMap()
+                    getFormTable(), new ObjectMap()
                         .put("object_type", objectType)
                         .put("object_id", objectId)
                         .put("operate_user_id", SessionContext.getUserId())
@@ -89,7 +97,7 @@ public class SimpleLogService {
      * SELECT
      *     l.*
      * FROM
-     *     system_common_log l
+     *     %s l
      * WHERE
      *     %s
      *     l.object_type = ?
@@ -165,7 +173,9 @@ public class SimpleLogService {
         }
         return getDao().queryAsList(CommonSimpleLog.class, String.format(
                 SQL_QUERY_OPERATION_LOG_BY_OBJECT_TYPE_AND_ID,
-                limited, typeSql, orderFlag, 50), sqlArgs.toArray()).stream().sorted(new Comparator<CommonSimpleLog>() {
+                getFormTable(),
+                limited, typeSql, orderFlag, 50
+            ),  sqlArgs.toArray()).stream().sorted(new Comparator<CommonSimpleLog>() {
                     @Override
                     public int compare(CommonSimpleLog l, CommonSimpleLog r) {
                         return Long.compare(r.getId(), l.getId());
@@ -181,7 +191,8 @@ public class SimpleLogService {
             return null;
         }
         return getDao().queryAsObject(CommonSimpleLog.class,
-                String.format(SQL_QUERY_OPERATION_LOG_BY_OBJECT_TYPE_AND_ID, "", "", "ASC", 1),
+                String.format(SQL_QUERY_OPERATION_LOG_BY_OBJECT_TYPE_AND_ID, 
+                        getFormTable(), "", "", "ASC", 1),
                 new Object[] { objectType, objectId });
     }
     
@@ -193,21 +204,17 @@ public class SimpleLogService {
             return null;
         }
         return getDao().queryAsObject(CommonSimpleLog.class,
-                String.format(SQL_QUERY_OPERATION_LOG_BY_OBJECT_TYPE_AND_ID, "", "", "DESC", 1),
+                String.format(SQL_QUERY_OPERATION_LOG_BY_OBJECT_TYPE_AND_ID, 
+                        getFormTable(), "", "", "DESC", 1),
                 new Object[] { objectType, objectId });
     }
     
-    /**
-     * SELECT * FROM system_common_log_detail WHERE id = ?
-     */
-    @Multiline
-    private final static String SQL_QUERY_OPERATION_INFO_LOG_BY_OPERATION_ID = "X";
-
     public static CommonSimpleLogDetail getLogDetail(Long detailId) throws Exception {
         if (detailId == null) {
             return null;
         }
-        return getDao().queryAsObject(CommonSimpleLogDetail.class, SQL_QUERY_OPERATION_INFO_LOG_BY_OPERATION_ID,
+        return getDao().queryAsObject(CommonSimpleLogDetail.class,
+                String.format("SELECT * FROM %s WHERE id = ?", getDetailTable()), 
                 new Object[] { detailId });
     }
     

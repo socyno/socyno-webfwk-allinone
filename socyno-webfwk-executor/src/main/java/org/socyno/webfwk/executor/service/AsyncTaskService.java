@@ -29,7 +29,7 @@ public class AsyncTaskService extends AbstractAsyncTaskService {
         status.setCreatedAt(task.getCreatedAt());
         status.setStartedAt(task.getRunningAt());
         status.setCompletedAt(task.getUnlockedAt());
-        status.setCreatedBy(task.getCreatedUserName());
+        status.setCreatedBy(task.getCreatedCodeBy());
         status.setStatus(task.isFinished() ? (task.getResult() ? JobStatusEnum.SUCCESS : JobStatusEnum.FAILURE)
                 : (task.isRunning() ? JobStatusEnum.RUNNING
                         : (task.isPending() ? JobStatusEnum.PENDING : JobStatusEnum.UNKNOWN)));

@@ -1,7 +1,6 @@
 package org.socyno.webfwk.state.module.notify;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -22,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SystemNotifyService {
     
     public final static int NOEXCEPTION_TMPL_NOTFOUD = 1;
+    
+    public final static int NOTIFY_DATA_RETURN_ONLY = 2;
     
     @Getter
     private final static SystemNotifyService Instance = new SystemNotifyService();
@@ -65,17 +66,18 @@ public class SystemNotifyService {
      *            邮件模板
      * @param context
      *            模板上下文数据
+     * @return 
      * @return
      * @throws Exception
      */
-    public static void sendSync(String template, Map<String, Object> context, int options) throws Exception {
+    public static Map<String, SystemNotifyRecordFormCreation> sendSync(String template, Map<String, Object> context, int options) throws Exception {
         
         /* 获得模板信息 */
         SystemNotifyTemplateFormSimple tmplForm = null;
         if ((tmplForm = SystemNotifyTemplateService.getInstance()
                 .getByCode(StringUtils.trimToEmpty(template))) == null) {
             if ((options & NOEXCEPTION_TMPL_NOTFOUD) != 0) {
-                return;
+                return null;
             }
             throw new SystemNotifiyTemplateNotFoundException(template);
         }
@@ -85,24 +87,28 @@ public class SystemNotifyService {
         if (context != null) {
             tmplContext.putAll(context);
         }
-        List<SystemNotifyRecordFormCreation> notifies = new ArrayList<>(5);
+        Map<String, SystemNotifyRecordFormCreation> notifies = new HashMap<>(5);
         if (StringUtils.isNotBlank(tmplForm.getMailContent())) {
             SystemNotifyRecordFormCreation mailNotify= new SystemNotifyRecordFormCreation();
             mailNotify.setType(MessageType.Email.getValue());
             mailNotify.setMessageTo(tmplForm.getMailTo());
             mailNotify.setMessageCc(tmplForm.getMailCc());
             mailNotify.setContent(EnjoyUtil.format(tmplForm.getMailContent(), tmplContext.asMap()));
-            notifies.add(mailNotify);
+            notifies.put(MessageType.Email.getValue(), mailNotify);
         }
         if (StringUtils.isNotBlank(tmplForm.getMessageContent())) {
             SystemNotifyRecordFormCreation messageNotify = new SystemNotifyRecordFormCreation();
             messageNotify.setType(MessageType.Message.getValue());
             messageNotify.setMessageTo(tmplForm.getMessageTo());
             messageNotify.setContent(EnjoyUtil.format(tmplForm.getMessageContent(), tmplContext.asMap()));
-            notifies.add(messageNotify);
+            notifies.put(MessageType.Message.getValue(), messageNotify);
         }
-        for (SystemNotifyRecordFormCreation notify : notifies) {
-            SystemNotifyRecordService.getInstance().triggerAction(SystemNotifyRecordService.EVENTS.Create.getName(), notify);
+        if ((options & NOTIFY_DATA_RETURN_ONLY) == 0) {
+            for (SystemNotifyRecordFormCreation notify : notifies.values()) {
+                SystemNotifyRecordService.getInstance().triggerAction(SystemNotifyRecordService.EVENTS.Create.getName(),
+                        notify);
+            }
         }
+        return notifies;
     }
 }

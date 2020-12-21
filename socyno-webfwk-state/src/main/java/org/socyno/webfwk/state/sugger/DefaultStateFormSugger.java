@@ -23,6 +23,7 @@ public class DefaultStateFormSugger extends AbstractStateFormSugger {
             add(SuggerDefinitionFormAttachment.getInstance());
             add(SuggerDefinitionSystemRole.getInstance());
             add(SuggerDefinitionSystemFeature.getInstance());
+            add(SuggerDefinitionSystemBusiness.getInstance());
         }
     };
     

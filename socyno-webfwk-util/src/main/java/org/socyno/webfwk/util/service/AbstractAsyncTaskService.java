@@ -42,7 +42,7 @@ public abstract class AbstractAsyncTaskService {
     public AbstractAsyncTaskService() {
         lockService = new AbstractSimpleLockService() {
             @Override
-            protected AbstractDao getDao() {
+            public AbstractDao getDao() {
                 return getTaskServiceInstance().getDao();
             }
         };

@@ -6,15 +6,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.socyno.webfwk.util.context.ContextUtil;
 
+import lombok.Getter;
+
 public class StateFormDisplayScheduled {
     
-    private final static String FORM_DISPLAY_TABLE = "system_form_display";
+    @Getter
+    private final static String FormDisplayTable = "system_form_display";
     
     private final static Map<String, String> FROM_DISPLAY_DATA = new ConcurrentHashMap<String, String>();
     
     synchronized public static void reload() throws Exception {
         List<StateFormDisplayEntity> entities = ContextUtil.getBaseDataSource().queryAsList(
-                StateFormDisplayEntity.class, String.format("SELECT name, display FROM %s", FORM_DISPLAY_TABLE), null);
+                StateFormDisplayEntity.class, String.format("SELECT name, display FROM %s", FormDisplayTable), null);
         if (entities == null || entities.isEmpty()) {
             FROM_DISPLAY_DATA.clear();
             return;

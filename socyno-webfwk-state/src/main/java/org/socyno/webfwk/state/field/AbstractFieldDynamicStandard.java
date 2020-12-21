@@ -18,27 +18,40 @@ public abstract class AbstractFieldDynamicStandard extends FieldTableView {
         return FieldOptionsType.DYNAMIC;
     }
     
-    private static AbstractDao getDao() {
+    public static AbstractDao getDao() {
         return SystemTenantDataSource.getMain();
+    }
+    
+    public static String getFormTableName() {
+        return "system_form_option";
+    }
+    
+    public static String getValuesTableName() {
+        return "system_form_option_values";
     }
     
     /**
      * SELECT
-     *     o.*
+     *     o.*,
+     *     o.value AS option_value,
+     *     o.group AS option_group,
+     *     o.display AS option_display
      * FROM
-     *     system_field_option o
+     *     %s o,
+     *     %s v
      * WHERE
+     *     o.id = v.class_path
      */
     @Multiline
     private final static String SQL_QUERY_CURRENT_OPTIONS = "x";
 
     /**
      * (
-     *     option_group LIKE CONCAT('%', ?, '%')
+     *     v.group LIKE CONCAT('%', ?, '%')
      *   OR 
-     *     option_value LIKE CONCAT('%', ?, '%')
+     *     v.value LIKE CONCAT('%', ?, '%')
      *   OR
-     *     option_display LIKE CONCAT('%', ?, '%')
+     *     v.display LIKE CONCAT('%', ?, '%')
      * )
      *
      */
@@ -65,8 +78,9 @@ public abstract class AbstractFieldDynamicStandard extends FieldTableView {
                 return Collections.emptyList();
             }
         }
-        StringBuilder sql = new StringBuilder(SQL_QUERY_CURRENT_OPTIONS)
-            .append("class_path = ? AND category = ? AND disabled = 0");
+        StringBuilder sql = new StringBuilder()
+                .append(String.format(SQL_QUERY_CURRENT_OPTIONS, getFormTableName(), getValuesTableName()))
+                .append("o.class_path = ? AND v.category = ? AND v.disabled = 0");
         List<Object> args = new ArrayList<>();
         args.add(getClass().getName());
         args.add(category);
@@ -101,8 +115,10 @@ public abstract class AbstractFieldDynamicStandard extends FieldTableView {
             args.add(v.getOptionValue());
         }
         return getDao().queryAsList(OptionDynamicStandard.class,
-                String.format("%s %s", SQL_QUERY_CURRENT_OPTIONS,
-                        CommonUtil.join("(class_path = ? AND category = ? AND option_value = ?)",
+                String.format(SQL_QUERY_CURRENT_OPTIONS.concat(" %s"),
+                        getFormTableName(),
+                        getValuesTableName(),
+                        CommonUtil.join("(o.class_path = ? AND v.category = ? AND v.option_value = ?)",
                                 args.size()/3, " OR ")),
                 args.toArray());
     }

@@ -18,20 +18,39 @@ public class SimpleLock {
     }
     
     private Long id;
+    
     private String objectType;
+    
     private String objectId;
+    
     private String title;
+    
     private String logfile;
+    
     private Integer locked;
+    
     private String  state;
+    
     private Boolean result;
+    
     private Date createdAt;
-    private String createdUserId;
-    private String createdUserName;
+    
+    private String createdBy;
+    
+    private String createdCodeBy;
+    
+    private String createdNameBy;
+    
     private Date runningAt;
+    
     private Date unlockedAt;
-    private String unlockedUserId;
-    private String unlockedUserName;
+    
+    private String unlockedBy;
+    
+    private String unlockedCodeBy;
+    
+    private String unlockedNameBy;
+    
     private Integer timeoutSeconds;
 
     public boolean isLocked() {

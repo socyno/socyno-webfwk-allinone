@@ -4,12 +4,16 @@ import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.util.service.AbstractSimpleLockService;
 import org.socyno.webfwk.util.sql.AbstractDao;
 
+import lombok.Getter;
+
 public class SimpleLockService extends AbstractSimpleLockService {
     
-    protected AbstractDao getDao() {
+    @Override
+    public AbstractDao getDao() {
         return SystemTenantDataSource.getMain();
     }
     
-    public final static AbstractSimpleLockService DEFAULT = new SimpleLockService();
+    @Getter
+    private final static AbstractSimpleLockService Instance = new SimpleLockService();
     
 }

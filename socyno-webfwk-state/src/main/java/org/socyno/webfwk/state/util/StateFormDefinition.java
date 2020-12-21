@@ -14,7 +14,7 @@ public class StateFormDefinition {
     private String formClass;
     private boolean commentSupported;
     private String[] allownActions;
-    private String rowsExpand;
+    private String properties;
     private List<? extends FieldOption>    states;
     private List<StateFormQueryDefinition>  queries;
     private List<StateFormActionDefinition> actions;

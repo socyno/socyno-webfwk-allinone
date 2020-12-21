@@ -15,8 +15,8 @@ public interface StateFormStateBaseEnum extends FieldOption {
     }
     
     @Override
-    public default void setOptionValue(String var1){
-
+    public default void setOptionValue(String var1) {
+        
     }
     
     @Override

@@ -113,13 +113,13 @@ public class BasicStateTaskStatusView {
     @Attributes(title = "编号")
     private Long id;
     
-    @Attributes(title = "标题", position = 1010)
+    @Attributes(title = "标题")
     private String title;
     
-    @Attributes(title = "状态", position = 1020, type = FieldOptionsRunning.class)
+    @Attributes(title = "状态", type = FieldOptionsRunning.class)
     private String status;
     
-    @Attributes(title = "结果", position = 1030, type = FieldOptionsResult.class)
+    @Attributes(title = "结果", type = FieldOptionsResult.class)
     private String result;
     
     @Attributes(title = "类型")
@@ -128,15 +128,15 @@ public class BasicStateTaskStatusView {
     @Attributes(title = "标的")
     private String targetId;
     
-    @Attributes(title = "创建时间", position = 1060)
+    @Attributes(title = "创建时间")
     private Date createdAt;
     
-    @Attributes(title = "创建人", position = 1070)
+    @Attributes(title = "创建人")
     private String createdBy;
     
-    @Attributes(title = "结束时间", position = 1080)
+    @Attributes(title = "结束时间")
     private Date completedAt;
 
-    @Attributes(title = "实时日志", position = 2000, type = FieldTextDelta.class)
+    @Attributes(title = "实时日志", type = FieldTextDelta.class)
     private String logsTextDelta;
 }

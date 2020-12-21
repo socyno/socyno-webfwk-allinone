@@ -515,7 +515,9 @@ public class SystemMenuItemService extends
             for (Map.Entry<Long, Set<String>> e : allMenuKeys.entrySet()) {
                 oneSystemAuths = new ArrayList<>();
                 for (String authKey : e.getValue()) {
-                    oneSystemAuths.add(mappedSystemAuths.get(authKey));
+                    if (mappedSystemAuths.containsKey(authKey)) {
+                        oneSystemAuths.add(mappedSystemAuths.get(authKey));
+                    }
                 }
                 menuSystemAuths.put(e.getKey(), oneSystemAuths);
             }

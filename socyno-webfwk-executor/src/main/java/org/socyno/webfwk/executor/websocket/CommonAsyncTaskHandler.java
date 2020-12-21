@@ -51,7 +51,7 @@ public class CommonAsyncTaskHandler extends WebSocketHanlderWithTokenInterceptor
         status.setTargetType(lock.getObjectType());
         status.setTargetId(lock.getObjectId());
         status.setCreatedAt(CommonUtil.ifNull(lock.getRunningAt(), lock.getCreatedAt()));
-        status.setCreatedBy(lock.getCreatedUserName());
+        status.setCreatedBy(lock.getCreatedCodeBy());
         status.setCompletedAt(lock.getUnlockedAt());
         status.setLogsTextDelta(logsContent);
         writeResponse(session, R.ok().setData(status));

@@ -15,7 +15,6 @@ import org.socyno.webfwk.state.annotation.Authority;
 import org.socyno.webfwk.state.authority.AuthorityScopeType;
 import org.socyno.webfwk.state.module.tenant.SystemTenantDataSource;
 import org.socyno.webfwk.state.util.*;
-import org.socyno.webfwk.util.context.SessionContext;
 import org.socyno.webfwk.util.exception.MessageException;
 import org.socyno.webfwk.util.model.ObjectMap;
 import org.socyno.webfwk.util.model.PagedList;
@@ -89,10 +88,6 @@ public class SystemNotifyTemplateService extends
                         .put("mail_content",    form.getMailContent())
                         .put("message_to",      form.getMessageTo())
                         .put("message_content", form.getMessageContent())
-                        .put("created_at",      new Date())
-                        .put("created_by",      SessionContext.getTokenUserId())
-                        .put("created_code_by", SessionContext.getTokenUsername())
-                        .put("created_name_by", SessionContext.getTokenDisplay())
             ), new ResultSetProcessor () {
                 @Override
                 public void process(ResultSet r, Connection c) throws Exception {

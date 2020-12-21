@@ -29,7 +29,15 @@ public abstract class AbstractSimpleLockService {
     
     private final static int DEFAULT_TIMEOUT_SECONDS = 7200;
     
-    protected abstract AbstractDao getDao();
+    public abstract AbstractDao getDao();
+    
+    public String getFormTableName() {
+        return "system_lock";
+    }
+    
+    public String getDataTableName() {
+        return "system_lock_data";
+    }
     
     /**
      * 创建任务锁
@@ -50,7 +58,7 @@ public abstract class AbstractSimpleLockService {
      */
     private SimpleLock getLock(@NonNull String objectType, @NonNull String objectId, String title, Integer timeoutSeconds) throws Exception {
         log.info("任务锁参数 = objectType = {}, objectId={}, title={}, createdBy=",
-                                    objectType, objectId, title, SessionContext.getTokenDisplay());
+                                    objectType, objectId, title, SessionContext.getDisplay());
         if (StringUtils.isAnyBlank(objectType, objectId.toString())) {
             throw new MessageException("任务锁唯一标识符(ObjectType && ObjectId)不可置空");
         }
@@ -60,15 +68,16 @@ public abstract class AbstractSimpleLockService {
         try {
             final AtomicLong id = new AtomicLong();
             getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-                "system_common_lock", new ObjectMap()
+                getFormTableName(), new ObjectMap()
                     .put("object_type", objectType)
                     .put("object_id", objectId)
                     .put("title", title)
                     .put("locked", 1)
-                    .put("#created_at", "NOW()")
                     .put("state", SimpleLock.STATES.created.name())
-                    .put("created_user_id",SessionContext.getTokenUserId())
-                    .put("created_user_name", SessionContext.getTokenDisplay())
+                    .put("#created_at", "NOW()")
+                    .put("created_by", SessionContext.getUserId())
+                    .put("created_code_by", SessionContext.getUsername())
+                    .put("created_name_by", SessionContext.getDisplay())
                     .put("timeout_seconds", CommonUtil.ifNull(timeoutSeconds, DEFAULT_TIMEOUT_SECONDS))
                 ), new ResultSetProcessor() {
                     @Override
@@ -89,7 +98,7 @@ public abstract class AbstractSimpleLockService {
     public SimpleLock queryLock(@NonNull final String objectType, @NonNull final Object objectId) {
         try {
             SimpleLock lock =  getDao().queryAsObject(SimpleLock.class,
-                "SELECT * from system_common_lock WHERE object_type = ? and object_id = ? and locked IS NOT NULL",
+                String.format("SELECT * from %s WHERE object_type = ? and object_id = ? and locked IS NOT NULL", getFormTableName()),
                 new Object[] { StringUtils.trimToEmpty(objectType), StringUtils.trimToEmpty(objectId.toString()) }
             );
             if (lock != null && lock.alreadyTimeout()) {
@@ -118,12 +127,13 @@ public abstract class AbstractSimpleLockService {
         ObjectMap query = new ObjectMap()
                         .put("locked", null)
                         .put("#unlocked_at", "NOW()")
-                        .put("unlocked_user_id", SessionContext.getTokenUserId())
-                        .put("unlocked_user_name", SessionContext.getTokenDisplay())
+                        .put("unlocked_by", SessionContext.getUserId())
+                        .put("unlocked_code_by", SessionContext.getUsername())
+                        .put("unlocked_name_by", SessionContext.getDisplay())
                         .put("result", result)
                         .put("state", SimpleLock.STATES.released.name())
                         .put("=id", lockId);
-        getDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery("system_common_lock", query));
+        getDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTableName(), query));
     }
     
     /**
@@ -134,7 +144,7 @@ public abstract class AbstractSimpleLockService {
      */
     public void setLogFile(long lockId, String logfile) throws Exception {
         getDao().executeUpdate(
-            "UPDATE system_common_lock SET logfile = ? WHERE id = ?",
+            String.format("UPDATE %s SET logfile = ? WHERE id = ?", getFormTableName()),
             new Object[] { logfile, lockId }
         );
     }
@@ -146,13 +156,13 @@ public abstract class AbstractSimpleLockService {
     public void setResultData(long lockId, Map<String, String> data) throws Exception {
         if (data == null || data.isEmpty()) {
             getDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
-                "system_common_lock_data", new ObjectMap()
+                 getDataTableName(), new ObjectMap()
                     .put("=task_id", lockId)
             ));
             return;
         }
         getDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-            "system_common_lock_data", new ObjectMap()
+             getDataTableName(), new ObjectMap()
                 .put("=task_id", lockId)
                 .put("result_data", CommonUtil.toJson(data))
         ));
@@ -165,7 +175,7 @@ public abstract class AbstractSimpleLockService {
      */
     public Map<String, String> getResultData(long lockId) throws Exception {
         String resultData = getDao().queryAsObject(String.class, 
-            "SELECT result_data FROM system_common_lock_data WHERE task_id = ?", 
+            String.format("SELECT result_data FROM %s WHERE task_id = ?", getDataTableName()),
             new Object[] {lockId});
         if (StringUtils.isBlank(resultData)) {
             return Collections.emptyMap();
@@ -181,7 +191,7 @@ public abstract class AbstractSimpleLockService {
      */
     public void markRunning(long lockId) throws Exception {
         getDao().executeUpdate(
-                "UPDATE system_common_lock SET state = ?, running_at = NOW() WHERE id = ?",
+                String.format("UPDATE %s SET state = ?, running_at = NOW() WHERE id = ?", getFormTableName()),
                 new Object[] { SimpleLock.STATES.started.name(), lockId }
             );
     }
@@ -189,7 +199,7 @@ public abstract class AbstractSimpleLockService {
     
     public SimpleLock getLock(long lockId) throws Exception {
         return getDao().queryAsObject(SimpleLock.class,
-            "SELECT * from system_common_lock WHERE id = ?",
+            String.format("SELECT * from %s WHERE id = ?", getFormTableName()),
             new Object[] { lockId }
         );
         
