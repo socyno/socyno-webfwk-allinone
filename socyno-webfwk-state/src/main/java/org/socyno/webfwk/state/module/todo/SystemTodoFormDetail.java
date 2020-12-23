@@ -15,8 +15,8 @@ import lombok.ToString;
 @Setter
 @ToString
 @Attributes(title = "待办事项详情")
-public class SystemTodoFormDetail extends SystemTodoFormDefault {
+public class SystemTodoFormDetail extends SystemTodoFormDefault implements SystemTodoFormWithAssignees {
     
     @Attributes(title = "审批人清单", type = FieldSystemUser.class)
-    private List<OptionSystemUser> assignee;
+    private List<OptionSystemUser> assignees;
 }

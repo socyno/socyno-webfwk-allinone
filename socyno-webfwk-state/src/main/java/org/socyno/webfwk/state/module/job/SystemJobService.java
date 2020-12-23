@@ -161,10 +161,6 @@ public class SystemJobService
                                 .put("cron_expression", form.getCronExpression())
                                 .put("service_parameters_form", form.getServiceParametersForm())
                                 .put("description", form.getDescription())
-                                .put("created_at", new Date())
-                                .put("created_by", SessionContext.getUserId())
-                                .put("created_code_by", SessionContext.getUsername())
-                                .put("created_name_by", SessionContext.getDisplay())
                                 .put("running_tasks", 0)
                                 .put("concurrent_allowed", form.getConcurrentAllowed())
                                 .put("default_params", StringUtils.isBlank(form.getDefaultParams()) ? "" :

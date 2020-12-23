@@ -51,18 +51,6 @@ public class SystemTodoFormSimple extends StateFormBasicSaved implements Abstrac
     @Attributes(title = "待办项页面", type = FieldTextLine.class)
     private String targetPage;
     
-    @Attributes(title = "创建时间", type = FieldDateTime.class)
-    private Date createdAt;
-    
-    @Attributes(title = "创建人编号")
-    private Long createdUserId;
-    
-    @Attributes(title = "创建人账户")
-    private String createdUserName;
-    
-    @Attributes(title = "创建人姓名")
-    private String createdUserDisplay;
-    
     @Attributes(title = "处理时间", type = FieldDateTime.class)
     private Date closedAt;
     

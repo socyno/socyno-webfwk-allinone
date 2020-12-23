@@ -30,32 +30,32 @@ public class SystemTodoQueryDefault extends AbstractStateFormQuery {
     @Attributes(title = "状态", position = 10, type = SystemTodoFormSimple.FieldOptionsState.class)
     private String state;
     
-    @Attributes(title = "起始创建日期", position = 20, type = FieldDateOnly.class)
+    @Attributes(title = "起始创建日期", type = FieldDateOnly.class)
     private Date createdAtBegin;
     
-    @Attributes(title = "结束创建日期", position = 30, type = FieldDateOnly.class)
+    @Attributes(title = "结束创建日期", type = FieldDateOnly.class)
     private Date createdAtEnd;
     
-    @Attributes(title = "类型", position = 40)
+    @Attributes(title = "类型")
     private String category;
     
-    @Attributes(title = "审批人包含", position = 50, type = FieldSystemUser.class)
+    @Attributes(title = "审批人包含", type = FieldSystemUser.class)
     private Long assignee;
     
     @Attributes(title = "流程单编号")
     private String targetId;
     
-    @Attributes(title = "最终审批人", position = 60, type = FieldSystemUser.class)
+    @Attributes(title = "最终审批人", type = FieldSystemUser.class)
     private Long closedUserId;
     
     @Attributes(title = "待办项标识")
     private String targetKey;
 
-    @Attributes(title = "待办流程发起人", position = 70, type = FieldSystemUser.class)
+    @Attributes(title = "待办流程发起人", type = FieldSystemUser.class)
     private Long applyUserId ;
 
-    @Attributes(title = "待办事项创建人", position = 80, type = FieldSystemUser.class)
-    private Long createdUserId ;
+    @Attributes(title = "待办事项创建人", type = FieldSystemUser.class)
+    private Long createdBy ;
     
     public SystemTodoQueryDefault() {
         super();
@@ -110,20 +110,22 @@ public class SystemTodoQueryDefault extends AbstractStateFormQuery {
         }
         if (createdAtEnd != null) {
             sqlargs.add(DateFormatUtils.format(createdAtEnd, "yyyy-MM-dd 24:00:00"));
-            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.created_at < ?");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.state_form_created_at < ?");
         }
         if (createdAtBegin != null) {
             sqlargs.add(DateFormatUtils.format(createdAtBegin, "yyyy-MM-dd 00:00:00"));
-            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.created_at >= ?");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.state_form_created_at >= ?");
         }
-        if(createdUserId!=null){
-            sqlargs.add(createdUserId);
-            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.created_user_id = ?");
+        if (createdBy != null) {
+            sqlargs.add(createdBy);
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.state_form_created_by = ?");
         }
         if (assignee != null) {
             sqlargs.add(assignee);
-            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append(
-                    "EXISTS (SELECT a.todo_id FROM system_common_todo_assignee a WHERE a.todo_id = f.id AND a.todo_user = ?)");
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ")
+                    .append("EXISTS (SELECT a.todo_id FROM ")
+                    .append(SystemTodoService.getInstance().getAssigneeTable())
+                    .append(" a WHERE a.todo_id = f.id AND a.todo_user = ?)");
         }
         return new BasicSqlStatement().setValues(sqlargs.toArray())
                 .setSql(StringUtils.prependIfNotEmpty(sqlwhere, "WHERE ").toString());

@@ -46,7 +46,7 @@ public class SimpleTodoService {
             for (long userId : assignee) {
                 options.add(new OptionSystemUser().setId(userId));
             }
-            form.setAssignee(options);
+            form.setAssignees(options);
         }
         return SystemTodoService.getInstance().triggerCreateAction(SystemTodoService.EVENTS.Create.getName(), form)
                 .getId();

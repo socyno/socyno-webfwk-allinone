@@ -37,6 +37,6 @@ public class SystemTodoFormEdition extends StateFormBasicInput {
     private OptionSystemUser applyUser;
     
     @Attributes(title = "审批人清单", required = true, type = FieldSystemUser.class)
-    private List<OptionSystemUser> assignee;
+    private List<OptionSystemUser> assignees;
     
 }

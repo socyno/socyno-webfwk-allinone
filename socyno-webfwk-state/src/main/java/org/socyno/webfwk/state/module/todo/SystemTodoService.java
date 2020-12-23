@@ -2,6 +2,7 @@ package org.socyno.webfwk.state.module.todo;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -47,6 +48,7 @@ import org.socyno.webfwk.util.sql.AbstractDao.ResultSetProcessor;
 import org.socyno.webfwk.util.sql.SqlQueryUtil;
 import org.socyno.webfwk.util.tmpl.EnjoyUtil;
 import org.socyno.webfwk.util.tool.ClassUtil;
+import org.socyno.webfwk.util.tool.CommonUtil;
 
 import lombok.Data;
 import lombok.Getter;
@@ -59,6 +61,7 @@ public class SystemTodoService extends
         setStates(STATES.values());
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
+        
     }
     
     @Getter
@@ -144,10 +147,6 @@ public class SystemTodoService extends
                                 .put("apply_user_id", applyUserId)
                                 .put("apply_user_name", applyUsername)
                                 .put("apply_user_display", applyDisplay)
-                                .put("created_user_id", SessionContext.getTokenUserId())
-                                .put("created_user_name", SessionContext.getTokenUsername())
-                                .put("created_user_display", SessionContext.getTokenDisplay())
-                                .put("created_at", new Date())
                     ), new ResultSetProcessor() {
                         @Override
                         public void process(ResultSet r, Connection c) throws Exception {
@@ -155,7 +154,7 @@ public class SystemTodoService extends
                             todoId.set(r.getLong(1));
                         }
                     });
-                    setAssignee(todoId.get(), form.getAssignee());
+                    setAssignees(todoId.get(), form.getAssignees());
                 }
             });
             return new StateFormEventResultCreateViewBasic(todoId.get());
@@ -238,7 +237,7 @@ public class SystemTodoService extends
                         }
                     }
                     getFormBaseDao().executeUpdate(SqlQueryUtil.prepareUpdateQuery(getFormTable(), updated));
-                    setAssignee(form.getId(), form.getAssignee());
+                    setAssignees(form.getId(), form.getAssignees());
                 }
             });
             return null;
@@ -326,7 +325,7 @@ public class SystemTodoService extends
                     getFormTable(), new ObjectMap()
                             .put("=id", originForm.getId())
             ));
-            setAssignee(originForm.getId(), Collections.emptyList());
+            setAssignees(originForm.getId(), Collections.emptyList());
             return null;
         }
     }
@@ -356,12 +355,16 @@ public class SystemTodoService extends
     
     @Override
     public String getFormName() {
-        return "system_common_todo";
+        return "system_todo";
     }
     
     @Override
     public String getFormTable() {
-        return "system_common_todo";
+        return "system_todo";
+    }
+    
+    public String getAssigneeTable() {
+        return "system_todo_assignee";
     }
     
     @Override
@@ -391,10 +394,10 @@ public class SystemTodoService extends
         Set<Long> allUserIds = new HashSet<>();
         allUserIds.add(originForm.getApplyUserId());
         allUserIds.add(originForm.getClosedUserId());
-        allUserIds.add(originForm.getCreatedUserId());
+        allUserIds.add(originForm.getCreatedBy());
         List<OptionSystemUser> assignee;
         Set<Long> allAssigneeIds = new HashSet<>();
-        if ((assignee = originForm.getAssignee()) != null) {
+        if ((assignee = originForm.getAssignees()) != null) {
             for (OptionSystemUser o : assignee) {
                 allUserIds.add(o.getId());
                 allAssigneeIds.add(o.getId());
@@ -410,7 +413,7 @@ public class SystemTodoService extends
         TodoNotifyInfo result = new TodoNotifyInfo()
                 .setApplierNotifyInfo(allNotifyInfos.get(originForm.getApplyUserId()))
                 .setCloserNotifyInfo(allNotifyInfos.get(originForm.getClosedUserId()))
-                .setCreatorNotifyInfo(allNotifyInfos.get(originForm.getCreatedUserId()));
+                .setCreatorNotifyInfo(allNotifyInfos.get(originForm.getCreatedBy()));
         for (Object userId : allNotifyInfos.keySet().toArray()) {
             if (!allAssigneeIds.contains(userId)) {
                 allNotifyInfos.remove(userId);
@@ -419,51 +422,18 @@ public class SystemTodoService extends
         return result.setAssigneeNotifyInfos(allNotifyInfos.values());
     }
     
-    /**
-     SELECT DISTINCT
-         a.todo_user
-     FROM
-         system_common_todo_assignee a
-     WHERE
-         a.todo_id = ?
-     */
-    @Multiline
-    private static final String SQL_QUERY_TODO_ASSIGNEE = "X";
-    
-    private SystemTodoFormDetail withAssignee(SystemTodoFormDetail form) throws Exception {
-        if (form == null) {
-            return null;
-        }
-        if (form.getId() != null) {
-            List<Long> assignee = getFormBaseDao().queryAsList(Long.class, String.format(SQL_QUERY_TODO_ASSIGNEE, getFormTable()),
-                    new Object[] { form.getId() });
-            
-            form.setAssignee(ClassUtil.getSingltonInstance(FieldSystemUser.class)
-                    .queryDynamicValues(assignee.toArray(new Long[0])));
-        }
-        return form;
-    }
-    
-    /**
-     * 获取待办事项的详情数据。
-     */
-    @Override
-    public SystemTodoFormDetail getForm(long id) throws Exception {
-        return withAssignee(super.getForm(id));
-    }
-    
-    private void setAssignee(long formId, List<OptionSystemUser> assignee) throws Exception {
+    private void setAssignees(long formId, List<OptionSystemUser> assignee) throws Exception {
         if (assignee == null) {
             return;
         }
         getFormBaseDao().executeUpdate(SqlQueryUtil.prepareDeleteQuery(
-                "system_common_todo_assignee", new ObjectMap().put("=todo_id", formId)));
+                getAssigneeTable(), new ObjectMap().put("=todo_id", formId)));
         for (OptionSystemUser user : assignee) {
             if (user == null) {
                 continue;
             }
             getFormBaseDao().executeUpdate(SqlQueryUtil.prepareInsertQuery(
-                    "system_common_todo_assignee", new ObjectMap()
+                    getAssigneeTable(), new ObjectMap()
                             .put("=todo_user", user.getId())
                             .put("todo_id", formId)));
         }
@@ -473,8 +443,8 @@ public class SystemTodoService extends
         return new SystemTodoQueryDefault(1, 1000).setAssignee(assignee).setState(STATES.OPENED.getCode());
     }
 
-    private SystemTodoQueryDefault getTodoByCreatorQuery(Long createdUserId , Integer page , Integer limit) {
-        return new SystemTodoQueryDefault(page, limit).setCreatedUserId(createdUserId);
+    private SystemTodoQueryDefault getTodoByCreatorQuery(Long createdBy , Integer page , Integer limit) {
+        return new SystemTodoQueryDefault(page, limit).setCreatedBy(createdBy);
     }
 
     private SystemTodoQueryDefault getTodoByCloserQuery(Long closedUserId , Integer page , Integer limit) {
@@ -533,9 +503,86 @@ public class SystemTodoService extends
         return getForm(id);
     }
     
+    @Data
+    public static class TodoAssigneeEntity {
+        
+        private long todoId;
+        
+        private long todoUser;
+        
+    }
+    
+    /**
+     SELECT DISTINCT
+         a.todo_id
+         a.todo_user
+     FROM
+          %s a
+     WHERE
+         a.todo_id IN (%s)
+     */
+    @Multiline
+    private static final String SQL_QUERY_TODO_ASSIGNEE = "X";
+    
     @Override
     protected void fillExtraFormFields(Collection<? extends SystemTodoFormSimple> forms) throws Exception {
-        // TODO Auto-generated method stub
+        
+        if (forms == null || forms.size() <= 0) {
+            return;
+        }
+        List<SystemTodoFormSimple> sameForms;
+        Map<Long, List<SystemTodoFormSimple>> withAssignees = new HashMap<>();
+        for (SystemTodoFormSimple form : forms) {
+            if (form.getId() != null && (form instanceof SystemTodoFormWithAssignees)) {
+                if ((sameForms = withAssignees.get(form.getId())) == null) {
+                    withAssignees.put(form.getId(), sameForms = new ArrayList<>());
+                }
+                sameForms.add(form);
+            }
+        }
+        if (withAssignees.size() > 0) {
+            List<TodoAssigneeEntity> flattedAssignees = getFormBaseDao().queryAsList(
+                    TodoAssigneeEntity.class,
+                    String.format(SQL_QUERY_TODO_ASSIGNEE, getAssigneeTable(),
+                            CommonUtil.join("?", withAssignees.size(), ",")),
+                    withAssignees.keySet().toArray());
+            
+            List<Long> oneAssignees;
+            Set<Long> allAssigneeIds = new HashSet<>();
+            Map<Long, List<Long>> mappedAssigneeIds = new HashMap<>();
+            for (TodoAssigneeEntity a : flattedAssignees) {
+                allAssigneeIds.add(a.getTodoUser());
+                if ((oneAssignees = mappedAssigneeIds.get(a.getTodoId())) == null) {
+                    mappedAssigneeIds.put(a.getTodoId(), oneAssignees = new ArrayList<>());
+                }
+                oneAssignees.add(a.getTodoUser());
+            }
+            
+            Map<Long, OptionSystemUser> mappedAllAssigneeEntities = new HashMap<>();
+            List<OptionSystemUser> flattedAssigneeEntities = ClassUtil.getSingltonInstance(FieldSystemUser.class)
+                    .queryDynamicValues(allAssigneeIds.toArray());
+            for (OptionSystemUser o : flattedAssigneeEntities) {
+                mappedAllAssigneeEntities.put(o.getId(), o);
+            }
+            
+            List<OptionSystemUser> sameTodoAssigneeEntities;
+            Map<Long, List<OptionSystemUser>> mappedSameAssigneeEntities = new HashMap<>();
+            for (Map.Entry<Long, List<Long>> e : mappedAssigneeIds.entrySet()) {
+                mappedSameAssigneeEntities.put(e.getKey(),
+                        sameTodoAssigneeEntities = new ArrayList<>(e.getValue().size()));
+                for (Long o : e.getValue()) {
+                    if (o != null && mappedAllAssigneeEntities.containsKey(o)) {
+                        sameTodoAssigneeEntities.add(mappedAllAssigneeEntities.get(o));
+                    }
+                }
+            }
+            
+            for (Map.Entry<Long, List<SystemTodoFormSimple>> e : withAssignees.entrySet()) {
+                for (SystemTodoFormSimple form : e.getValue()) {
+                    ((SystemTodoFormWithAssignees) form).setAssignees(mappedSameAssigneeEntities.get(e.getKey()));
+                }
+            }
+        }
         
     }
 }

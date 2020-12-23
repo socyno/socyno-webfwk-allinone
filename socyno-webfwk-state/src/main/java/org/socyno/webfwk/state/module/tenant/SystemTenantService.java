@@ -271,7 +271,6 @@ public class SystemTenantService extends
         } 
         form.setFeatures(SystemTenantBasicService.getTenantFeatures(OptionSystemFeature.class, form.getCode()));
         form.setDatabases(SystemTenantBasicService.getTenantDatabases(SystemTenantDbInfo.class, form.getCode()));
-//        form.setNamespaces(ClassUtil.getSingltonInstance(FieldDeployNamespace.class).queryByTenantId(form.getId()));
         return form;
     }
     
