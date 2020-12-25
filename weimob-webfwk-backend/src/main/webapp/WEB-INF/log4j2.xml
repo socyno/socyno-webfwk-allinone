@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<Configuration status="WARN" monitorInterval="30">
+    <Appenders>
+        <RollingRandomAccessFile name="logfile"
+            fileName="/opt/log/weimob-webfwk-backend/weimob-webfwk-backend.log"
+            filePattern="/opt/log/weimob-webfwk-backend/weimob-webfwk-backend-%d{yyyy-MM-dd}.log.%i">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%t] (%c) - %m%n"</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50"/>
+        </RollingRandomAccessFile>
+    </Appenders>
+    <Loggers>
+        <AsyncRoot level="info" includeLocation="false">
+            <AppenderRef ref="logfile" />
+        </AsyncRoot>
+    </Loggers>
+</Configuration>

@@ -1,71 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.socyno.webfwk</groupId>
-    <artifactId>socyno-webfwk-parent</artifactId>
+    <groupId>com.weimob.webfwk</groupId>
+    <artifactId>weimob-webfwk-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>socyno-webfwk-util</module>
-        <module>socyno-webfwk-state</module>
-        <module>socyno-webfwk-execapi</module>
-        <module>socyno-webfwk-module</module>
-        <module>socyno-webfwk-schmodel</module>
-        <module>socyno-webfwk-backend</module>
-        <module>socyno-webfwk-gateway</module>
-        <module>socyno-webfwk-executor</module>
-        <module>socyno-webfwk-schedule</module>
-    <module>socyno-webfwk-jjschema</module>
-    <module>socyno-webfwk-modutil</module>
+        <module>weimob-webfwk-util</module>
+        <module>weimob-webfwk-state</module>
+        <module>weimob-webfwk-execapi</module>
+        <module>weimob-webfwk-module</module>
+        <module>weimob-webfwk-schmodel</module>
+        <module>weimob-webfwk-backend</module>
+        <module>weimob-webfwk-gateway</module>
+        <module>weimob-webfwk-executor</module>
+        <module>weimob-webfwk-schedule</module>
+    <module>weimob-webfwk-jjschema</module>
+    <module>weimob-webfwk-modutil</module>
   </modules>
     
    <properties>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
        <version.log4j>2.13.2</version.log4j>
        <version.jackson>2.10.3</version.jackson>
-       <version.socyno.webfwk>0.0.1-SNAPSHOT</version.socyno.webfwk>
+       <version.weimob.webfwk>0.0.1-SNAPSHOT</version.weimob.webfwk>
        <version.spring.framework>4.3.20.RELEASE</version.spring.framework>
    </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- org.socyno.webfwk -->
+            <!-- com.weimob.webfwk -->
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-util</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-util</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-schmodel</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-schmodel</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-state</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-state</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-modutil</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-modutil</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-execapi</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-execapi</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-module</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-module</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
             <dependency>
-                <groupId>org.socyno.webfwk</groupId>
-                <artifactId>socyno-webfwk-jjschema</artifactId>
-                <version>${version.socyno.webfwk}</version>
+                <groupId>com.weimob.webfwk</groupId>
+                <artifactId>weimob-webfwk-jjschema</artifactId>
+                <version>${version.weimob.webfwk}</version>
             </dependency>
-            <!-- org.socyno.webfwk -->
+            <!-- com.weimob.webfwk -->
             
             <!-- org.apache.logging.log4j -->
             <dependency>

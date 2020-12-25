@@ -6,5 +6,5 @@ docker run -d -p 80:80 -p 443:443 \
            --privileged=true \
            --name webfwk-static \
            --link webfwk-app:webfwk-app \
-           --link webfwk-app:webfwk-app.socyno.org \
+           --link webfwk-app:webfwk-app.weimob.com \
            "$1"

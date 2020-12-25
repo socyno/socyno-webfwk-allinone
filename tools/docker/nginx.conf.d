@@ -5,7 +5,7 @@ upstream webfwk {
 server {
     listen       443 ssl;
     listen  [::]:443 ssl;
-    server_name  webfwk.socyno.org;
+    server_name  webfwk.weimob.com;
     
     ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
     ssl_certificate /etc/nginx/cert/cert-all.pem;
@@ -31,7 +31,7 @@ server {
 server {
     listen       80;
     listen  [::]:80;
-    server_name  webfwk.socyno.org;
+    server_name  webfwk.weimob.com;
     
     location / {
         root /usr/share/nginx/html/webfwk;
