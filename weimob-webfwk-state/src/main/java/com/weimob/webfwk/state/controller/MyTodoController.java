@@ -1,6 +1,5 @@
 package com.weimob.webfwk.state.controller;
 
-
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -11,23 +10,36 @@ import com.weimob.webfwk.util.remote.R;
 public class MyTodoController {
     
     @RequestMapping(value = "/list", method = RequestMethod.GET)
-    public R getTodoList() throws Exception {
+    public R listOpened() throws Exception {
         return R.ok().setData(SimpleTodoService.queryOpenedByAssignee(SessionContext.getUserId()));
     }
     
     @RequestMapping(value = "/total", method = RequestMethod.GET)
-    public R getUserTodoTotal() throws Exception {
+    public R getOpenedTotal() throws Exception {
         return R.ok().setData(SimpleTodoService.queryOpenedCountByAssignee(SessionContext.getUserId()));
     }
-
-    @RequestMapping(value = "/created", method = RequestMethod.GET)
-    public R getCreatedTodoList(Integer page , Integer limit) throws Exception {
-        return R.ok().setData(SimpleTodoService.queryTodoByCreator(SessionContext.getUserId() , page , limit));
+    
+    @RequestMapping(value = "/create", method = RequestMethod.POST)
+    public R create(String targetKey, String targetId, String applierCode, String title, String category,
+            String[] assigneeCodes) throws Exception {
+        SimpleTodoService.createTodoUsePageTmpl(targetKey, targetId, applierCode, title, category, assigneeCodes);
+        return R.ok();
     }
-
+    
+    @RequestMapping(value = "/applied", method = RequestMethod.GET)
+    public R listApplied(Integer page, Integer limit) throws Exception {
+        return R.ok().setData(SimpleTodoService.queryTodoByApplier(SessionContext.getUserId(), page, limit));
+    }
+    
+    @RequestMapping(value = "/close", method = RequestMethod.POST)
+    public R close(String targetKey, String targetId, String result) throws Exception {
+        SimpleTodoService.closeTodo(targetKey, targetId, result);
+        return R.ok();
+    }
+    
     @RequestMapping(value = "/closed", method = RequestMethod.GET)
-    public R getClosedTodoList(Integer page , Integer limit) throws Exception {
-        return R.ok().setData(SimpleTodoService.queryTodoByCloser(SessionContext.getUserId(), page , limit));
+    public R listClosed(Integer page, Integer limit) throws Exception {
+        return R.ok().setData(SimpleTodoService.queryTodoByCloser(SessionContext.getUserId(), page, limit));
     }
-
+    
 }

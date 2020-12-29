@@ -50,7 +50,7 @@ public class SystemFeatureQueryDefault extends AbstractStateFormQuery {
     
     /** EXISTS (
      *     SELECT
-     *          a.feature_id
+     *          tf.feature_id
      *     FROM
      *          system_tenant_feature tf,
      *          system_tenant t

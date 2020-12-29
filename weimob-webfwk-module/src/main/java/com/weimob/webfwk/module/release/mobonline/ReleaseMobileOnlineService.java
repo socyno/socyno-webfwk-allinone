@@ -778,7 +778,7 @@ public class ReleaseMobileOnlineService extends
             emails.add(user.getMailAddress());
         }
         
-        SystemNotifyService.sendSync(
+        SystemNotifyService.getInstance().sendSync(
                 "release.app.store.notice",
                 new ObjectMap()
                         .put("event", event)

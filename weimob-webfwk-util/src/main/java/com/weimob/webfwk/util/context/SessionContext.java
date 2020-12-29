@@ -126,6 +126,14 @@ public class SessionContext {
         }
         throw new TenantMissingException();
     }
+
+    public static String getSsoTicketOrNull() {
+        UserContext context;
+        if ((context = USERCONTEXT.get()) == null) {
+            return null;
+        }
+        return context.getSsoTicket();
+    }
     
     public static String getTenantOrNull() {
         UserContext context;

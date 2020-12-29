@@ -1,6 +1,7 @@
 package com.weimob.webfwk.state.module.user;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.naming.Context;
@@ -24,6 +25,7 @@ import java.util.Hashtable;
 public class WindowsAdService  {
     
     @Data
+    @Accessors(chain = true)
     public static class SystemWindowsAdUser {
         private String login;
         private String name;

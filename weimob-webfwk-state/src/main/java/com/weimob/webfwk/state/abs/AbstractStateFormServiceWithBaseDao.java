@@ -645,7 +645,8 @@ public abstract class AbstractStateFormServiceWithBaseDao<D extends L, L extends
         /**
          * 异步通知
          */
-        SystemNotifyService.sendAsync(String.format("system.state.form:%s:%s", getFormName(), event),
+        SystemNotifyService.getInstance().sendAsync(
+                String.format("system.state.form:%s:%s", getFormName(), event),
                 new ObjectMap().put("formEvent", event)
                         .put("formName", getFormName())
                         .put("formService", this)

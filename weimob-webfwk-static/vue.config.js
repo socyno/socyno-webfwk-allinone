@@ -1,23 +1,24 @@
 module.exports = {
   publicPath: process.env.NODE_ENV === 'production'
-    ? '/'
-    : '/',
+    ? '/flow/'
+    : '/flow/',
   devServer: {
-    host: 'localhost.weimob.com',
+    // host: 'localhost.weimob.com',
+    host : 'atlas.qa.internal.hsmob.com',
     port: 8090,
     proxy: {
       '/webfwk-executor/': {
-        target: 'http://localhost.weimob.com:8080',
+        target: 'http://atlas.qa.internal.hsmob.com:8080',
         ws: true
       },
       '/webfwk-backend/': {
-        target: 'http://localhost.weimob.com:8080'
+        target: 'http://atlas.qa.internal.hsmob.com:8080'
       },
       '/webfwk-gateway/': {
-        target: 'http://localhost.weimob.com:8080'
+        target: 'http://atlas.qa.internal.hsmob.com:8080'
       },
       '/webfwk-schedule/': {
-        target: 'http://localhost.weimob.com:8080'
+        target: 'http://atlas.qa.internal.hsmob.com:8080'
       }
     }
   },

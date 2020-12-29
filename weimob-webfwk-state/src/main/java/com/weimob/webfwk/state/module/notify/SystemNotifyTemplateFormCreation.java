@@ -26,7 +26,7 @@ public class SystemNotifyTemplateFormCreation extends StateFormBasicInput {
     @Attributes(title = "邮件抄送人", description = "多个可使用逗号或分号分隔")
     private String mailCc;
     
-    @Attributes(title = "移动手机号", description = "当指定了移动手机号是，将以短消息的方式发送。多个可使用逗号或分号分隔。")
+    @Attributes(title = "移动手机号", description = "当指定了移动手机号，将以短消息的方式发送。多个可使用逗号或分号分隔。")
     private String messageTo;
     
     @Attributes(title = "邮件模板", type = FieldText.class, description = "使用 jFinal Enjoy 模板格式，参见 : https://jfinal.com/doc/6-1")
@@ -34,5 +34,11 @@ public class SystemNotifyTemplateFormCreation extends StateFormBasicInput {
     
     @Attributes(title = "短消息模板", type = FieldText.class, description = "使用 jFinal Enjoy 模板格式，参见 : https://jfinal.com/doc/6-1")
     private String messageContent;
+    
+    @Attributes(title = "企业微信号", description = "当指定了微信接收号，将以企微信的方式发送。多个可使用逗号或分号分隔。")
+    private String weixinTo;
+    
+    @Attributes(title = "微信消息模板", type = FieldText.class, description = "使用 jFinal Enjoy 模板格式，参见 : https://jfinal.com/doc/6-1")
+    private String weixinContent;
     
 }

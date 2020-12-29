@@ -138,7 +138,7 @@ public class SystemDataChartUtil {
         if (StringUtils.isBlank(mailTemplate)) {
             return null;
         }
-        Map<String, SystemNotifyRecordFormCreation> notifyContents = SystemNotifyService.sendSync(
+        Map<String, SystemNotifyRecordFormCreation> notifyContents = SystemNotifyService.getInstance().sendSync(
                 mailTemplate,
                 new ObjectMap().put("data", originData).asMap(),
                 SystemNotifyService.NOEXCEPTION_TMPL_NOTFOUD | SystemNotifyService.NOTIFY_DATA_RETURN_ONLY);
@@ -153,6 +153,6 @@ public class SystemDataChartUtil {
         if (StringUtils.isBlank(mailTemplate)) {
             return;
         }
-        SystemNotifyService.sendSync(mailTemplate, new ObjectMap().put("data", originData).asMap(), 0);
+        SystemNotifyService.getInstance().sendSync(mailTemplate, new ObjectMap().put("data", originData).asMap(), 0);
     }
 }

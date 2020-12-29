@@ -89,7 +89,7 @@
             <mvc:mapping path="/**" />
             <!-- 排除地址 -->
             <!-- <mvc:exclude-mapping path="/login"/> -->
-            <bean class="com.weimob.webfwk.state.module.token.SessionContextInterceptor">
+            <bean class="com.weimob.webfwk.gateway.interceptor.SessionContextInterceptor">
                 <constructor-arg index="0" value="Yes" />
             </bean>
         </mvc:interceptor>

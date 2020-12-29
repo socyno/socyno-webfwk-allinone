@@ -366,7 +366,7 @@ public class SystemJobService
                                 log.error(e.toString(), e);
                             }
                             
-                            SystemNotifyService.sendAsync(
+                            SystemNotifyService.getInstance().sendAsync(
                                     "system.external.async.job.result.notify",
                                     new ObjectMap()
                                             .put("originForm", originForm)

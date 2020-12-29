@@ -40,32 +40,46 @@ public class SystemUserController {
         HttpRedirectUtil.redirectToBackend("/api/user/menus", req, res);
     }
     
-    @Attributes(title = "List:用户待办事项列表")
+    @Attributes(title = "我的待处理待办事项清单")
     @Authority(AuthorityScopeType.System)
     @RequestMapping(value = "/mytodo/list", method = RequestMethod.GET)
-    public void myTodoList(HttpServletRequest req, HttpServletResponse res) throws Exception {
+    public void todoListMyOpened(HttpServletRequest req, HttpServletResponse res) throws Exception {
         HttpRedirectUtil.redirectToBackend("/api/mytodo/list", req, res);
     }
-
-    @Attributes(title = "用户待办事项数量")
+    
+    @Attributes(title = "我的待处理待办事项数量")
     @Authority(AuthorityScopeType.System)
     @RequestMapping(value = "/mytodo/total", method = RequestMethod.GET)
-    public void myTodoTotal(HttpServletRequest req, HttpServletResponse res) throws Exception {
+    public void todoTotalMyOpened(HttpServletRequest req, HttpServletResponse res) throws Exception {
         HttpRedirectUtil.redirectToBackend("/api/mytodo/total", req, res);
     }
-
-    @Attributes(title = "我创建的待办事项列表")
+    
+    @Attributes(title = "我发起的待办事项清单")
     @Authority(AuthorityScopeType.System)
-    @RequestMapping(value = "/mytodo/created", method = RequestMethod.GET)
-    public void myCreatedTodoList(HttpServletRequest req, HttpServletResponse res) throws Exception {
-        HttpRedirectUtil.redirectToBackend("/api/mytodo/created", req, res);
+    @RequestMapping(value = "/mytodo/applied", method = RequestMethod.GET)
+    public void todoListMyApplied(HttpServletRequest req, HttpServletResponse res) throws Exception {
+        HttpRedirectUtil.redirectToBackend("/api/mytodo/applied", req, res);
     }
-
-    @Attributes(title = "我申请的待办事项列表" )
+    
+    @Attributes(title = "我处理的待办事项清单" )
     @Authority(AuthorityScopeType.System)
     @RequestMapping(value = "/mytodo/closed", method = RequestMethod.GET)
-    public void myClosedTodoList(HttpServletRequest req, HttpServletResponse res) throws Exception {
+    public void todoListMyClosed(HttpServletRequest req, HttpServletResponse res) throws Exception {
         HttpRedirectUtil.redirectToBackend("/api/mytodo/closed", req, res);
+    }
+    
+    @Attributes(title = "关闭待办事项记录" )
+    @Authority(AuthorityScopeType.System)
+    @RequestMapping(value = "/mytodo/close", method = RequestMethod.POST)
+    public void todoClose(HttpServletRequest req, HttpServletResponse res) throws Exception {
+        HttpRedirectUtil.redirectToBackend("/api/mytodo/close", req, res);
+    }
+    
+    @Attributes(title = "创建待办事项记录" )
+    @Authority(AuthorityScopeType.System)
+    @RequestMapping(value = "/mytodo/create", method = RequestMethod.POST)
+    public void todoCreate(HttpServletRequest req, HttpServletResponse res) throws Exception {
+        HttpRedirectUtil.redirectToBackend("/api/mytodo/create", req, res);
     }
     
     @Attributes(title = "应用收藏")

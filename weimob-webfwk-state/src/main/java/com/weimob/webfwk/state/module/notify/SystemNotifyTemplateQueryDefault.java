@@ -50,6 +50,10 @@ public class SystemNotifyTemplateQueryDefault extends AbstractStateFormQuery {
          f.message_to LIKE CONCAT('%', ?, '%')
        OR
          f.message_content LIKE CONCAT('%', ?, '%')
+       OR
+         f.weixin_to LIKE CONCAT('%', ?, '%')
+       OR
+         f.weixin_content LIKE CONCAT('%', ?, '%')
      )
     */
     @Multiline
@@ -78,6 +82,8 @@ public class SystemNotifyTemplateQueryDefault extends AbstractStateFormQuery {
         List<Object> sqlargs = new ArrayList<>();
         StringBuilder sqlwhere = new StringBuilder();
         if (StringUtils.isNotBlank(nameLike)) {
+            sqlargs.add(nameLike);
+            sqlargs.add(nameLike);
             sqlargs.add(nameLike);
             sqlargs.add(nameLike);
             sqlargs.add(nameLike);

@@ -37,4 +37,7 @@ public class UserContext {
 
     /* 代理人姓名 */
     private String proxyDisplay;
+    
+    /* 单点登陆的 ticket */
+    private String ssoTicket;
 }

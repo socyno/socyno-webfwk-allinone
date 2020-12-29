@@ -6,11 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.mail.internet.MimeUtility;
 
 import com.weimob.webfwk.state.abs.AbstractStateAction;
 import com.weimob.webfwk.state.abs.AbstractStateCreateAction;
@@ -29,8 +28,7 @@ import com.weimob.webfwk.util.context.RunableWithSessionContext;
 import com.weimob.webfwk.util.context.SessionContext;
 import com.weimob.webfwk.util.exception.MessageException;
 import com.weimob.webfwk.util.model.ObjectMap;
-import com.weimob.webfwk.util.service.AbstractSendEmailService;
-import com.weimob.webfwk.util.service.AbstractSendEmailService.EmailEntity;
+import com.weimob.webfwk.util.service.AbstractWeimobNotifyService;
 import com.weimob.webfwk.util.sql.AbstractDao;
 import com.weimob.webfwk.util.sql.SqlQueryUtil;
 import com.weimob.webfwk.util.sql.AbstractDao.ResultSetProcessor;
@@ -51,26 +49,59 @@ public class SystemNotifyRecordService extends
     @Getter
     private final static SystemNotifyRecordService Instance = new SystemNotifyRecordService();
     
-    private final static AbstractSendEmailService MAIL_SERVICE = new AbstractSendEmailService() {
+    private final static AbstractWeimobNotifyService EMAIL_SERVICE = new AbstractWeimobNotifyService() {
         
         @Override
-        protected String getSmtpHost() {
-            return ContextUtil.getConfigTrimed("system.notify.mail.smtp.host");
+        protected String getAppKey() {
+            return ContextUtil.getConfigTrimed("system.notify.mail.app.key");
         }
         
         @Override
-        protected String getUsername() {
-            return ContextUtil.getConfigTrimed("system.notify.mail.smtp.username");
+        protected String getTemplateId() {
+            return ContextUtil.getConfigTrimed("system.notify.mail.tmpl.id");
         }
         
         @Override
-        protected String getPassword() {
-            return ContextUtil.getConfigTrimed("system.notify.mail.smtp.passowrd");
+        public String getRemoteUrl() {
+            return ContextUtil.getConfigTrimed("system.notify.alert.apiurl");
+        }
+        
+    };
+    
+    private final static AbstractWeimobNotifyService WEIXIN_SERVICE = new AbstractWeimobNotifyService() {
+        
+        @Override
+        protected String getAppKey() {
+            return ContextUtil.getConfigTrimed("system.notify.weixin.app.key");
         }
         
         @Override
-        protected int getSmtpPort() {
-            return CommonUtil.parsePositiveInteger(ContextUtil.getConfigTrimed("system.notify.mail.smtp.port"), 25);
+        protected String getTemplateId() {
+            return ContextUtil.getConfigTrimed("system.notify.weixin.tmpl.id");
+        }
+        
+        @Override
+        public String getRemoteUrl() {
+            return ContextUtil.getConfigTrimed("system.notify.alert.apiurl");
+        }
+        
+    };
+    
+    private final static AbstractWeimobNotifyService MOBILE_SERVICE = new AbstractWeimobNotifyService() {
+        
+        @Override
+        protected String getAppKey() {
+            return ContextUtil.getConfigTrimed("system.notify.mobile.app.key");
+        }
+        
+        @Override
+        protected String getTemplateId() {
+            return ContextUtil.getConfigTrimed("system.notify.mobile.tmpl.id");
+        }
+        
+        @Override
+        public String getRemoteUrl() {
+            return ContextUtil.getConfigTrimed("system.notify.alert.apiurl");
         }
         
     };
@@ -253,78 +284,75 @@ public class SystemNotifyRecordService extends
             
         }
         
+        private String[] parseMultipleContents(String body) {
+            return CommonUtil.split(body, "\\s+\\-{10,}\\s*MULTIPLE-BODY\\s*\\-{10,}\\s+",
+                    CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED);
+        }
+        
+        private String[] parseMultipleReceivers(String receivers) {
+            return CommonUtil.split(receivers, "[,;]+",
+                    CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED);
+        }
+        
         @Override
         public StateFormEventResultMessageView handle(String event, SystemNotifyRecordFormSimple originForm, StateFormBasicInput form, String message) {
             try {
+                String body;
+                if ((body = StringUtils.trimToEmpty(originForm.getContent())).isEmpty()) {
+                    throw new MessageException("No Body");
+                }
+                if (StringUtils.isNotBlank(parseMailContentKeyword(body, "sendSkiped", "sendSkipped"))) {
+                    setNotifySendResult(form.getId(), SendResult.Skipped);
+                    return new StateFormEventResultMessageView("忽略发送");
+                }
+                final AtomicInteger successCount = new AtomicInteger(0);
+                final AtomicInteger failureCount = new AtomicInteger(0);
                 if (MessageType.Email.getValue().equalsIgnoreCase(originForm.getType())) {
-                    String fromAddress;
-                    
-                    String body;
-                    if ((body = StringUtils.trimToEmpty(originForm.getContent())).isEmpty()) {
-                        throw new MessageException("No Body");
-                    }
-                    if (StringUtils.isNotBlank(parseMailContentKeyword(body, "sendSkiped", "sendSkipped"))) {
-                        setNotifySendResult(form.getId(), SendResult.Skipped);
-                        return new StateFormEventResultMessageView("忽略发送");
-                    }
-                    for (String oneBody : CommonUtil.split(body, "\\s+\\-{10,}\\s*MULTIPLE-BODY\\s*\\-{10,}\\s+",
-                                                        CommonUtil.STR_NONBLANK | CommonUtil.STR_TRIMED)) {
-                        EmailEntity mailEntity = new EmailEntity();
-                        if (StringUtils
-                                .isBlank(fromAddress = ContextUtil.getConfigTrimed("system.notify.mail.smtp.from"))) {
-                            fromAddress = "noreply@weimob.com";
-                        }
-                        mailEntity.setFrom(fromAddress);
-                        mailEntity.setBody(oneBody);
-                        int subjectIndex = oneBody.indexOf("\n");
-                        if (subjectIndex <= 0) {
-                            subjectIndex = oneBody.length();
-                        }
-                        if (subjectIndex > 80) {
-                            subjectIndex = 80;
-                        }
-                        /* 使用 MimeUtility.encodeWord 可避免outlook标题显示乱码的问题 */
-                        mailEntity.setSubject(MimeUtility.encodeWord(oneBody.substring(0, subjectIndex), "UTF-8", "Q"));
-                        
-                        String[] addressesTo = CommonUtil.split(
+                    for (String singleBody : parseMultipleContents(body)) {
+                        String[] receivers = parseMultipleReceivers(
                                 String.format("%s,%s", StringUtils.trimToEmpty(originForm.getMessageTo()),
-                                        StringUtils.trimToEmpty(
-                                                parseMailContentKeyword(oneBody, "recipients", "addressesTo"))),
-                                "[,;]+", CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED);
-                        if (addressesTo != null && addressesTo.length > 0) {
-                            for (String address : addressesTo) {
-                                try {
-                                    mailEntity.getAddressesTo().add(address);
-                                } catch (Exception e) {
-                                    log.warn(String.format("Invalid mail address provided: %s", address), e);
-                                }
-                            }
+                                        StringUtils.trimToEmpty(parseMailContentKeyword(singleBody, "receivers",
+                                                "recipients", "addressesTo", "copyperson", "addressesCc"))));
+                        if (EMAIL_SERVICE.send(singleBody, receivers, AbstractWeimobNotifyService.OPTION_NOEXCEPTOIN_ONERROR)) {
+                            successCount.addAndGet(1);
+                        } else {
+                            failureCount.addAndGet(1);
                         }
-                        String[] addressesCc = CommonUtil.split(
-                                String.format("%s,%s", StringUtils.trimToEmpty(originForm.getMessageCc()),
-                                        StringUtils.trimToEmpty(
-                                                parseMailContentKeyword(oneBody, "copyperson", "addressesCc"))),
-                                "[,;]+", CommonUtil.STR_NONBLANK | CommonUtil.STR_UNIQUE | CommonUtil.STR_TRIMED);
-                        if (addressesCc != null && addressesCc.length > 0) {
-                            for (String address : addressesCc) {
-                                try {
-                                    mailEntity.getAddressesCc().add(address);
-                                } catch (Exception e) {
-                                    log.warn(String.format("Invalid mail address provided: %s", address), e);
-                                }
-                            }
+                        Thread.sleep(1000);
+                    }
+                } else if (MessageType.Weixin.getValue().equalsIgnoreCase(originForm.getType())) {
+                    for (String singleBody : parseMultipleContents(body)) {
+                        String[] receivers = parseMultipleReceivers(
+                                String.format("%s,%s", StringUtils.trimToEmpty(originForm.getMessageTo()),
+                                        StringUtils.trimToEmpty(parseMailContentKeyword(singleBody, "receivers",
+                                                "recipients", "addressesTo"))));
+                        if (WEIXIN_SERVICE.send(singleBody, receivers, AbstractWeimobNotifyService.OPTION_NOEXCEPTOIN_ONERROR)) {
+                            successCount.addAndGet(1);
+                        } else {
+                            failureCount.addAndGet(1);
                         }
-                        if (mailEntity.getAddressesTo().isEmpty() && mailEntity.getAddressesCc().isEmpty()) {
-                            throw new MessageException("No Recipients");
+                        Thread.sleep(1000);
+                    }
+                } else if (MessageType.Message.getValue().equalsIgnoreCase(originForm.getType())) {
+                    for (String singleBody : parseMultipleContents(body)) {
+                        String[] receivers = parseMultipleReceivers(
+                                String.format("%s,%s", StringUtils.trimToEmpty(originForm.getMessageTo()),
+                                        StringUtils.trimToEmpty(parseMailContentKeyword(singleBody, "receivers",
+                                                "recipients", "addressesTo"))));
+                        if (MOBILE_SERVICE.send(singleBody, receivers, AbstractWeimobNotifyService.OPTION_NOEXCEPTOIN_ONERROR)) {
+                            successCount.addAndGet(1);
+                        } else {
+                            failureCount.addAndGet(1);
                         }
-                        MAIL_SERVICE.send(mailEntity);
                         Thread.sleep(1000);
                     }
                 } else {
                     throw new MessageException("Unimplemented Message Type");
                 }
-                setNotifySendResult(form.getId(), SendResult.Success);
-                return new StateFormEventResultMessageView("发送成功");
+                SendResult result = failureCount.get() <= 0 ? SendResult.Success
+                        : (successCount.get() <= 0 ? SendResult.Failure : SendResult.Partial);
+                setNotifySendResult(form.getId(), result);
+                return new StateFormEventResultMessageView(String.format("发送结果：%s", result.getDisplay()));
             } catch (Throwable e) {
                 try {
                     setNotifySendResult(form.getId(), SendResult.Failure);
@@ -332,7 +360,7 @@ public class SystemNotifyRecordService extends
                     throw new RuntimeException(x);
                 }
                 log.error(e.toString(), e);
-                return new StateFormEventResultMessageView("发送失败")
+                return new StateFormEventResultMessageView(String.format("发送结果：%s", SendResult.Failure.getDisplay()))
                         .setEventAppendMessage(CommonUtil.stringifyStackTrace(e));
             }
         }

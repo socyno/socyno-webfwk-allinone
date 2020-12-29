@@ -89,6 +89,8 @@ public class SystemNotifyTemplateService extends
                         .put("mail_content",    form.getMailContent())
                         .put("message_to",      form.getMessageTo())
                         .put("message_content", form.getMessageContent())
+                        .put("weixin_to",       form.getWeixinTo())
+                        .put("weixin_content",  form.getWeixinContent())
             ), new ResultSetProcessor () {
                 @Override
                 public void process(ResultSet r, Connection c) throws Exception {
@@ -125,6 +127,8 @@ public class SystemNotifyTemplateService extends
                     .put("mail_content",    form.getMailContent())
                     .put("message_to",      form.getMessageTo())
                     .put("message_content", form.getMessageContent())
+                    .put("weixin_to",       form.getWeixinTo())
+                    .put("weixin_content",  form.getWeixinContent())
                     ));
             return null;
         }

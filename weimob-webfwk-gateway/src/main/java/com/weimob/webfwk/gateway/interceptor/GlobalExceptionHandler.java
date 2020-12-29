@@ -1,4 +1,4 @@
-package com.weimob.webfwk.gateway.gateway.interceptor;
+package com.weimob.webfwk.gateway.interceptor;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 

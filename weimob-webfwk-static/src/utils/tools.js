@@ -216,11 +216,23 @@ const tool = {
     return this.stringify(v).length === 0
   },
 
+  /* 检测是否为空字符串(undefined/null/empty) */
+  isNotEmpty(v) {
+    return !this.isEmpty(v)
+  },
+
   /**
    * 检测是否为空白字符串
    */
   isBlank(str) {
     return this.trim2str(str).length === 0
+  },
+
+  /**
+   * 检测是否为空白字符串
+   */
+  isNotBlank(str) {
+    return !this.isBlank(str)
   },
 
   /**
@@ -599,6 +611,90 @@ const tool = {
       url = this.setUrlParam(key, params[key], url)
     }
     return url
+  },
+
+  /**
+   * 获取URL上的参数, 返回值为对象，其中 key 为参数名称，value 为参数值的数组
+   * @param {String} url 当 url 为空时，从当前浏览地址中解析
+   */
+  getUrlParams(url) {
+    if ((url = this.trim(this.stringify(url))).length <= 0) {
+      url = location.href
+    }
+    console.warn('getUrlParams() : url = ' + url)
+    var searchStartIndex
+    if ((searchStartIndex = url.indexOf('?')) < 0) {
+      console.warn('         found search start index : ' + searchStartIndex)
+      return {}
+    }
+    console.warn('         found search start index : ' + searchStartIndex)
+    /**
+     * 找到 hash 的启示位置，如果在 search 之前，说明 search 位于 hash 内部（前端路由），忽略之
+     */
+    var hashStartIndex
+    if ((hashStartIndex = url.indexOf('#')) >= 0 && hashStartIndex < searchStartIndex) {
+      console.warn('         found hash start index : ' + hashStartIndex)
+      return {}
+    }
+    console.warn('         found hash start index : ' + hashStartIndex)
+    /**
+     * 从 url 中解析出 search string 串（包括启示字符?）
+     */
+    var queryString
+    if (hashStartIndex < 0) {
+      queryString = url.substring(searchStartIndex)
+    } else {
+      queryString = url.substring(searchStartIndex, hashStartIndex)
+    }
+    console.warn('         found search string : ' + queryString)
+    /**
+     * 解析 search string 的内容为键值对的形式返回
+     */
+    var result = {}
+    var matched, equalsIndex, paramName, paramValue
+    if ((matched = queryString.match(/[?&][^&]*/g)) && matched.length > 0) {
+      for (var m = 0; m < matched.length; m++) {
+        var kvpair = matched[m].substring(1)
+        console.warn('         found param pair : ' + kvpair)
+        if ((equalsIndex = kvpair.indexOf('=')) >= 0) {
+          paramName = kvpair.substring(0, equalsIndex)
+          paramValue = kvpair.substring(equalsIndex + 1)
+        } else {
+          paramName = kvpair
+          paramValue = null
+        }
+        if (!result[paramName]) {
+          result[paramName] = []
+        }
+        result[paramName].push(paramValue)
+      }
+    }
+    return result
+  },
+
+  /**
+   * 获取URL上的指定参数的值, 返回值为参数值的数组
+   * @param {String} name 参数的名称
+   * @param {String} url 当 url 为空时，从当前浏览地址中解析
+   */
+  getUrlParamsByName(name, url) {
+    console.warn('getUrlParams() : ' + name + ' => ' + url)
+    var params = this.getUrlParams(url)
+    console.warn('        parsed params : ' + tool.toJson(params))
+    return params[name]
+  },
+
+  /**
+   * 获取URL上的指定参数的第一个值
+   * @param {String} name 参数的名称
+   * @param {String} url 当 url 为空时，从当前浏览地址中解析
+   */
+  getUrlFirstParamByName(name, url) {
+    var params
+    if (!!(params = this.getUrlParamsByName(name, url)) && params.length > 0) {
+      return params[0]
+    }
+    return undefined
   },
 
   /**

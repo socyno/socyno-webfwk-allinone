@@ -37,25 +37,25 @@ export default {
   },
   data() {
     return {
-      activeIndex: 'sys',
+      activeIndex: 'todo',
       tabs: [
-        {
-          key: 'sys',
-          title: '业务系统'
-        },
         {
           key: 'todo',
           title: '我的待办'
-        },
-        {
-          key: 'app',
-          title: '我的应用'
-        }
+        // },
+        // {
+        //   key: 'sys',
+        //   title: '业务系统'
+        // },
+        // {
+        //   key: 'app',
+        //   title: '我的应用'
+        // }
         // ,
         // {
         //   key: 'commits',
         //   title: '我的变更集'
-        // }
+        }
 
       ]
     }

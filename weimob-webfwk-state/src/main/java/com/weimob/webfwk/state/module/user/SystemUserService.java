@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import com.weimob.webfwk.state.abs.AbstractStateAction;
 import com.weimob.webfwk.state.abs.AbstractStateCreateAction;
 import com.weimob.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
@@ -509,131 +508,174 @@ public class SystemUserService extends
                 .setNamesIn(StringUtils.join(usernames, ','))
                 .setDisableIncluded(true)).getList();
     }
+
+    public void forceSuToUser(String username) throws Exception {
+        forceSuToUser(username, null);
+    }
+    
+    public AbstractUser forceCreateUser(SystemWindowsAdUser winadUser) throws Exception {
+        return ensureAdUserExisted(winadUser, SessionContext.getTenant());
+    }
     
     /**
      * 切换到指定用户上下文，返回当前的上下文对象。
      */
-    public UserContext forceSuToUser(String username) throws Exception {
-        /* 首先, 提取租户代码 */
-        UserContext currentContext = SessionContext.getUserContext();
-        String tenant = AbstractUser.parseTenantFromUsername(username);
-        SessionContext.setUserContext(new UserContext().setTenant(tenant));
-        
-        /* 检索并验证用户是否有效 */
-        AbstractUser sysuser;
-        if ((sysuser = getSimple(username)) == null || sysuser.isDisabled()) {
+    public void forceSuToUser(String username, String proxiedUsername) throws Exception {
+        String tenant = null;
+        String ssoTicket = null;
+        AbstractUser sysuser = null;
+        try {
+            /**
+             * 设置租户的上下文，确保在正确的租户数据库中检索用户信息
+             */
+            tenant = AbstractUser.parseTenantFromUsername(username);
+            SessionContext.setUserContext(new UserContext().setTenant(tenant));
+            sysuser = getSimple(username);
+        } catch (TenantMissingException e) {
+            /**
+             * 否则，将用户(username)视为 weimob sso ticket，
+             * 同时将代理用户(proxiedUsername)视为 sso service
+             */
+            SystemWindowsAdUser winadUser;
+            String ssoService = proxiedUsername;
+            proxiedUsername = null;
+            if ((winadUser = WeimobSsoService.validateTicket(username, ssoService)) != null) {
+                ssoTicket = username;
+                username = winadUser.getMail();
+                tenant = AbstractUser.parseTenantFromUsername(username);
+                SessionContext.setUserContext(new UserContext().setTenant(tenant));
+                sysuser = ensureAdUserExisted(winadUser, tenant);
+            }
+        }
+        /**
+         * 验证用户是否有效
+         */
+        if (sysuser == null || sysuser.isDisabled()) {
             log.info("账户（{}）不存在，或者已被禁用", username);
             throw new MessageException(String.format("No such user found or disabled : %s", username));
         }
-        SessionContext.setUserContext(new UserContext().setSysUser(sysuser)
-                .setTokenHead(UserTokenService.getTokenHeader())
-                .setToken(LoginTokenUtil.generateToken(sysuser, false)));
-        return currentContext;
+        /**
+         * 验证租户是否被警用
+         */
+        if (!SystemTenantBasicService.checkTenantEnabled(tenant)) {
+            log.info("租户（{}）不存在，或者已被禁用", tenant);
+            throw new MessageException("账户或密码信息错误");
+        }
+        /**
+         * 代理人模式校验
+         */
+        AbstractUser proxiedUser = null;
+        boolean isAdmin = isAdmin(sysuser.getId());
+        boolean isSuperTeant = SystemTenantBasicService.inSuperTenantContext();
+        if (StringUtils.isNotBlank(proxiedUsername)) {
+            if (!isAdmin) {
+                throw new MessageException("未获得被代理用户的授权");
+            }
+            String proxiedTenant = AbstractUser.parseTenantFromUsername(proxiedUsername);
+            if (!isSuperTeant && !StringUtils.equals(proxiedTenant, sysuser.getTenant())) {
+                throw new MessageException("未获得被代理用户的授权");
+            }
+            /* 系统登录前必须先设置为别代理用户的租户上下文，否则无法访问到对应的租户数据库 */
+            SessionContext.setUserContext(new UserContext().setTenant(proxiedTenant));
+            /* 确认被代理租户可用 */
+            if (!SystemTenantBasicService.checkTenantEnabled(SessionContext.getTenant())) {
+                log.info("被代理租户（{}）不存在，或者已被禁用", SessionContext.getTenant());
+                throw new MessageException("未获得被代理用户的授权");
+            }
+            /* 确认被代理用户可用 */
+            if ((proxiedUser = getSimple(proxiedUsername)) == null || proxiedUser.isDisabled()) {
+                log.info("被代理用户（{}）不存在，或者已被禁用", SessionContext.getTenant());
+                throw new MessageException("未获得被代理用户的授权");
+            }
+        }
+        /**
+         * 确保拥有基础角色
+         */
+        SystemRoleFormSimple basicRole;
+        if ((basicRole = SystemRoleService.getInstance()
+                .getSimple(SystemRoleService.InternalRoles.Basic.getCode())) != null) {
+            getFormBaseDao()
+                    .executeUpdate(
+                            SqlQueryUtil
+                                    .prepareInsertQuery("system_user_scope_role",
+                                            new ObjectMap()
+                                                    .put("user_id",
+                                                            proxiedUser == null ? sysuser.getId()
+                                                                    : proxiedUser.getId())
+                                                    .put("scope_type", "System")
+                                                    .put("role_id", basicRole.getId()).put("=scope_id", 0)));
+        }
+        final SystemUserToken userToken = new SystemUserToken();
+        if (proxiedUser != null) {
+            userToken.setTokenHeader(UserTokenService.getTokenHeader())
+                    .setTokenContent(LoginTokenUtil.generateToken(proxiedUser,
+                            isAdmin(proxiedUser.getId()), sysuser,
+                            new ObjectMap().put("isSuperTenant",
+                                    SystemTenantBasicService.equalsSuperTenant(proxiedUser.getTenant()))));
+        } else {
+            userToken.setTokenHeader(UserTokenService.getTokenHeader()).setTokenContent(LoginTokenUtil
+                    .generateToken(sysuser, isAdmin, null, new ObjectMap().put("isSuperTenant", isSuperTeant)));
+        }
+        SessionContext.setUserContext(
+                new UserContext()
+                    .setSysUser(sysuser)
+                    .setSsoTicket(ssoTicket)
+                    .setTokenHead(userToken.getTokenHeader())
+                    .setToken(userToken.getTokenContent())
+        );
+        return;
     }
     
     /**
      * 用户认证
      */
     public SystemUserToken login(SystemUserFormLogin form) throws Exception {
-        if (form == null || StringUtils.isBlank(form.getUsername()) || StringUtils.isBlank(form.getPassword())) {
-            throw new MessageException("账户或密码信息不完整");
-        }
         UserContext currentContext = SessionContext.getUserContext();
         try {
-            String tenant;
-            try {
-                tenant = AbstractUser.parseTenantFromUsername(form.getUsername());
-            } catch (TenantMissingException e) {
-                if (StringUtils.isBlank(form.getUsername())) {
-                    throw e;
-                }
-                tenant = WindowsAdService.getDefaultDomain();
-                form.setUsername(String.format("%s%s", form.getUsername(), WindowsAdService.getDefaultDomainSuffix()));
-            }
-            /* 系统登录前必须先设置租户上下文，否则无法访问到对应的租户数据库 */
-            SessionContext.setUserContext(new UserContext().setTenant(tenant));
-            if (!SystemTenantBasicService.checkTenantEnabled(SessionContext.getTenant())) {
-                log.info("租户（{}）不存在，或者已被禁用", SessionContext.getTenant());
-                throw new MessageException("账户或密码信息错误");
-            }
-            /* 检索并验证用户的密码 */
-            AbstractUser sysuser;
-            if ((sysuser = getSimple(form.getUsername())) == null || sysuser.isDisabled()) {
-                throw new MessageException("账户或密码信息错误");
-            }
             boolean success = false;
-            if (checkLocalPassword(sysuser.getId(), form.getPassword())) {
+            /**
+             * 携带 weimob sso ticket 进行系统登陆
+             */
+            if (form != null && StringUtils.isNotBlank(form.getTicket())) {
+                forceSuToUser(form.getTicket(), form.getService());
                 success = true;
             }
-            SystemWindowsAdUser winadUser = null;
-            if (!success && WindowsAdService.equalsDefaultDomain(sysuser.getTenant())
-                    && (winadUser = WindowsAdService.verifyAdUser(form.getUsername(), form.getPassword())) != null) {
-                success = true;
-            }
-            if (!success && SystemTenantBasicService.equalsSuperTenant(sysuser.getTenant())
-                    && (winadUser = WindowsAdService.verifyAdUser(
-                            form.getUsername().replace("@" + SystemTenantBasicService.getSuperTenant(), ""),
-                            form.getPassword())) != null) {
-                success = true;
-            }
-            if (success) {
-                /* 代理人模式校验 */
-                AbstractUser proxiedUser = null;
-                boolean isAdmin = isAdmin(sysuser.getId());
-                boolean isSuperTeant = SystemTenantBasicService.inSuperTenantContext();
-                if (StringUtils.isNotBlank(form.getProxied())) {
-                    if (!isAdmin) {
-                        throw new MessageException("未获得被代理用户的授权");
-                    }
-                    String proxiedTenant = AbstractUser.parseTenantFromUsername(form.getProxied());
-                    if (!isSuperTeant && !StringUtils.equals(proxiedTenant, sysuser.getTenant())) {
-                        throw new MessageException("未获得被代理用户的授权");
-                    }
-                    /* 系统登录前必须先设置为别代理用户的租户上下文，否则无法访问到对应的租户数据库 */
-                    SessionContext.setUserContext(new UserContext().setTenant(proxiedTenant));
-                    /* 确认被代理租户可用 */
-                    if (!SystemTenantBasicService.checkTenantEnabled(SessionContext.getTenant())) {
-                        log.info("被代理租户（{}）不存在，或者已被禁用", SessionContext.getTenant());
-                        throw new MessageException("未获得被代理用户的授权");
-                    }
-                    /* 确认被代理用户可用 */
-                    if ((proxiedUser = getSimple(form.getProxied())) == null || proxiedUser.isDisabled()) {
-                        log.info("被代理用户（{}）不存在，或者已被禁用", SessionContext.getTenant());
-                        throw new MessageException("未获得被代理用户的授权");
-                    }
+            /**
+             * 账户密码方式登陆(LDAP 或本地账密)
+             */
+            String tenant = null;
+            if (!success && StringUtils.isNotBlank(form.getUsername()) && StringUtils.isNotBlank(form.getPassword())) {
+                try {
+                    tenant = AbstractUser.parseTenantFromUsername(form.getUsername());
+                } catch (TenantMissingException e) {
+                    tenant = WindowsAdService.getDefaultDomain();
+                    form.setUsername(String.format("%s%s", form.getUsername(), WindowsAdService.getDefaultDomainSuffix()));
                 }
-                
-                SystemRoleFormSimple basicRole;
-                if ((basicRole = SystemRoleService.getInstance()
-                        .getSimple(SystemRoleService.InternalRoles.Basic.getCode())) != null) {
-                    getFormBaseDao()
-                            .executeUpdate(
-                                    SqlQueryUtil
-                                            .prepareInsertQuery("system_user_scope_role",
-                                                    new ObjectMap()
-                                                            .put("user_id",
-                                                                    proxiedUser == null ? sysuser.getId()
-                                                                            : proxiedUser.getId())
-                                                            .put("scope_type", "System")
-                                                            .put("role_id", basicRole.getId()).put("=scope_id", 0)));
+                forceSuToUser(form.getUsername(), form.getProxied());
+                AbstractUser sysuser = SessionContext.getUserContext().getSysUser();
+                /* 验证用户的密码 */
+                if (checkLocalPassword(sysuser.getId(), form.getPassword())) {
+                    success = true;
                 }
-                final SystemUserToken userToken = new SystemUserToken();
-                if (proxiedUser != null) {
-                    userToken.setTokenHeader(UserTokenService.getTokenHeader())
-                            .setTokenContent(LoginTokenUtil.generateToken(proxiedUser,
-                                    isAdmin(proxiedUser.getId()), sysuser,
-                                    new ObjectMap().put("isSuperTenant",
-                                            SystemTenantBasicService.equalsSuperTenant(proxiedUser.getTenant()))));
-                } else {
-                    userToken.setTokenHeader(UserTokenService.getTokenHeader()).setTokenContent(LoginTokenUtil
-                            .generateToken(sysuser, isAdmin, null, new ObjectMap().put("isSuperTenant", isSuperTeant)));
+                SystemWindowsAdUser winadUser = null;
+                if (!success && WindowsAdService.equalsDefaultDomain(sysuser.getTenant())
+                        && (winadUser = WindowsAdService.verifyAdUser(form.getUsername(), form.getPassword())) != null) {
+                    success = true;
                 }
-                /* 更新域用户的必要信息 */
+                if (!success && SystemTenantBasicService.equalsSuperTenant(sysuser.getTenant())
+                        && (winadUser = WindowsAdService.verifyAdUser(
+                                form.getUsername().replace("@" + SystemTenantBasicService.getSuperTenant(), ""),
+                                form.getPassword())) != null) {
+                    success = true;
+                }
                 if (winadUser != null) {
                     ensureAdUserExisted(winadUser, tenant);
                 }
-                /* END */
-                return userToken;
+            }
+            if (success) {
+                return new SystemUserToken()
+                            .setTokenHeader(SessionContext.getTokenHead())
+                            .setTokenContent(SessionContext.getToken());
             }
         } finally {
             SessionContext.setUserContext(currentContext);
@@ -716,7 +758,8 @@ public class SystemUserService extends
     
     protected AbstractUser ensureAdUserExisted(SystemWindowsAdUser windowsAdUser, String tenant) throws Exception {
         String username = String.format(String.format("%s@%s", windowsAdUser.getLogin(), tenant));
-        ObjectMap queryData = new ObjectMap().put("username", username).put("=display", windowsAdUser.getName())
+        ObjectMap queryData = new ObjectMap().put("username", username)
+                                                .put("=display", windowsAdUser.getName())
                                                 .put("=password", "");
         AbstractUser manager = null;
         if (windowsAdUser.getManager() != null) {

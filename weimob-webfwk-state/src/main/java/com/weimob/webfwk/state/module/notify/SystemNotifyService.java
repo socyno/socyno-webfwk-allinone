@@ -30,7 +30,7 @@ public class SystemNotifyService {
     private static final ThreadPoolExecutor NotifyThreadsPool = new ThreadPoolExecutor(1, 5, 5, TimeUnit.MINUTES,
                     new LinkedBlockingQueue<Runnable>(200), new ThreadPoolExecutor.DiscardOldestPolicy());
     
-    public static void sendAsync(String template, Map<String, Object> context, int options) {
+    public void sendAsync(String template, Map<String, Object> context, int options) {
         try {
             NotifyThreadsPool.submit(new SystemNotifyThread(template, context, options));
         } catch (Exception e) {
@@ -38,7 +38,7 @@ public class SystemNotifyService {
         }
     }
     
-    static class SystemNotifyThread extends RunableWithSessionContext {
+    class SystemNotifyThread extends RunableWithSessionContext {
         private final String template;
         private final Map<String, Object> context;
         private final int options;
@@ -70,7 +70,7 @@ public class SystemNotifyService {
      * @return
      * @throws Exception
      */
-    public static Map<String, SystemNotifyRecordFormCreation> sendSync(String template, Map<String, Object> context, int options) throws Exception {
+    public Map<String, SystemNotifyRecordFormCreation> sendSync(String template, Map<String, Object> context, int options) throws Exception {
         
         /* 获得模板信息 */
         SystemNotifyTemplateFormSimple tmplForm = null;
@@ -102,6 +102,13 @@ public class SystemNotifyService {
             messageNotify.setMessageTo(tmplForm.getMessageTo());
             messageNotify.setContent(EnjoyUtil.format(tmplForm.getMessageContent(), tmplContext.asMap()));
             notifies.put(MessageType.Message.getValue(), messageNotify);
+        }
+        if (StringUtils.isNotBlank(tmplForm.getWeixinContent())) {
+            SystemNotifyRecordFormCreation weixinNotify = new SystemNotifyRecordFormCreation();
+            weixinNotify.setType(MessageType.Weixin.getValue());
+            weixinNotify.setMessageTo(tmplForm.getWeixinTo());
+            weixinNotify.setContent(EnjoyUtil.format(tmplForm.getWeixinContent(), tmplContext.asMap()));
+            notifies.put(MessageType.Weixin.getValue(), weixinNotify);
         }
         if ((options & NOTIFY_DATA_RETURN_ONLY) == 0) {
             for (SystemNotifyRecordFormCreation notify : notifies.values()) {

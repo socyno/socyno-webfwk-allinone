@@ -68,19 +68,13 @@ public class SystemTodoQueryDefault extends AbstractStateFormQuery {
     }
     
     /**
-     SELECT
-        f.*
-     FROM
-        %s f
+     * SELECT f.* FROM %s f
      */
     @Multiline
     private static final String SQL_QUERY_ALL_TODOS = "X";
     
     /**
-     SELECT
-        COUNT(1)
-     FROM
-        %s f
+     * SELECT COUNT(1) FROM %s f
      */
     @Multiline
     private static final String SQL_QUERY_COUNT_TODOS = "X";
@@ -107,6 +101,10 @@ public class SystemTodoQueryDefault extends AbstractStateFormQuery {
         if (closedUserId != null) {
             sqlargs.add(closedUserId);
             StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.closed_user_id = ?");
+        }
+        if (applyUserId != null) {
+            sqlargs.add(applyUserId);
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("f.apply_user_id = ?");
         }
         if (createdAtEnd != null) {
             sqlargs.add(DateFormatUtils.format(createdAtEnd, "yyyy-MM-dd 24:00:00"));

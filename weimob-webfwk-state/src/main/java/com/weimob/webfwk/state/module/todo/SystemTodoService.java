@@ -70,8 +70,8 @@ public class SystemTodoService extends
     
     @Getter
     public static enum STATES implements StateFormStateBaseEnum  {
-        OPENED("0", "待处理"),
-        CLOSED("1", "已关闭")
+        OPENED("opened", "待处理"),
+        CLOSED("closed", "已关闭")
         ;
         
         private final String code;
@@ -171,7 +171,7 @@ public class SystemTodoService extends
         @Override
         public Void handle(String event, SystemTodoFormDetail originForm, AbstractStateFormInput form, String message) throws Exception {
             SystemTodoFormDetail closedForm = getForm(form.getId());
-            SystemNotifyService.sendAsync(
+            SystemNotifyService.getInstance().sendAsync(
                     "system.todo.notify.standard.created", 
                     new ObjectMap()
                         .put("notifyService", getInstance())
@@ -192,7 +192,7 @@ public class SystemTodoService extends
         @Override
         public Void handle(String event, SystemTodoFormDetail originForm, AbstractStateFormInput form, String message) throws Exception {
             SystemTodoFormDetail closedForm = getForm(form.getId());
-            SystemNotifyService.sendAsync(
+            SystemNotifyService.getInstance().sendAsync(
                     "system.todo.notify.standard.closed", 
                     new ObjectMap()
                         .put("notifyService", getInstance())
@@ -409,7 +409,6 @@ public class SystemTodoService extends
         Map<Long, SystemUserFormWithSecurity> allNotifyInfos = new HashMap<>();
         for (SystemUserFormWithSecurity u : usersSecurity) {
             allNotifyInfos.put(u.getId(), u);
-            
         }
         TodoNotifyInfo result = new TodoNotifyInfo()
                 .setApplierNotifyInfo(allNotifyInfos.get(originForm.getApplyUserId()))
@@ -444,47 +443,34 @@ public class SystemTodoService extends
         return new SystemTodoQueryDefault(1, 1000).setAssignee(assignee).setState(STATES.OPENED.getCode());
     }
 
-    private SystemTodoQueryDefault getTodoByCreatorQuery(Long createdBy , Integer page , Integer limit) {
-        return new SystemTodoQueryDefault(page, limit).setCreatedBy(createdBy);
+    private SystemTodoQueryDefault getTodoByApplierQuery(Long applyUserId , Integer page , Integer limit) {
+        return new SystemTodoQueryDefault(page, limit).setApplyUserId(applyUserId);
     }
 
     private SystemTodoQueryDefault getTodoByCloserQuery(Long closedUserId , Integer page , Integer limit) {
         return new SystemTodoQueryDefault(page, limit).setClosedUserId(closedUserId);
     }
     
-    @SuppressWarnings("unchecked")
-    public List<SystemTodoFormDefault> queryOpenedByAssignee(Long assignee) throws Exception {
+    public List<SystemTodoFormDetail> queryOpenedByAssignee(Long assignee) throws Exception {
         if (assignee == null) {
             return Collections.emptyList();
         }
-        return (List<SystemTodoFormDefault>) listForm(getFormDefaultQuery(), getOpenedByAssigneeQuery(assignee)).getList();
+        return listForm(SystemTodoFormDetail.class, getOpenedByAssigneeQuery(assignee)).getList();
     }
     
     public long queryOpenedCountByAssignee(Long assignee) throws Exception {
         if (assignee == null) {
             return 0;
         }
-        return getListFormTotal(getFormDefaultQuery(), getOpenedByAssigneeQuery(assignee));
+        return getListFormTotal(getOpenedByAssigneeQuery(assignee));
     }
     
-    @SuppressWarnings("unchecked")
-    public PagedListWithTotal<SystemTodoFormDefault> queryTodoByCreator(Long createdUserId , Integer page , Integer limit) throws Exception {
-        return (PagedListWithTotal<SystemTodoFormDefault>) listFormWithTotal(getFormDefaultQuery(), getTodoByCreatorQuery(createdUserId , page , limit));
+    public PagedListWithTotal<SystemTodoFormDetail> queryTodoByApplier(Long applierId , Integer page , Integer limit) throws Exception {
+        return listFormWithTotal(SystemTodoFormDetail.class, getTodoByApplierQuery(applierId , page , limit));
     }
     
-    @SuppressWarnings("unchecked")
-    public PagedListWithTotal<SystemTodoFormDefault> queryTodoByCloser(Long closedUserId ,Integer page , Integer limit) throws Exception {
-        return (PagedListWithTotal<SystemTodoFormDefault>) listFormWithTotal(getFormDefaultQuery(), getTodoByCloserQuery(closedUserId , page , limit));
-    }
-    
-    @SuppressWarnings("unchecked")
-    public List<SystemTodoFormDefault> queryClosedByCategoryId(String category, String targetId)
-            throws Exception {
-        if (StringUtils.isBlank(category) || StringUtils.isBlank(targetId)) {
-            return Collections.emptyList();
-        }
-        return (List<SystemTodoFormDefault>) listForm(getFormDefaultQuery(), new SystemTodoQueryDefault(1, 100)
-                .setCategory(category).setTargetId(targetId).setState(STATES.OPENED.getCode())).getList();
+    public PagedListWithTotal<SystemTodoFormDetail> queryTodoByCloser(Long closedUserId ,Integer page , Integer limit) throws Exception {
+        return listFormWithTotal(SystemTodoFormDetail.class, getTodoByCloserQuery(closedUserId , page , limit));
     }
     
     @SuppressWarnings("unchecked")
@@ -495,13 +481,6 @@ public class SystemTodoService extends
         }
         return (List<SystemTodoFormDefault>) listForm(getFormDefaultQuery(), new SystemTodoQueryDefault(1, 100)
                 .setTargetKey(targetKey).setTargetId(targetId).setState(STATES.OPENED.getCode())).getList();
-    }
-    
-    public SystemTodoFormDetail queryTodoId(Long id) throws Exception {
-        if (id == null) {
-            return null;
-        }
-        return getForm(id);
     }
     
     @Data
@@ -515,7 +494,7 @@ public class SystemTodoService extends
     
     /**
      SELECT DISTINCT
-         a.todo_id
+         a.todo_id,
          a.todo_user
      FROM
           %s a
@@ -547,7 +526,6 @@ public class SystemTodoService extends
                     String.format(SQL_QUERY_TODO_ASSIGNEE, getAssigneeTable(),
                             CommonUtil.join("?", withAssignees.size(), ",")),
                     withAssignees.keySet().toArray());
-            
             List<Long> oneAssignees;
             Set<Long> allAssigneeIds = new HashSet<>();
             Map<Long, List<Long>> mappedAssigneeIds = new HashMap<>();

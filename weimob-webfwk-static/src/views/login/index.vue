@@ -1,6 +1,5 @@
 <template>
-  <div class="content">
-    <canvas id="cas" />
+  <div class="content" :class="localUser ? 'visible' : 'hidden'">
     <div class="con">
       <div class="head">
         <span class="title">微盟效能后端开发框架</span>
@@ -34,7 +33,8 @@
 </template>
 
 <script>
-import { login } from '@/apis/common'
+import tool from '@/utils/tools'
+import { login, loginWithTicket } from '@/apis/common'
 import { Notification } from 'element-ui'
 export default {
   data() {
@@ -47,16 +47,59 @@ export default {
       rules: {
         account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
         pwd: [{ required: true, message: '请输入密码', trigger: 'blur' }]
-      }
+      },
+      localUser: tool.isNotBlank(this.$route.query.localUser)
     }
   },
   created() {
-    // 解决iframe内置登陆问题
-    if (top.location !== self.location) { top.location = self.location }
-  },
-  mounted() {
+    /**
+     * 解决iframe内置登陆问题
+     */
+    if (top.location !== self.location) {
+      top.location = self.location
+    }
+    /**
+     * 默认方式走 SSO 登陆界面，除非携带了 localUser 选项
+     */
+    var ssoTicket
+    if (tool.isBlank(ssoTicket = this.$route.query.ticket)) {
+      if (!this.localUser) {
+        this.toSsoLoginPage()
+      }
+      return
+    }
+    /**
+     * 如果携带有 sso ticket，则进行验证，如果失效或过期则跳转登陆界面
+     */
+    var ssoService = tool.trim(this.$route.query.service)
+    loginWithTicket(ssoTicket, ssoService).then(res => {
+      if (res.status !== 0) {
+        this.toSsoLoginPage()
+        return
+      }
+      this.$store.dispatch('user/setUserByToken', res.data.tokenContent)
+      this.$store.dispatch('user/setTokenHeader', res.data.tokenHeader)
+      this.$router.replace(this.$route.query.redirect || '/dashboard')
+    }).catch(res => {
+      this.toSsoLoginPage()
+      return
+    })
   },
   methods: {
+    /**
+     * 跳转至 SSO 登录页面
+     */
+    toSsoLoginPage() {
+      var $lo = window.location
+      window.location.href = 'http://cas.dev.internal.hsmob.com/?service=' +
+            tool.encodeURI($lo.protocol + '//' + $lo.host + $lo.pathname + $lo.hash)
+    },
+
+    /**
+     * 系统内部登陆表单提交
+     * @param {Object} formName
+     * @param {Object} type
+     */
     submitForm(formName, type) {
       this.$refs[formName].validate(valid => {
         if (valid && !this.submitState) {
@@ -140,5 +183,11 @@ export default {
     cursor: pointer;
     }
   }
+}
+.content.visible {
+  display: block;
+}
+.content.hidden {
+  display: none;
 }
 </style>

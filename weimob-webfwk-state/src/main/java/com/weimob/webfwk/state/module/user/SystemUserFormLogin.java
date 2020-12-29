@@ -14,4 +14,8 @@ public class SystemUserFormLogin {
     private String proxied;
     
     private String token;
+    
+    private String ticket;
+    
+    private String service;
 }

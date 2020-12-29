@@ -47,13 +47,19 @@ public class SystemNotifyTemplateFormSimple extends StateFormBasicSaved implemen
     @Attributes(title = "邮件抄送人")
     private String mailCc;
     
-    @Attributes(title = "移动手机号")
-    private String messageTo;
-    
     @Attributes(title = "邮件模板", type = FieldText.class)
     private String mailContent;
     
+    @Attributes(title = "移动手机号")
+    private String messageTo;
+    
     @Attributes(title = "短消息模板", type = FieldText.class)
     private String messageContent;
+    
+    @Attributes(title = "微信接收号")
+    private String weixinTo;
+    
+    @Attributes(title = "微信接消息模板", type = FieldText.class)
+    private String weixinContent;
     
 }

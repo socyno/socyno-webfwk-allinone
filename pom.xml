@@ -254,7 +254,7 @@
                 <version>8.0.22</version>
             </dependency>
             
-            <!-- com.fasterxml.jackson.core -->
+            <!-- begin com.fasterxml.jackson.core -->
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
@@ -270,9 +270,9 @@
                 <artifactId>jackson-databind</artifactId>
                 <version>${version.jackson}</version>
             </dependency>
-            <!-- com.fasterxml.jackson.core -->
+            <!-- end com.fasterxml.jackson.core -->
             
-            <!-- org.springframework -->
+            <!-- begin org.springframework -->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-aop</artifactId>
@@ -323,7 +323,8 @@
                 <artifactId>spring-tx</artifactId>
                 <version>${version.spring.framework}</version>
             </dependency>
-            <!-- org.springframework -->
+            <!-- end org.springframework -->
+            
             <!-- <dependency>
                 <groupId>sun.jdk</groupId>
                 <artifactId>tools</artifactId>

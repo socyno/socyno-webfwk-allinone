@@ -1,7 +1,6 @@
 import request from '../utils/request'
 
 export function logout() {
-  // return
   return request({
     url: '/user/logout',
     method: 'get'
@@ -10,10 +9,29 @@ export function logout() {
 
 export function login(username, password, proxied, token) {
   return request({
-    url: `/user/login`,
+    url: '/user/login',
     method: 'post',
     data: {
-      username, password, proxied, token
+      username,
+      password,
+      proxied,
+      token
+    }
+  })
+}
+
+/**
+ * 通过 sso ticket 获取用户的会话数据
+ *
+ * @param {String} ticket
+ */
+export function loginWithTicket(ssoTicket, ssoService) {
+  return request({
+    url: '/user/login',
+    method: 'post',
+    data: {
+      ticket: ssoTicket,
+      service: ssoService
     }
   })
 }
@@ -26,9 +44,9 @@ export function getTodoListClosed(data) {
   })
 }
 
-export function getTodoListCreated(data) {
+export function getTodoListApplied(data) {
   return request({
-    url: 'user/mytodo/created',
+    url: 'user/mytodo/applied',
     method: 'get',
     params: data
   })

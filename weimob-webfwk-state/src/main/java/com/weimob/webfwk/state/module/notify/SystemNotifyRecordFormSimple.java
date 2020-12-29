@@ -25,7 +25,8 @@ public class SystemNotifyRecordFormSimple extends StateFormBasicSaved implements
     @Getter
     public enum MessageType {
         Email("email", "邮件"),
-        Message("message", "短消息")
+        Message("message", "短消息"),
+        Weixin("weixin", "企业微信")
         ;
         private final String value;
         
@@ -41,7 +42,8 @@ public class SystemNotifyRecordFormSimple extends StateFormBasicSaved implements
     public enum SendResult {
         Skipped("skipped", "忽略"),
         Success("success", "成功"),
-        Failure("failure", "失败")
+        Failure("failure", "失败"),
+        Partial("partical", "部分成功")
         ;
         private final String value;
         

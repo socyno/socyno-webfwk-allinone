@@ -15,16 +15,16 @@ public class SessionContextInterceptor extends AbstractSessionInterceptor {
     protected AbstractUser getAbstractUser(String username) {
         return null;
     }
-
+    
     @Override
     protected void checkUserAndTokenInvlid(AbstractUser user, String token) {
         return;
     }
-
+    
     public SessionContextInterceptor(String weakValidation) {
         super(weakValidation);
     }
-
+    
     public SessionContextInterceptor(String weakValidation, int allowedExpiredMinites) {
         super(weakValidation, allowedExpiredMinites);
     }
@@ -34,6 +34,6 @@ public class SessionContextInterceptor extends AbstractSessionInterceptor {
         Map<String, String[]> parameters = HttpUtil.parseQueryString(session.getUri().getQuery());
         String[] tokenContent = parameters.get("__" + tokenHeader);
         SessionContext.setUserContext(null);
-        return tokenValidation(tokenHeader, tokenContent == null ? "" : tokenContent[0]);
+        return tokenValidation(tokenContent == null ? "" : tokenContent[0]);
     }
 }

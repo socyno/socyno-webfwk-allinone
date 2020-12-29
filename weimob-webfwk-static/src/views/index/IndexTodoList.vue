@@ -3,18 +3,25 @@
     <div class="tabbar">
       <el-radio-group v-model="selectedTab" size="small" @change="handlePageChange">
         <el-radio-button label="todo">
-          待处理
+          待处理的代办
         </el-radio-button>
-        <!-- <el-radio-button label="closed">
-          已审批
+        <el-radio-button label="closed">
+          我处理的待办
         </el-radio-button>
         <el-radio-button label="applied">
-          已发起
-        </el-radio-button> -->
+          我发起的待办
+        </el-radio-button>
       </el-radio-group>
     </div>
     <div v-loading="loading" class="index-todo-list">
-      <BaseInfoRow v-for="(item, index) in items" :key="index" :title="item.title" :time="item.createdAt" @click="handleRow(item)" />
+      <BaseInfoRow
+        v-for="(item, index) in items"
+        :key="index"
+        :title="item.title"
+        :detail="getTodoStatus(item)"
+        :time="item.createdAt"
+        @click="handleRow(item)"
+      />
       <div v-if="!items.length" class="common-nodata" style="padding-bottom:10%;">
         暂无数据
       </div>
@@ -35,7 +42,7 @@
 <script>
 import tool from '@/utils/tools.js'
 import BaseInfoRow from '@/components/BaseInfoRow'
-import { getTodoList, getTodoListClosed, getTodoListCreated } from '@/apis/common'
+import { getTodoList, getTodoListClosed, getTodoListApplied } from '@/apis/common'
 import BasePagination from '@/components/BasePagination'
 
 export default {
@@ -77,6 +84,34 @@ export default {
         }
       }
     },
+
+    /**
+     * 拼装待办的状态信息
+     * @param {Object} todo
+     */
+    getTodoStatus(todo) {
+      var status = ''
+      if (todo && tool.isNotBlank(todo.state)) {
+        status += '状态：' + tool.trim(todo.state) + ', '
+      }
+      if (todo && tool.isNotBlank(todo.applyUserDisplay)) {
+        status += '发起人：' + tool.trim(todo.applyUserDisplay) + ', '
+      }
+      if (todo && tool.isNotBlank(todo.closedUserName)) {
+        status += '处理人：' + tool.trim(todo.closedUserName) + ', '
+      }
+      if (todo && tool.isNotBlank(todo.result)) {
+        status += '处理时间：' + tool.trim(todo.closedAt) + ', '
+      }
+      if (todo && tool.isNotBlank(todo.result)) {
+        status += '处理结果：' + tool.trim(todo.result) + ', '
+      }
+      if (status.length > 0) {
+        return status.substring(0, status.length - 2)
+      }
+      return status
+    },
+
     /**
      * 切换Tab面板，并初始化数据
      */
@@ -96,7 +131,7 @@ export default {
        */
       if (this.selectedTab === 'applied') {
         this.loading = true
-        getTodoListCreated(this.page).then(res => {
+        getTodoListApplied(this.page).then(res => {
           this.items = res.data.list
           this.total = res.data.total
         }).finally(res => {

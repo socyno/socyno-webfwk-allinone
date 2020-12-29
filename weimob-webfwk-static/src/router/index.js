@@ -69,8 +69,22 @@ export default router
 
 const prefixTitle = window.$title + ' - '
 router.beforeEach((to, from, next) => {
-  if (to.name !== 'Login' && !store.getters['user/getToken']()) { // 跳登录页 但是没token
-    next({ path: '/Login', query: { redirect: to.fullPath }})
+  if (to.name === '404') {
+    next()
+    return
+  }
+  // 携带 ticket 访问，或者未获取到用户的 token 数据时，跳转到登陆页面
+  var ssoTicket = ''
+  if (tool.isNotBlank(ssoTicket = tool.getUrlFirstParamByName('ticket')) ||
+      (to.name !== 'Login' && !store.getters['user/getToken']())) {
+    var localUser = tool.getUrlFirstParamByName('localUser')
+    console.log(location.href)
+    next({ path: '/Login', query: {
+      redirect: to.fullPath,
+      ticket: ssoTicket,
+      service: tool.getUrlFirstParamByName('service'),
+      localUser: localUser
+    }})
     return
   }
   if (to.name === 'Login' && from.name !== 'Login' && !to.query.redirect) { // 跳登录把redirect页面带过去

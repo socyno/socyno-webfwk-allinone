@@ -72,22 +72,28 @@ public abstract class AbstractSessionInterceptor extends HandlerInterceptorAdapt
     }
     
     /**
+     * 获取认证令牌的内容
+     */
+    protected String getTokenContent(HttpServletRequest request) throws Exception {
+        String tokenHeader = getTokenHeader();
+        return CommonUtil.ifBlank(request.getParameter("__" + tokenHeader), request.getHeader(tokenHeader));
+    }
+    
+    /**
      * 请求进入Controller层方法执行前验证身份信息
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
         SessionContext.setUserContext(null);
-        String tokenHeader = getTokenHeader();
-        return tokenValidation(tokenHeader,
-                CommonUtil.ifBlank(request.getParameter("__" + tokenHeader), request.getHeader(tokenHeader)));
+        return tokenValidation(getTokenContent(request));
     }
     
     /**
      * 令牌弱校验，即当令牌缺失或非法时，视为匿名用户（用于网关层）。
      * 
      */
-    protected boolean tokenValidation(String header, String token) throws Exception {
+    protected boolean tokenValidation(String token) throws Exception {
         /* 没有令牌 */
         if (StringUtils.isBlank(token)) {
             log.info("没有令牌，视为匿名用户访问。");
@@ -146,7 +152,7 @@ public abstract class AbstractSessionInterceptor extends HandlerInterceptorAdapt
                     .setToken(token)
                     .setSysUser(abstractUser)
                     .setTenant(tokenTenant)
-                    .setTokenHead(header)
+                    .setTokenHead(getTokenHeader())
                     .setTokenUserId(Long.valueOf(userId.toString()))
                     .setTokenDisplay(display.toString())
                     .setTokenUsername(username.toString())
