@@ -7,7 +7,7 @@ TOOLDIR=$(dirname "$0") \
     && export WORKSPACE="$(pwd)" \
     && git fetch origin \
     && git reset --hard FETCH_HEAD \
-    && git checkout -B master origin/master \
+    && git checkout -B weimob origin/develop/weimob \
     && export WORKTMPDIR="$WORKSPACE/build" \
     && export BUILDSCRIPT="$WORKTMPDIR/build-static.sh" \
     && mkdir -p "$WORKTMPDIR" \
