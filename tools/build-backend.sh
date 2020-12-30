@@ -31,8 +31,6 @@ TOOLDIR=$(dirname "$0") \
     && echo "rm -f '$WORKTMPDIR'/*.war || exit \$?" >> "$BUILDSCRIPT" \
     && echo "cp -f weimob-webfwk-gateway/target/weimob-webfwk-gateway-*.war '$WORKTMPDIR/webfwk-gateway.war' || exit \$?" >>"$BUILDSCRIPT" \
     && echo "cp -f weimob-webfwk-backend/target/weimob-webfwk-backend-*.war '$WORKTMPDIR/webfwk-backend.war' || exit \$?" >>"$BUILDSCRIPT" \
-    && echo "cp -f weimob-webfwk-executor/target/weimob-webfwk-executor-*.war '$WORKTMPDIR/webfwk-executor.war' || exit \$?" >>"$BUILDSCRIPT" \
-    && echo "cp -f weimob-webfwk-schedule/target/weimob-webfwk-schedule-*.war '$WORKTMPDIR/webfwk-schedule.war' || exit \$?" >>"$BUILDSCRIPT" \
     && docker run --rm -it -u root --privileged=true -v "$WORKSPACE:$WORKSPACE" maven:3.6.3-jdk-8 /bin/sh "$BUILDSCRIPT" \
     || exit $?
 
