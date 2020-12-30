@@ -14,6 +14,7 @@ import com.weimob.webfwk.state.abs.AbstractStateFormServiceWithBaseDao;
 import com.weimob.webfwk.state.annotation.Authority;
 import com.weimob.webfwk.state.authority.AuthorityScopeType;
 import com.weimob.webfwk.state.authority.AuthoritySpecialChecker;
+import com.weimob.webfwk.state.field.FieldStringAllowOrDenied;
 import com.weimob.webfwk.state.sugger.DefaultStateFormSugger;
 import com.weimob.webfwk.state.util.StateFormBasicInput;
 import com.weimob.webfwk.state.util.StateFormEventClassEnum;
@@ -38,8 +39,6 @@ public class SystemConfigService extends
         setActions(EVENTS.values());
         setQueries(QUERIES.values());
     }
-    
-    public static final String FORM_DISPLAY = "系统参数配置";
 
     @Getter
     public enum STATES implements StateFormStateBaseEnum {
@@ -145,6 +144,7 @@ public class SystemConfigService extends
                             .put("name", form.getName())
                             .put("value", form.getValue())
                             .put("comment", form.getComment())
+                            .put("external", form.getExternal())
             ), new AbstractDao.ResultSetProcessor() {
                 @Override
                 public void process(ResultSet resultSet, Connection connection) throws Exception {
@@ -176,6 +176,7 @@ public class SystemConfigService extends
                             .put("name", form.getName())
                             .put("value", form.getValue())
                             .put("comment", form.getComment())
+                            .put("external", form.getExternal())
             ));
             return null;
         }
@@ -201,5 +202,13 @@ public class SystemConfigService extends
             ));
             return null;
         }
+    }
+    
+    /**
+     * 获取所有的允许外部访问的系统配置参数
+     */
+    public List<SystemConfigFormSimple> getAllExternals() throws Exception {
+        return listForm(SystemConfigFormSimple.class, new SystemConfigQueryDefault(1000, 1L)
+                .setExternal(FieldStringAllowOrDenied.OptionsAllowOrDenied.Allowed.getValue())).getList();
     }
 }

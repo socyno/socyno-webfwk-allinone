@@ -12,7 +12,7 @@ mkdir -p /opt/log/tomcat \
           --name webfwk-app \
           -v /opt/log/tomcat:/usr/local/tomcat/logs \
           -v /opt/log/webfwk:/opt/log/ \
-          --add-host webfwk-db:103.39.217.201 \
-          --add-host webfwk-db.weimob.com:103.39.217.201 \
+          --add-host webfwk-db:120.0.0.1 \
+          --add-host webfwk-db.weimob.com:120.0.0.1 \
           -e CATALINA_OPTS=" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5050 " \
           "$1"

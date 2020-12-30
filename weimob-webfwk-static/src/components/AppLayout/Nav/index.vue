@@ -105,9 +105,9 @@
 
           <el-button class="menu-btn btn" type="text" icon="el-icon-s-home" @click="handleHome" />
 
-          <router-link to="/user/setting">
+          <!-- <router-link to="/user/setting">
             <el-button class="menu-btn btn" type="text" icon="el-icon-s-tools" @click="$store.commit('uiControl/setCurrentMenuInit')" />
-          </router-link>
+          </router-link> -->
 
           <el-badge :value="num" :hidden="!num" class="nav-bell">
             <el-button

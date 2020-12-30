@@ -39,13 +39,9 @@ TOOLDIR=$(dirname "$0") \
 cd "$TOOLDIR/docker" \
     && cp -f "$WORKTMPDIR"/*.war . \
     && IMAGE_TAG_NAME=$(date '+%Y-%m-%d_%H-%M') \
-    && IMAGE_REPO_SERVER=webfwk-hub.weimob.com:5000 \
-    && IMAGE_FULL_NAME=$IMAGE_REPO_SERVER/webfwk-allinone:$IMAGE_TAG_NAME \
+    && IMAGE_FULL_NAME=webfwk-allinone:$IMAGE_TAG_NAME \
     && docker build -t "$IMAGE_FULL_NAME" . \
-    && docker push "$IMAGE_FULL_NAME" \
-    && NODE_DEPLOY_HOST=root@webfwk-app.weimob.com \
-    && scp -B -o StrictHostKeyChecking=no "$TOOLDIR/start-backend.sh" "$NODE_DEPLOY_HOST:/tmp/start-backend.sh" \
-    && ssh -o PasswordAuthentication=no -o StrictHostKeyChecking=no "$NODE_DEPLOY_HOST" "bash /tmp/start-backend.sh '$IMAGE_FULL_NAME'"
+    && bash "$TOOLDIR/start-backend.sh" "$IMAGE_FULL_NAME"
 STATUS=$?
 rm -f *.war
 exit $STATUS

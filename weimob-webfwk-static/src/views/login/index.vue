@@ -34,7 +34,7 @@
 
 <script>
 import tool from '@/utils/tools'
-import { login, loginWithTicket } from '@/apis/common'
+import { login, loginWithTicket, requireConfigs } from '@/apis/common'
 import { Notification } from 'element-ui'
 export default {
   data() {
@@ -63,6 +63,7 @@ export default {
      */
     var ssoTicket
     if (tool.isBlank(ssoTicket = this.$route.query.ticket)) {
+      console.log(this.localUser)
       if (!this.localUser) {
         this.toSsoLoginPage()
       }
@@ -90,9 +91,12 @@ export default {
      * 跳转至 SSO 登录页面
      */
     toSsoLoginPage() {
-      var $lo = window.location
-      window.location.href = 'http://cas.dev.internal.hsmob.com/?service=' +
-            tool.encodeURI($lo.protocol + '//' + $lo.host + $lo.pathname + $lo.hash)
+      requireConfigs((configs) => {
+        var $lo = window.location
+        window.location.href = configs['system.user.login.weimob.sso.login.url'] +
+              '?service=' +
+              tool.encodeURI($lo.protocol + '//' + $lo.host + $lo.pathname + $lo.hash)
+      })
     },
 
     /**

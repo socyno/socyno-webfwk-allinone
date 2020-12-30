@@ -2,6 +2,7 @@ package com.weimob.webfwk.state.module.config;
 
 import com.github.reinert.jjschema.Attributes;
 import com.weimob.webfwk.state.abs.AbstractStateFormQuery;
+import com.weimob.webfwk.state.field.FieldStringAllowOrDenied;
 import com.weimob.webfwk.util.sql.AbstractSqlStatement;
 import com.weimob.webfwk.util.sql.BasicSqlStatement;
 import com.weimob.webfwk.util.tool.StringUtils;
@@ -26,6 +27,9 @@ public class SystemConfigQueryDefault extends AbstractStateFormQuery {
     @Attributes(title = "关键字")
     private String keyword;
     
+    @Attributes(title = "外部访问", type = FieldStringAllowOrDenied.class)
+    private String external;
+    
     /**
      * (
      *     a.name LIKE CONCAT('%',?,'%')
@@ -38,10 +42,26 @@ public class SystemConfigQueryDefault extends AbstractStateFormQuery {
     @Multiline
     private final static String SQL_QUERY_BY_KEYWORD = "X";
     
+    public SystemConfigQueryDefault() {
+        super();
+    }
+    
+    public SystemConfigQueryDefault(Integer limit) {
+        super(limit);
+    }
+    
+    public SystemConfigQueryDefault(Integer limit, Long page) {
+        super(limit, page);
+    }
+    
     private AbstractSqlStatement buildWhereSql() {
         List<Object> sqlargs = new ArrayList<>();
         StringBuilder sqlwhere = new StringBuilder();
         
+        if (StringUtils.isNotBlank(external)) {
+            sqlargs.add(external);
+            StringUtils.appendIfNotEmpty(sqlwhere, " AND ").append("a.external = ?");
+        }
         if (StringUtils.isNotBlank(keyword)) {
             sqlargs.add(keyword);
             sqlargs.add(keyword);

@@ -87,9 +87,10 @@ router.beforeEach((to, from, next) => {
     }})
     return
   }
-  if (to.name === 'Login' && from.name !== 'Login' && !to.query.redirect) { // 跳登录把redirect页面带过去
-    next({ path: '/Login', query: { redirect: from.fullPath }})
-    return
+  if (to.name === 'Login' && from.name !== 'Login' && !to.query.redirect) {
+    // // 跳登录把redirect页面带过去
+    // next({ path: '/Login', query: { redirect: from.fullPath }})
+    // return
   }
   if (to.name === 'Dashboard') {
     store.commit('uiControl/setCurrentMenuInit')

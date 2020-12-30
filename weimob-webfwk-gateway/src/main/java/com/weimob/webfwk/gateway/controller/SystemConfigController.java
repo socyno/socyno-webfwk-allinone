@@ -12,12 +12,12 @@ import com.weimob.webfwk.state.annotation.Authority;
 import com.weimob.webfwk.state.authority.AuthorityScopeType;
 
 @RestController
-@RequestMapping(value = "/notify")
-public class SystemNotifyController {
+@RequestMapping(value = "/config")
+public class SystemConfigController {
     
-    @Authority(value = AuthorityScopeType.System)
-    @RequestMapping(value = "/send", method = RequestMethod.POST)
-    public void send(HttpServletRequest req, HttpServletResponse res) throws Exception {
-        HttpRedirectUtil.redirectToBackend("/api/notify/send", req, res);
+    @Authority(value = AuthorityScopeType.Guest)
+    @RequestMapping(value = "/externals", method = RequestMethod.GET)
+    public void listExternals(HttpServletRequest req, HttpServletResponse res) throws Exception {
+        HttpRedirectUtil.redirectToBackend("/api/config/externals", req, res);
     }
 }

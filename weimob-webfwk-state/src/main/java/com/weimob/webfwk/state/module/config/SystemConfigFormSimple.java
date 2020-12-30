@@ -4,6 +4,7 @@ import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.v1.FieldOption;
 import com.github.reinert.jjschema.v1.FieldType;
 import com.weimob.webfwk.state.abs.AbstractStateFormBase;
+import com.weimob.webfwk.state.field.FieldStringAllowOrDenied;
 import com.weimob.webfwk.state.util.StateFormBasicSaved;
 import com.weimob.webfwk.util.state.field.FieldText;
 
@@ -39,6 +40,9 @@ public class SystemConfigFormSimple extends StateFormBasicSaved implements Abstr
     
     @Attributes(title = "值", required = true, type = FieldText.class)
     private String value;
+    
+    @Attributes(title = "外部访问", required = true, type = FieldStringAllowOrDenied.class)
+    private String external;
     
     @Attributes(title = "备注", required = true, type = FieldText.class)
     private String comment;

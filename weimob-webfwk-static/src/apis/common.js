@@ -1,3 +1,4 @@
+import tool from '../utils/tools'
 import request from '../utils/request'
 
 export function logout() {
@@ -20,11 +21,6 @@ export function login(username, password, proxied, token) {
   })
 }
 
-/**
- * 通过 sso ticket 获取用户的会话数据
- *
- * @param {String} ticket
- */
 export function loginWithTicket(ssoTicket, ssoService) {
   return request({
     url: '/user/login',
@@ -33,6 +29,19 @@ export function loginWithTicket(ssoTicket, ssoService) {
       ticket: ssoTicket,
       service: ssoService
     }
+  })
+}
+
+export function requireConfigs(callback) {
+  if (tool.isPlainObject(window.__webfwk_external_configs__)) {
+    callback(window.__webfwk_external_configs__)
+  }
+  request({
+    url: '/config/externals',
+    method: 'get'
+  }).then((res) => {
+    window.__webfwk_external_configs__ = res.data
+    callback(window.__webfwk_external_configs__)
   })
 }
 

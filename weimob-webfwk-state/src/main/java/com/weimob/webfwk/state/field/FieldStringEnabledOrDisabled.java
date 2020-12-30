@@ -9,18 +9,18 @@ import com.github.reinert.jjschema.v1.FieldType;
 
 import lombok.Getter;
 
-public class FieldStringYesOrNo extends FieldType {
+public class FieldStringEnabledOrDisabled extends FieldType {
     
     @Getter
-    public enum OptionsStringYesOrNo {
-        Yes("yes", "是"), 
-        No("no",   "否");
+    public enum OptionsEnabledOrDisabled {
+        Disabled("disabled", "禁用"), 
+        Enabled("enabled",   "开启");
         
         private final String value;
         
         private final String display;
         
-        OptionsStringYesOrNo(String value, String display) {
+        OptionsEnabledOrDisabled(String value, String display) {
             
             this.value = value;
             
@@ -31,7 +31,7 @@ public class FieldStringYesOrNo extends FieldType {
     @SuppressWarnings("serial")
     private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {
         {
-            for (OptionsStringYesOrNo v : OptionsStringYesOrNo.values()) {
+            for (OptionsEnabledOrDisabled v : OptionsEnabledOrDisabled.values()) {
                 add(FieldSimpleOption.create(v.getValue(), v.getDisplay()));
             }
         }

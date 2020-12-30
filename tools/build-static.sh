@@ -24,13 +24,9 @@ cd "$TOOLDIR/docker" \
     && cp -f "$TOOLDIR"/cert-*.pem . \
     && cp -f "$WORKTMPDIR/webfwk-static.tar" . \
     && IMAGE_TAG_NAME=$(date '+%Y-%m-%d_%H-%M') \
-    && IMAGE_REPO_SERVER=webfwk-hub.weimob.com:5000 \
-    && IMAGE_FULL_NAME=$IMAGE_REPO_SERVER/webfwk-static:$IMAGE_TAG_NAME \
+    && IMAGE_FULL_NAME=webfwk-static:$IMAGE_TAG_NAME \
     && docker build -t "$IMAGE_FULL_NAME" -f Dockerfile-static  . \
-    && docker push "$IMAGE_FULL_NAME" \
-    && NODE_DEPLOY_HOST=root@webfwk-app.weimob.com \
-    && scp -B -o StrictHostKeyChecking=no "$TOOLDIR/start-static.sh" "$NODE_DEPLOY_HOST":/tmp/start-static.sh \
-    && ssh -o PasswordAuthentication=no -o StrictHostKeyChecking=no "$NODE_DEPLOY_HOST" "bash /tmp/start-static.sh '$IMAGE_FULL_NAME'"
+    && bash "$TOOLDIR/start-static.sh" "$IMAGE_FULL_NAME"
 STATUS=$?
 rm -f webfwk-static.tar cert-*.pem
 exit $STATUS

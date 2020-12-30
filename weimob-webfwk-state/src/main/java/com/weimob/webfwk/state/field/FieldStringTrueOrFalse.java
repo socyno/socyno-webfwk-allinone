@@ -9,17 +9,18 @@ import com.github.reinert.jjschema.v1.FieldType;
 
 import lombok.Getter;
 
-public class FieldNumberYesOrNo extends FieldType {
+public class FieldStringTrueOrFalse extends FieldType {
     
     @Getter
-    public enum OptionsNumberYesOrNo {
-        No("0", "否"), Yes("1", "是");
+    public enum OptionsStringTrueOrFalse {
+        False("false", "否"), 
+        True("true",   "是");
         
         private final String value;
         
         private final String display;
         
-        OptionsNumberYesOrNo(String value, String display) {
+        OptionsStringTrueOrFalse(String value, String display) {
             
             this.value = value;
             
@@ -30,7 +31,7 @@ public class FieldNumberYesOrNo extends FieldType {
     @SuppressWarnings("serial")
     private final static List<FieldSimpleOption> options = new ArrayList<FieldSimpleOption>() {
         {
-            for (OptionsNumberYesOrNo v : OptionsNumberYesOrNo.values()) {
+            for (OptionsStringTrueOrFalse v : OptionsStringTrueOrFalse.values()) {
                 add(FieldSimpleOption.create(v.getValue(), v.getDisplay()));
             }
         }

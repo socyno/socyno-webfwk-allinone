@@ -89,9 +89,9 @@
             <mvc:mapping path="/**"/>
             <!-- 排除地址 -->
             <mvc:exclude-mapping path="/api/user/login"/>
-            <mvc:exclude-mapping path="/api/change/request/**"/>
             <mvc:exclude-mapping path="/api/internal/**"/>
             <mvc:exclude-mapping path="/api/vcschange/submit"/>
+            <mvc:exclude-mapping path="/api/config/externals"/>
             <bean class="com.weimob.webfwk.state.module.token.SessionContextInterceptor">
                 <constructor-arg index="0" value="NotAll"/>
             </bean>

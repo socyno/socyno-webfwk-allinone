@@ -20,10 +20,10 @@ public abstract class AbstractWeimobNotifyService extends AbstractExternalHttpSe
         try {
             JsonElement result = postJson("/info/sent",
                     (Object)(new ObjectMap().put("appKey", getAppKey()).put("templateId", getTemplateId())
-                            .put("content", CommonUtil.toJson(new ObjectMap().put("content", content).asMap()))
+                            .put("content", content)
                             .put("receivers", receivers).asMap()), null);
             if (result == null || !result.isJsonObject()
-                    || !"000000".equals(CommonUtil.getJstring((JsonObject) result, ""))) {
+                    || !"000000".equals(CommonUtil.getJstring((JsonObject) result, "code"))) {
                 throw new RuntimeException("通知发送失败");
             }
             return true;
