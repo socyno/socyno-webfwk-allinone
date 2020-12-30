@@ -4,8 +4,8 @@ docker rm -vf webfwk-app
 mkdir -p /opt/log/tomcat \
     && mkdir -p /opt/log/webfwk \
     && docker run -d \
-          -p 8080:8080 \
-          -p 5050:5050 \
+          -p 4321:8080 \
+          -p 4322:5050 \
           -m 1024M --memory-swap -1 \
           --restart=always \
           --privileged=true \
