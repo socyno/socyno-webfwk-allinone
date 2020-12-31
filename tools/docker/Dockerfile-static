@@ -1,6 +1,6 @@
 FROM nginx:1.18.0-alpine
 
-ADD webfwk-static.tar /usr/share/nginx/html/webfwk/
+ADD webfwk-static.tar /usr/share/nginx/html/flow/
 ADD nginx.conf.d /etc/nginx/conf.d/default.conf
 ADD cert-all.pem /etc/nginx/cert/
 ADD cert-key.pem /etc/nginx/cert/

@@ -14,7 +14,7 @@ server {
     ssl_ciphers HIGH:!aNULL:!MD5;
     
     location / {
-        root /usr/share/nginx/html/webfwk;
+        root /usr/share/nginx/html/;
         index index.html index.htm;
     }
     
@@ -34,7 +34,7 @@ server {
     server_name  webfwk.weimob.com;
     
     location / {
-        root /usr/share/nginx/html/webfwk;
+        root /usr/share/nginx/html/;
         index index.html index.htm;
     }
     
