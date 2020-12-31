@@ -18,9 +18,10 @@
         v-for="(item, index) in items"
         :key="index"
         :title="item.title"
-        :detail="getTodoStatus(item)"
+        :detail="getTodoResult(item)"
         :time="item.createdAt"
-        @click="handleRow(item)"
+        :subtitle="getTodoSubTitle(item)"
+        @click="showTodoTargetPage(item)"
       />
       <div v-if="!items.length" class="common-nodata" style="padding-bottom:10%;">
         暂无数据
@@ -86,10 +87,27 @@ export default {
     },
 
     /**
-     * 拼装待办的状态信息
+     * 拼装待办的副标题（包括发起人，审批人等）
      * @param {Object} todo
      */
-    getTodoStatus(todo) {
+    getTodoSubTitle(todo) {
+      var subtitle = '审批人包括：'
+      if (todo && tool.isArray(todo.assignees) && todo.assignees.length > 0) {
+        for (var a = 0; a < todo.assignees.length; a++) {
+          var assignee = todo.assignees[a]
+          if (assignee && tool.isNotBlank(assignee.display)) {
+            subtitle += assignee.display + ', '
+          }
+        }
+      }
+      return tool.remove(/,\s*$/, subtitle)
+    },
+
+    /**
+     * 拼装待办的状态信息（包括状态，发起人，处理结果等）
+     * @param {Object} todo
+     */
+    getTodoResult(todo) {
       var status = ''
       if (todo && tool.isNotBlank(todo.state)) {
         status += '状态：' + tool.trim(todo.state) + ', '
@@ -98,7 +116,7 @@ export default {
         status += '发起人：' + tool.trim(todo.applyUserDisplay) + ', '
       }
       if (todo && tool.isNotBlank(todo.closedUserName)) {
-        status += '处理人：' + tool.trim(todo.closedUserName) + ', '
+        status += '处理人：' + tool.trim(todo.closedUserDisplay) + ', '
       }
       if (todo && tool.isNotBlank(todo.result)) {
         status += '处理时间：' + tool.trim(todo.closedAt) + ', '
@@ -171,7 +189,7 @@ export default {
      * 点击行记录时，打开代办详情窗口
      * @param {Object} row 行数据
      */
-    handleRow(row) {
+    showTodoTargetPage(row) {
       var that = this
       window.layui.layer.open({
         type: 2, /* open with iframe */
