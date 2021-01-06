@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.weimob.webfwk.state.module.user.SystemUserService;
 import com.weimob.webfwk.util.context.SessionContext;
 import com.weimob.webfwk.util.exception.MissingUserException;
+import com.weimob.webfwk.util.tool.CommonUtil;
 
 public class SessionContextInterceptor extends com.weimob.webfwk.state.module.token.SessionContextInterceptor {
     
@@ -28,8 +29,10 @@ public class SessionContextInterceptor extends com.weimob.webfwk.state.module.to
     @Override
     protected String getTokenContent(HttpServletRequest request) throws Exception {
         String ssoTicket;
-        if (StringUtils.isNotBlank(ssoTicket = request.getParameter("__weimob_sso_ticket__"))) {
-            SystemUserService.getInstance().forceSuToUser(ssoTicket, request.getParameter("__weimob_sso_service__"));
+        if (StringUtils.isNotBlank(ssoTicket = CommonUtil.ifBlank(request.getParameter("__weimob_sso_ticket__"),
+                request.getHeader("WEIMOB-SSO-TICKET")))) {
+            SystemUserService.getInstance().forceSuToUser(ssoTicket, CommonUtil
+                    .ifBlank(request.getParameter("__weimob_sso_service__"), request.getHeader("WEIMOB-SSO-SERVICE")));
             if (StringUtils.isNotBlank(SessionContext.getSsoTicketOrNull())) {
                 return SessionContext.getToken();
             }

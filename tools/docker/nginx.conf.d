@@ -23,7 +23,7 @@ server {
         root /usr/share/nginx/html;
     }
     
-    location ^~ /webfwk- {
+    location /webfwk-gateway/ {
         proxy_pass http://webfwk; 
     }
 }
