@@ -35,7 +35,7 @@
     "vue-datetime": "^0.7.1",
     "vue-router": "^3.0.3",
     "vuex": "^3.0.1",
-    "xlsx": "^0.16.8"
+    "xlsx": "^0.17.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.10.0",
